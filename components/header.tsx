@@ -22,8 +22,8 @@ export default function Header() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <Book className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-primary">CREDUPN</span>
+              <Book className="h-8 w-8 text-black" />
+              <span className="text-xl font-bold text-black">CREDUPN</span>
             </Link>
           </div>
           
@@ -82,5 +82,6 @@ export default function Header() {
         )}
       </nav>
     </header>
+    
   )
 }
