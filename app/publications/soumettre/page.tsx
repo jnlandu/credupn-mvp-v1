@@ -35,8 +35,8 @@ export default function SoumissionPage() {
   }
 
   return (
-    <div className="container mx-auto py-12 px-4">
-      <div className="flex gap-8">
+    <div className="container mx-auto py-12 px-24">
+      <div className="md:flex gap-8">
         <Card className="flex-1 max-w-2xl">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Soumettre un Article</CardTitle>

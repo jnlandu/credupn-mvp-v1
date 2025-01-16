@@ -44,7 +44,6 @@ export default function Header() {
               <Link href="/auth/login">Connexion</Link>
             </Button>
           </div>
-
           {/* Mobile menu button */}
           <div className="flex md:hidden">
             <Button
@@ -70,13 +69,13 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-black"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
                 </Link>
               ))}
-              <Button asChild variant="default" className="w-full mt-2">
+              <Button asChild variant="outline" className="w-full mt-2">
                 <Link href="/auth/login">Connexion</Link>
               </Button>
             </div>
