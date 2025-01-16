@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookOpen, Users, FileText, GraduationCap } from 'lucide-react'
+import Footer from '@/components/footer'
 
 export default function Home() {
   return (
@@ -19,7 +20,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Centre de Recherche CREDUPN
+            Centre de Recherche  Interdisciplinaire CRIDUPN
           </h1>
           <p className="text-xl text-white mb-8 max-w-2xl">
             Excellence en recherche pour le développement de l'éducation en République Démocratique du Congo
@@ -107,21 +108,8 @@ export default function Home() {
           </div>
         </div>
       </section>
-      {/* Footer */}
- 
-      <footer className="bg-gray-800 text-white py-6">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h5 className="text-lg font-bold">CREDUPN</h5>
-              <p className="text-sm">Centre de Recherche pour le Développement de l'Université Pédagogique Nationale</p>
-            </div>
-            <div>
-              <p className="text-sm">© 2023 CREDUPN. Tous droits réservés.</p>
-            </div>
-          </div>
-        </div>
-     </footer>
+      <Footer/>
+      
     </div>
   )
 }
