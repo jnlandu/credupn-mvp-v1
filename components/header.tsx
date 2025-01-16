@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Book, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { FileText, BookOpen, ScrollText } from 'lucide-react'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -17,7 +18,6 @@ export default function Header() {
   ]
 
   return (
-  // <header className="bg-white shadow-sm">
   // Update the header component with sticky positioning
   <header className="sticky top-0 z-50 bg-white backdrop-blur-sm shadow-sm">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">

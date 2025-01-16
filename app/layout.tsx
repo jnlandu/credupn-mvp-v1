@@ -33,6 +33,8 @@ export default function RootLayout({
             
           </main>
           {/* <Footer /> */}
+ 
+          <Footer/>
           
         </ThemeProvider>
        

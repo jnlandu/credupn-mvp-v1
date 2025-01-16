@@ -2,8 +2,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Users, FileText, GraduationCap } from 'lucide-react'
+import { BookOpen, Users, FileText, GraduationCap,ScrollText } from 'lucide-react'
+import { 
+  Upload, 
+  UserCheck, 
+  FileEdit, 
+} from 'lucide-react'
 import Footer from '@/components/footer'
+
 
 export default function Home() {
   return (
@@ -108,8 +114,206 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <Footer/>
-      
+
+{/* Call for Papers Section */}
+<section className="py-16 px-4 bg-white">
+  <div className="max-w-7xl mx-auto">
+    <div className="text-center mb-12">
+      <h2 className="text-3xl font-bold mb-4 text-black">Appel à publications</h2>
+      <p className="text-gray-600 max-w-2xl mx-auto">
+        CRIDUPN accepte les soumissions de recherches originales dans tous les domaines. 
+        Nous publions des articles scientifiques, des livres et des rapports de recherche.
+      </p>
     </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <Card className="text-center p-6">
+        <div className="mb-4">
+          <FileText className="h-12 w-12 mx-auto text-primary" />
+        </div>
+        <h3 className="font-bold mb-2">Articles Scientifiques</h3>
+        <p className="text-gray-600 mb-4">Soumettez vos articles de recherche pour publication</p>
+        <Button asChild variant="outline">
+          <Link href="/soumission">Soumettre un article</Link>
+        </Button>
+      </Card>
+      <Card className="text-center p-6">
+        <div className="mb-4">
+          <BookOpen className="h-12 w-12 mx-auto text-primary" />
+        </div>
+        <h3 className="font-bold mb-2">Livres</h3>
+        <p className="text-gray-600 mb-4">Publiez vos ouvrages académiques</p>
+        <Button asChild variant="outline">
+          <Link href="/soumission">Proposer un livre</Link>
+        </Button>
+      </Card>
+      <Card className="text-center p-6">
+        <div className="mb-4">
+          <ScrollText className="h-12 w-12 mx-auto text-primary" />
+        </div>
+        <h3 className="font-bold mb-2">Rapports</h3>
+        <p className="text-gray-600 mb-4">Partagez vos rapports de recherche</p>
+        <Button asChild variant="outline">
+          <Link href="/soumission">Soumettre un rapport</Link>
+        </Button>
+      </Card>
+    </div>
+  </div>
+</section>
+
+
+{/* Publication Process */}
+<section className="py-16 px-4 bg-gray-50">
+  <div className="max-w-7xl mx-auto">
+    <h2 className="text-3xl font-bold text-center mb-12 text-black">Processus de Publication</h2>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      {[
+        {
+          step: 1,
+          icon: Upload,
+          title: "Soumission",
+          description: "Envoyez votre manuscrit via notre plateforme en ligne"
+        },
+        {
+          step: 2,
+          icon: UserCheck,
+          title: "Évaluation",
+          description: "Examen par les pairs experts du domaine"
+        },
+        {
+          step: 3,
+          icon: FileEdit,
+          title: "Révision",
+          description: "Modifications basées sur les retours des évaluateurs"
+        },
+        {
+          step: 4,
+          icon: BookOpen,
+          title: "Publication",
+          description: "Publication finale après validation"
+        }
+      ].map((step) => (
+        <div key={step.step} className="text-center">
+          <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-4">
+            {/* <span className="text-black">{step.step} </span> */}
+            <step.icon className="h-6 w-6 text-black" />
+          </div>
+          <h3 className="font-bold mb-2 text-black">{step.title}</h3>
+          <p className="text-gray-600">{step.description}</p>
+       
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+{/* Lead Reviewers Section */}
+<section className="py-16 px-4 bg-white">
+  <div className="max-w-7xl mx-auto">
+    <h2 className="text-3xl font-bold text-center text-black mb-12">Comité de Rédaction</h2>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {[
+        {
+          name: "Prof. Emmanuel Kabongo",
+          title: "Rédacteur en Chef",
+          image: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80",
+          specialization: "Sciences de l'Éducation",
+          institution: "Université Pédagogique Nationale",
+          bio: "Professeur titulaire spécialisé en méthodologie de recherche éducative à l'UPN. Directeur de plusieurs thèses doctorales.",
+        },
+        {
+          name: "Dr. Marie-Claire Mabika",
+          title: "Rédactrice Adjointe",
+          image: "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?auto=format&fit=crop&q=80",
+          specialization: "Psychologie de l'Éducation",
+          institution: "CREDUPN",
+          bio: "Docteure en psychologie éducative, experte en développement cognitif et apprentissage dans le contexte congolais.",
+        },
+        {
+          name: "Prof. Joseph Mutombo",
+          title: "Directeur Scientifique",
+          image: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?auto=format&fit=crop&q=80",
+          specialization: "Politique Éducative",
+          institution: "Université de Kinshasa",
+          bio: "Spécialiste des politiques éducatives en RDC, consultant pour plusieurs projets de réforme éducative.",
+        }
+      ].map((reviewer, index) => (
+        <Card key={index} className="overflow-hidden">
+          <div className="relative h-64">
+            <Image
+              src={reviewer.image}
+              alt={reviewer.name}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+          <CardContent className="p-6">
+            <h3 className="text-xl font-bold mb-1">{reviewer.name}</h3>
+            <p className="text-primary font-semibold mb-2">{reviewer.title}</p>
+            <p className="text-sm text-gray-600 mb-2">
+              <span className="font-semibold">Spécialisation:</span> {reviewer.specialization}
+            </p>
+            <p className="text-sm text-gray-600 mb-4">
+              <span className="font-semibold">Institution:</span> {reviewer.institution}
+            </p>
+            <p className="text-sm text-gray-700">{reviewer.bio}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
+
+
+{/* Testimonials Section */}
+<section className="py-16 px-4 bg-gray-50">
+  <div className="max-w-7xl mx-auto">
+    <h2 className="text-3xl font-bold text-center text-black mb-12">Témoignages</h2>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {[
+        {
+          name: "Dr. Jean Mukendi",
+          role: "Chercheur en Sciences de l'Éducation",
+          comment: "CREDUPN offre un processus de publication rigoureux et professionnel. L'accompagnement éditorial est excellent.",
+          image: "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?auto=format&fit=crop&q=80"
+        },
+        {
+          name: "Prof. Marie Kabongo",
+          role: "Professeure en Pédagogie",
+          comment: "Une revue de qualité qui contribue significativement à la recherche en éducation en RDC.",
+          image: "https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?auto=format&fit=crop&q=80"
+        },
+        {
+          name: "Dr. Paul Ntumba",
+          role: "Auteur et Chercheur",
+          comment: "La plateforme idéale pour partager ses recherches avec la communauté académique africaine.",
+          image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80"
+        }
+      ].map((testimonial, index) => (
+        <Card key={index} className="p-6">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="relative h-12 w-12 rounded-full overflow-hidden">
+              <Image 
+                src={testimonial.image}
+                alt={testimonial.name}
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <h3 className="font-bold">{testimonial.name}</h3>
+              <p className="text-sm text-gray-600">{testimonial.role}</p>
+            </div>
+          </div>
+          <p className="text-gray-700 italic">{testimonial.comment}</p>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
+
+
+      
+</div>
   )
 }
