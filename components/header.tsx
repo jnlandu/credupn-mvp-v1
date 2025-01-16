@@ -40,7 +40,7 @@ export default function Header() {
                 {item.name}
               </Link>
             ))}
-            <Button asChild variant="default">
+            <Button asChild variant="outline" className="">
               <Link href="/auth/login">Connexion</Link>
             </Button>
           </div>
