@@ -133,7 +133,7 @@ export default function Home() {
         <h3 className="font-bold mb-2">Articles Scientifiques</h3>
         <p className="text-gray-600 mb-4">Soumettez vos articles de recherche pour publication</p>
         <Button asChild variant="outline">
-          <Link href="/soumission">Soumettre un article</Link>
+          <Link href="/publications/soumettre">Soumettre un article</Link>
         </Button>
       </Card>
       <Card className="text-center p-6">
