@@ -12,6 +12,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Icons } from "@/components/icons"
 import Link from 'next/link'
+import Image from 'next/image'
+import { BookOpen, Users, GraduationCap, Globe } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -48,10 +51,73 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container mx-auto py-12 px-4 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+<div className="min-h-[calc(100vh-4rem)] flex">
+    {/* Left side - Image and Content */}
+    <div className="hidden lg:flex lg:w-1/2 relative bg-gray-900">
+      <Image
+        src="/images/library-research.jpg"
+        alt="CRIDUPN Research Center"
+        fill
+        className="object-cover opacity-60"
+        priority
+      />
+      <div className="absolute inset-0 flex flex-col justify-center p-12 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-gray-900/50">
+        <h1 className="text-4xl font-bold text-white mb-4">
+          CRIDUPN
+        </h1>
+        <p className="text-xl text-white/90 max-w-md mb-8">
+          Centre  de Recherche Interdisciplinaire  de l'Université Pédagogique Nationale
+        </p>
+        
+        <div className="space-y-6">
+          <div className="flex items-center space-x-3 text-white/90">
+            <BookOpen className="h-6 w-6" />
+            <p>Publication de recherches académiques</p>
+          </div>
+          
+          <div className="flex items-center space-x-3 text-white/90">
+            <Users className="h-6 w-6" />
+            <p>Collaboration entre chercheurs</p>
+          </div>
+          
+          <div className="flex items-center space-x-3 text-white/90">
+            <GraduationCap className="h-6 w-6" />
+            <p>Développement de  la Recherche scientifique et l'éducation en Afrique et en  RDC</p>
+          </div>
+          
+          <div className="flex items-center space-x-3 text-white/90">
+            <Globe className="h-6 w-6" />
+            <p>Rayonnement international</p>
+          </div>
+        </div>
+
+        <div className="mt-12">
+          <Badge variant="outline" className="text-white border-white/30">
+            Excellence académique
+          </Badge>
+          <Badge variant="outline" className="ml-2 text-white border-white/30">
+            Innovation pédagogique
+          </Badge>
+          <Badge variant="outline" className="ml-2 text-white border-white/30">
+            Recherche avancée
+          </Badge>
+        </div>
+      </div>
+    </div>
+
+
+
+
+    {/* Right side - Login form */}
+    {/* <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-4 lg:p-8">  */}
+    <div className="w-full lg:w-1/2 flex flex-col">
+    <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Connexion CREDUPN</CardTitle>
+        <CardHeader className="space-y-1">
+          <div className="flex items-center justify-center space-x-2">
+            <Icons.logo className="h-8 w-8" />
+            <CardTitle className="text-2xl text-center">CREDUPN</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -166,6 +232,24 @@ export default function LoginPage() {
           </div>
         </CardFooter>
       </Card>
+      </div>
+      {/* Footer */}
+        <footer className="p-4 text-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} CRIDUPN. Tous droits réservés.</p>
+          <div className="mt-2 space-x-4">
+            <Link href="/privacy" className="hover:text-gray-700 transition-colors">
+              Confidentialité
+            </Link>
+            <Link href="/terms" className="hover:text-gray-700 transition-colors">
+              Conditions
+            </Link>
+            <Link href="/contact" className="hover:text-gray-700 transition-colors">
+              Contact
+            </Link>
+          </div>
+        </footer>
+
     </div>
+  </div>
   )
 }
