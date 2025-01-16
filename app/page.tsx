@@ -39,7 +39,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-16 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Nos Domaines de Recherche</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-black">Nos Domaines de Recherche</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
@@ -81,7 +81,7 @@ export default function Home() {
       <section className="py-16 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">Publications Récentes</h2>
+            <h2 className="text-3xl font-bold text-black">Publications Récentes</h2>
             <Button asChild variant="outline">
               <Link href="/publications">Voir toutes les publications</Link>
             </Button>

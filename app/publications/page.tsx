@@ -111,7 +111,64 @@ const publications = [
     citations: 7,
     image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80",
     downloadUrl: "#"
-  }
+  },
+  {
+    id: 'pub-6',
+    title: "Stratégies d'Apprentissage Collaboratif en Milieu Universitaire",
+    authors: ["Dr. Alice Kabongo", "Prof. Marc Ntumba"],
+    date: "2023-05-10",
+    abstract: `Une analyse des méthodes d'apprentissage collaboratif et leur efficacité dans 
+    l'enseignement supérieur en RDC. L'étude met en évidence les facteurs clés de succès et 
+    les obstacles à surmonter.`,
+    keywords: ["apprentissage collaboratif", "université", "pédagogie", "RDC"],
+    category: "Méthodologie",
+    type: "Article",
+    journal: "Revue des Sciences de l'Éducation en Afrique",
+    volume: "15",
+    issue: "4",
+    pages: "78-95",
+    doi: "10.3456/rsea.2023.15.4.78",
+    citations: 6,
+    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80",
+    downloadUrl: "#"
+    },
+    {
+    id: 'pub-7',
+    title: "L'Intelligence Artificielle dans l'Éducation Congolaise",
+    authors: ["Prof. David Kasongo", "Dr. Sophie Mbemba"],
+    date: "2023-04-15",
+    abstract: `Cette étude explore les possibilités d'intégration de l'IA dans le système 
+    éducatif congolais, en examinant les opportunités et les défis technologiques, 
+    pédagogiques et infrastructurels.`,
+    keywords: ["intelligence artificielle", "éducation", "innovation", "RDC"],
+    category: "Recherche",
+    type: "Article",
+    journal: "Technologies Éducatives en Afrique",
+    volume: "7",
+    issue: "2",
+    pages: "112-130",
+    doi: "10.5678/tea.2023.7.2.112",
+    citations: 4,
+    image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80",
+    downloadUrl: "#"
+    },
+    {
+      id: 'pub-8',
+      title: "L'Éducation Environnementale dans les Écoles de la RDC",
+      authors: ["Dr. Julie Mwanza", "Prof. Thomas Bokanga"],
+      date: "2023-03-20",
+      abstract: `Cette thèse examine l'état actuel de l'éducation environnementale dans les écoles 
+      congolaises et propose un cadre méthodologique pour son intégration effective dans les 
+      programmes scolaires.`,
+      keywords: ["éducation environnementale", "développement durable", "RDC", "programme scolaire"],
+      category: "Recherche",
+      type: "Thèse",
+      institution: "Université de Kinshasa",
+      pages: "278",
+      citations: 3,
+      image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80",
+      downloadUrl: "#"
+    }
 ]
 
 const categories = ["Tous", "Recherche", "Méthodologie", "Guide Pratique", "Politique Éducative"]
