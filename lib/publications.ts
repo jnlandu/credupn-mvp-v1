@@ -15,6 +15,8 @@ export interface Publication {
   doi?: string;
   citations: number;
   image: string;
+  isRestricted: boolean;
+  previewUrl?: string; // URL for preview-only PDF (first 2 pages)
   pdfUrl?: string;
   downloadUrl: string;
 }
@@ -40,6 +42,8 @@ export const publications = [
       doi: "10.1234/rase.2024.12.3.45",
       citations: 8,
       image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80",
+      isRestricted: true,
+      previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
     },
@@ -58,6 +62,8 @@ export const publications = [
       pages: "245",
       citations: 12,
       image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80",
+      isRestricted: true,
+      previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
     },
@@ -79,6 +85,8 @@ export const publications = [
       doi: "10.5678/jipu.2023.8.2.123",
       citations: 5,
       image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80",
+      isRestricted: false,
+      previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
     },
@@ -97,6 +105,8 @@ export const publications = [
       isbn: "978-2-12345-678-9",
       citations: 15,
       image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80",
+      isRestricted: false,
+      previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
     },
@@ -115,8 +125,10 @@ export const publications = [
       pages: "95",
       citations: 7,
       image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80",
+      isRestricted: true,
+      previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
-            downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
+      downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
     },
     {
       id: 'pub-6',
@@ -136,8 +148,10 @@ export const publications = [
       doi: "10.3456/rsea.2023.15.4.78",
       citations: 6,
       image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80",
+      isRestricted: false,
+      previewUrl: '/pdfs/previews/tech-education-preview.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
-            downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
+      downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
       },
       {
       id: 'pub-7',
@@ -157,6 +171,8 @@ export const publications = [
       doi: "10.5678/tea.2023.7.2.112",
       citations: 4,
       image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80",
+      isRestricted: false,
+      previewUrl: '/pdfs/previews/tech-education-preview.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
       },
@@ -175,8 +191,10 @@ export const publications = [
         pages: "278",
         citations: 3,
         image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80",
+        isRestricted: false,
+        previewUrl: '/pdfs/previews/tech-education-preview.pdf',
         pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
-        downloadUrl: "/publications/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
+        downloadUrl: "/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf"
       }
   ]
   
