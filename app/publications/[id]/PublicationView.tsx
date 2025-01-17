@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Download, Eye } from 'lucide-react'
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import type { Publication } from '@/lib/publications'
 
 export default function PublicationView({ publication }: { publication: Publication }) {
@@ -74,15 +74,18 @@ export default function PublicationView({ publication }: { publication: Publicat
       </Card>
 
       {/* Add PDF Preview Dialog */}
-        <Dialog open={showPreview} onOpenChange={setShowPreview}>
-          <DialogContent className="max-w-4xl h-[80vh]">
-            <iframe
-              src={`${publication.pdfUrl}#toolbar=0`}
-              className="w-full h-full"
-              title={`Preview of ${publication.title}`}
-            />
-          </DialogContent>
-        </Dialog>
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl h-[80vh]">
+          <DialogTitle className="sr-only">
+            Aperçu de {publication.title}
+          </DialogTitle>
+          <iframe
+            src={`${publication.pdfUrl}#toolbar=0`}
+            className="w-full h-full"
+            title={`Preview of ${publication.title}`}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
