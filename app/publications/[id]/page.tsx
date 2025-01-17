@@ -15,11 +15,10 @@ interface PageProps {
     id: string
   }
 }
-export default function PublicationPage({ params }: { params: { id: string } }) {
-  const publication = publications.find(p => p.id === params.id)
-  
+export default async  function PublicationPage({ params }: { params: { id: string } }) {
+ 
   try {
-    const { id } = params
+    const { id } =  await params
     const publication = publications.find(p => p.id === id)
     
     if (!publication) {

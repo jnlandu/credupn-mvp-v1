@@ -76,14 +76,14 @@ export default function PublicationView({ publication }: { publication: Publicat
       {/* Add PDF Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogTitle className="sr-only">
-            Aperçu de {publication.title}
-          </DialogTitle>
-          <iframe
-            src={`${publication.pdfUrl}#toolbar=0`}
+          <DialogTitle>Aperçu de {publication.title}</DialogTitle>
+          <object
+            data={publication.pdfUrl}
+            type="application/pdf"
             className="w-full h-full"
-            title={`Preview of ${publication.title}`}
-          />
+          >
+            <p>Le PDF ne peut pas être affiché</p>
+          </object>
         </DialogContent>
       </Dialog>
     </div>
