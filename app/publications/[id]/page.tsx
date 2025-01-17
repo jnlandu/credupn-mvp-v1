@@ -15,7 +15,7 @@ interface PageProps {
     id: string
   }
 }
-export default async  function PublicationPage({ params }: { params: { id: string } }) {
+export default async function PublicationPage({ params }: PageProps) {
  
   try {
     const { id } =  await params

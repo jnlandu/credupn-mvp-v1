@@ -56,7 +56,7 @@ export default function PublicationView({ publication }: { publication: Publicat
                 </div>
               </div>
               
-              <div className="flex gap-4 mt-8">
+              {/* <div className="flex gap-4 mt-8">
               <Button onClick={() => setShowPreview(true)}>
                   <Eye className="mr-2 h-4 w-4" />
                   Aperçu
@@ -67,6 +67,28 @@ export default function PublicationView({ publication }: { publication: Publicat
                     Télécharger le PDF
                   </a>
                 </Button>
+              </div> */}
+              <div className="flex gap-4 mt-8">
+                <Button onClick={() => setShowPreview(true)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Aperçu
+                </Button>
+                
+                {!publication.isRestricted ? (
+                  <Button variant="outline" asChild>
+                    <a href={publication.pdfUrl} download>
+                      <Download className="mr-2 h-4 w-4" />
+                      Télécharger le PDF
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="outline" asChild>
+                    <Link href="/auth/login">
+                      <Lock className="mr-2 h-4 w-4" />
+                      Accès complet
+                    </Link>
+                  </Button>
+                )}
               </div>
 
             </div>
@@ -74,28 +96,7 @@ export default function PublicationView({ publication }: { publication: Publicat
         </CardContent>
       </Card>
 
-      <div className="flex gap-4 mt-8">
-      <Button onClick={() => setShowPreview(true)}>
-        <Eye className="mr-2 h-4 w-4" />
-        Aperçu
-      </Button>
       
-      {!publication.isRestricted ? (
-        <Button variant="outline" asChild>
-          <a href={publication.pdfUrl} download>
-            <Download className="mr-2 h-4 w-4" />
-            Télécharger le PDF
-          </a>
-        </Button>
-      ) : (
-        <Button variant="outline" asChild>
-          <Link href="/auth/login">
-            <Lock className="mr-2 h-4 w-4" />
-            Accès complet
-          </Link>
-        </Button>
-      )}
-    </div>
 
   {/* Add PDF Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>

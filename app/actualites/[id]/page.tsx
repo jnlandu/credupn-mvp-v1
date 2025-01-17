@@ -7,7 +7,15 @@ import { Badge } from '@/components/ui/badge'
 import { MapPin, Users, Calendar, Clock, ArrowLeft } from 'lucide-react'
 import { events } from '../page'
 
-export default function EventPage({ params }: { params: { id: string } }) {
+
+
+interface PageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function EventPage({ params }: PageProps) {
   const event = events.find(e => e.id === params.id)
   
   if (!event) {
