@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, Users, Calendar, Clock, ArrowLeft } from 'lucide-react'
-import { events } from '../page'
+import { events } from '@/lib/events'
 
 
 
