@@ -40,7 +40,6 @@ export default function ActualitesPage() {
   const { toast } = useToast()
 
 
-
   // Update schema
   const registrationSchema = z.object({
     name: z.string().min(2, "Le nom est requis"),

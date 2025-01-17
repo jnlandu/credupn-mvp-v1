@@ -23,12 +23,13 @@ export default function Home() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/50 " />
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Centre de Recherche  Interdisciplinaire CRIDUPN
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
+            Centre de Recherche  Interdisciplinaire <br/>
+            CRIDUPN
           </h1>
-          <p className="text-xl text-white mb-8 max-w-2xl">
+          <p className="text-xl text-white mb-8 max-w-2xl mt-0">
             Excellence en recherche pour le développement de l'éducation en République Démocratique du Congo
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
@@ -43,7 +44,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4 bg-white">
+      <section className="py-4 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12 text-black">Nos Domaines de Recherche</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -84,7 +85,7 @@ export default function Home() {
       </section>
 
       {/* Latest Publications Preview */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section className="py-4 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-black">Publications Récentes</h2>
@@ -116,7 +117,7 @@ export default function Home() {
       </section>
 
 {/* Call for Papers Section */}
-<section className="py-16 px-4 bg-white">
+<section className="py-4 px-4 bg-white">
   <div className="max-w-7xl mx-auto">
     <div className="text-center mb-12">
       <h2 className="text-3xl font-bold mb-4 text-black">Appel à publications</h2>
@@ -162,7 +163,7 @@ export default function Home() {
 
 
 {/* Publication Process */}
-<section className="py-16 px-4 bg-gray-50">
+<section className="py-4 px-4 bg-gray-50">
   <div className="max-w-7xl mx-auto">
     <h2 className="text-3xl font-bold text-center mb-12 text-black">Processus de Publication</h2>
     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -207,30 +208,30 @@ export default function Home() {
 </section>
 
 {/* Lead Reviewers Section */}
-<section className="py-16 px-4 bg-white">
+<section className="py-4 px-4 bg-white">
   <div className="max-w-7xl mx-auto">
     <h2 className="text-3xl font-bold text-center text-black mb-12">Comité de Rédaction</h2>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {[
         {
-          name: "Prof. Emmanuel Kabongo",
-          title: "Rédacteur en Chef",
+          name: "Prof. Dr Yawidi",
+          title: "Maître de Recherche et Rédacteur en Chef",
           image: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80",
           specialization: "Sciences de l'Éducation",
           institution: "Université Pédagogique Nationale",
           bio: "Professeur titulaire spécialisé en méthodologie de recherche éducative à l'UPN. Directeur de plusieurs thèses doctorales.",
         },
         {
-          name: "Dr. Marie-Claire Mabika",
-          title: "Rédactrice Adjointe",
+          name: "Prof. Dr Mayala Lemba Francis",
+          title: "Chargé de Recherche  ",
           image: "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?auto=format&fit=crop&q=80",
           specialization: "Psychologie de l'Éducation",
           institution: "CREDUPN",
           bio: "Docteure en psychologie éducative, experte en développement cognitif et apprentissage dans le contexte congolais.",
         },
         {
-          name: "Prof. Joseph Mutombo",
-          title: "Directeur Scientifique",
+          name: "Chef de Travaux Jean Mathy Ilunga",
+          title: "Sécretaire",
           image: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?auto=format&fit=crop&q=80",
           specialization: "Politique Éducative",
           institution: "Université de Kinshasa",
@@ -266,7 +267,7 @@ export default function Home() {
 
 
 {/* Testimonials Section */}
-<section className="py-16 px-4 bg-gray-50">
+<section className="py-4 px-4 bg-gray-50">
   <div className="max-w-7xl mx-auto">
     <h2 className="text-3xl font-bold text-center text-black mb-12">Témoignages</h2>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
