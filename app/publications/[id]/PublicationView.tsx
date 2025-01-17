@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Download, Eye } from 'lucide-react'
+import { ArrowLeft, Download, Eye, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import type { Publication } from '@/lib/publications'
 
@@ -75,15 +75,43 @@ export default function PublicationView({ publication }: { publication: Publicat
 
       {/* Add PDF Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogTitle>Aperçu de {publication.title}</DialogTitle>
-          <object
-            data={publication.pdfUrl}
-            type="application/pdf"
-            className="w-full h-full"
-          >
-            <p>Le PDF ne peut pas être affiché</p>
-          </object>
+        <DialogContent className="max-w-5xl p-4">
+          <div className="flex flex-col h-[90vh]">
+            <DialogTitle className="text-xl font-semibold mb-4 flex items-center justify-between">
+              <span>Aperçu de {publication.title}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPreview(false)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Fermer</span>
+              </Button>
+            </DialogTitle>
+            
+            <div className="flex-1 bg-gray-100 rounded-lg overflow-hidden">
+              <object
+                data={publication.pdfUrl}
+                type="application/pdf"
+                className="w-full h-full"
+              >
+                <div className="flex items-center justify-center h-full p-8 text-center">
+                  <p className="text-gray-500">
+                    Le PDF ne peut pas être affiché. 
+                    <a 
+                      href={publication.pdfUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline ml-1"
+                    >
+                      Cliquez ici pour l'ouvrir dans un nouvel onglet
+                    </a>
+                  </p>
+                </div>
+              </object>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
