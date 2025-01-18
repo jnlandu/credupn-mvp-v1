@@ -127,7 +127,7 @@ export default function Home() {
       </p>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <Card className="text-center p-6 bg-cardBackground">
+      <Card className="text-center p-6">
         <div className="mb-4">
           <FileText className="h-12 w-12 mx-auto text-primary" />
         </div>

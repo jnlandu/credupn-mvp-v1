@@ -9,9 +9,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        cardBackground: '#000000', // Example for a black card
-      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':
@@ -25,8 +22,13 @@ const config: Config = {
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        button: {
+          DEFAULT: 'hsl(0, 0%, 0%)', // pure black
+          foreground: 'hsl(0, 0%, 100%)', // white text
+          hover: 'hsl(0, 0%, 20%)', // slightly lighter black for hover
+        },
         card: {
-          DEFAULT: 'hsl(var(--card))',
+          DEFAULT: 'hsl(222.2, 84%, 4.9%)',
           foreground: 'hsl(var(--card-foreground))',
         },
         popover: {
