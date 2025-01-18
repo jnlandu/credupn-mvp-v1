@@ -1,34 +1,31 @@
-// app/actualites/[id]/page.tsx
-import { notFound } from 'next/navigation'
-import { events } from '@/lib/events'
-import EventView from './EventView'
+import { notFound } from 'next/navigation';
+import { events } from '@/lib/events';
+import EventView from './EventView';
+import type { Event } from '@/types/event';
 
-
-
-
-// Type for the params
-type Props = {
-  params: {
-    id: string
-  }
-}
-
-// Remove async from function
-export function generateStaticParams() {
+// Generate static paths
+export function generateStaticParams(): Array<{ id: string }> {
   return events.map((event) => ({
     id: event.id,
-  }))
+  }));
 }
 
+// Simplified page props
+type PageProps = {
+  params: { id: string };
+  searchParams?: Record<string, string | string[] | undefined>;
+};
 
-// Make it a regular function, not async
-export default function EventPage({ params }: Props) {
-  // Find event synchronously
-  const event = events.find(e => e.id === params.id)
-  
+export default function Page({ params }: PageProps) {
+  const { id } = params as { id: string };
+  console.log('params', params);
+  console.log('id', id);
+
+  const event = events.find((e) => e.id === id);
+
   if (!event) {
-    notFound()
+    notFound();
   }
 
-  return <EventView event={event} />
+  return <EventView event={event} />;
 }
