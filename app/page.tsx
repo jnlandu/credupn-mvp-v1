@@ -223,20 +223,31 @@ export default function Home() {
               priority
             />
           </div>
-          <CardContent className="p-1">
+          <CardContent className="">
             <h3 className="text-xl font-bold mb-1">{reviewer.name}</h3>
             <p className="text-primary font-semibold mb-2">{reviewer.title}</p>
-            <p className="text-sm text-gray-600 mb-2">
-              <span className="font-semibold">Spécialisation:</span> {reviewer.specialization}
+            <p className="text-sm text-muted-foreground mb-2">
+              <span className="font-semibold">Spécialisation : </span> 
+              <span className="">{reviewer.specialization} </span>
             </p>
-            <p className="text-sm text-gray-600 mb-4">
-              <span className="font-semibold">Institution:</span> {reviewer.institution}
+            <p className="text-sm  mb-4">
+              <span className="font-semibold text-muted-foreground">Institution:</span>
+              <span className="text-muted-foreground"> {reviewer.institution}</span>
             </p>
-            <p className="text-sm text-gray-700">{reviewer.bio}</p>
+            <p className="text-sm text-gray-700">
+            <span className="font-semibold text-muted-foreground">Bio :</span>
+            <span className="text-muted-foreground"> {reviewer.bio} </span>
+
+            </p>
           </CardContent>
         </Card>
       ))}
     </div>
+    <div className="text-center mt-4">
+      <Button asChild variant="outline">
+        <Link href="/about">En savoir plus sur nos Membres</Link>
+      </Button>
+      </div>
   </div>
 </section>
 
