@@ -214,9 +214,9 @@ export default function Home() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {[
         {
-          name: "Prof. Dr Yawidi",
-          title: "Maître de Recherche et Rédacteur en Chef",
-          image: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80",
+          name: "Prof. Dr Jean-Paul Yawidi Mayinzambi",
+          title: "Directeur  et Rédacteur en Chef",
+          image: "/images/yawidi.jpg",
           specialization: "Sciences de l'Éducation",
           institution: "Université Pédagogique Nationale",
           bio: "Professeur titulaire spécialisé en méthodologie de recherche éducative à l'UPN. Directeur de plusieurs thèses doctorales.",
