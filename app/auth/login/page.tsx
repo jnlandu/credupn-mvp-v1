@@ -16,29 +16,36 @@ import Image from 'next/image'
 import { BookOpen, Users, GraduationCap, Globe } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
+
+// Define role type as union
+type Role = "author" | "admin"
+
+
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
-  role: z.enum(["author", "admin"], {
+  role: z.enum(["author", "admin"] as const, {
     required_error: "Veuillez sélectionner un rôle",
   }),
   rememberMe: z.boolean().default(false),
 })
 
+type LoginFormData = z.infer<typeof loginSchema>
+
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   
-  const form = useForm({
+  const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      role: "author",
+      role: "author" as Role,
       rememberMe: false,
     },
   })
 
-  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     try {
       // TODO: Implement login logic based on role
