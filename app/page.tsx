@@ -8,7 +8,7 @@ import {
   UserCheck, 
   FileEdit, 
 } from 'lucide-react'
-// import Footer  from '@/components/footer'
+import {members} from '@/lib/members'
 
 
 export default function Home() {
@@ -212,43 +212,18 @@ export default function Home() {
   <div className="max-w-7xl mx-auto">
     <h2 className="text-3xl font-bold text-center text-black mb-12">Nos Membres</h2>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {[
-        {
-          name: "Prof. Dr Jean-Paul Yawidi Mayinzambi",
-          title: "Directeur  et Rédacteur en Chef",
-          image: "/images/yawidi.jpg",
-          specialization: "Sciences de l'Éducation",
-          institution: "Université Pédagogique Nationale",
-          bio: "Professeur titulaire spécialisé en méthodologie de recherche éducative à l'UPN. Directeur de plusieurs thèses doctorales.",
-        },
-        {
-          name: "Prof. Dr Mayala Lemba Francis",
-          title: "Chargé de Recherche  ",
-          image: "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?auto=format&fit=crop&q=80",
-          specialization: "Psychologie de l'Éducation",
-          institution: "CREDUPN",
-          bio: "Docteure en psychologie éducative, experte en développement cognitif et apprentissage dans le contexte congolais.",
-        },
-        {
-          name: "Chef de Travaux Jean Mathy Ilunga",
-          title: "Sécretaire",
-          image: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?auto=format&fit=crop&q=80",
-          specialization: "Politique Éducative",
-          institution: "Université de Kinshasa",
-          bio: "Spécialiste des politiques éducatives en RDC, consultant pour plusieurs projets de réforme éducative.",
-        }
-      ].map((reviewer, index) => (
+      {members.map((reviewer, index) => (
         <Card key={index} className="overflow-hidden">
-          <div className="relative h-64">
+          <div className="relative h-64 mb-4">
             <Image
               src={reviewer.image}
               alt={reviewer.name}
               fill
-              className="object-cover"
+              className="object-cover w-full h-full"
               priority
             />
           </div>
-          <CardContent className="p-6">
+          <CardContent className="p-1">
             <h3 className="text-xl font-bold mb-1">{reviewer.name}</h3>
             <p className="text-primary font-semibold mb-2">{reviewer.title}</p>
             <p className="text-sm text-gray-600 mb-2">
