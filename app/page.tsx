@@ -129,7 +129,7 @@ export default function Home() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       <Card className="text-center p-6">
         <div className="mb-4">
-          <FileText className="h-12 w-12 mx-auto text-primary" />
+          <FileText className="h-12 w-12 mx-auto " />
         </div>
         <h3 className="font-bold mb-2">Articles Scientifiques</h3>
         <p className="text-gray-600 mb-4">Soumettez vos articles de recherche pour publication</p>
@@ -139,7 +139,7 @@ export default function Home() {
       </Card>
       <Card className="text-center p-6">
         <div className="mb-4">
-          <BookOpen className="h-12 w-12 mx-auto text-primary" />
+          <BookOpen className="h-12 w-12 mx-auto" />
         </div>
         <h3 className="font-bold mb-2">Livres</h3>
         <p className="text-gray-600 mb-4">Publiez vos ouvrages académiques</p>
@@ -149,7 +149,7 @@ export default function Home() {
       </Card>
       <Card className="text-center p-6">
         <div className="mb-4">
-          <ScrollText className="h-12 w-12 mx-auto text-primary" />
+          <ScrollText className="h-12 w-12 mx-auto" />
         </div>
         <h3 className="font-bold mb-2">Rapports</h3>
         <p className="text-gray-600 mb-4">Partagez vos rapports de recherche</p>
