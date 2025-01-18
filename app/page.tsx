@@ -196,9 +196,9 @@ export default function Home() {
         }
       ].map((step) => (
         <div key={step.step} className="text-center">
-          <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
             {/* <span className="text-black">{step.step} </span> */}
-            <step.icon className="h-6 w-6 text-black" />
+            <step.icon className="h-6 w-6 text-black  dark:text-black" />
           </div>
           <h3 className="font-bold mb-2 text-black">{step.title}</h3>
           <p className="text-gray-600">{step.description}</p>
