@@ -38,7 +38,7 @@ export default function Home() {
             <Button asChild size="lg">
               <Link href="/publications">Nos Publications</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="bg-white/10 backdrop-blur-sm">
+            <Button asChild variant="secondary" size="lg" className="bg-white/10 backdrop-blur-sm">
               <Link href="/about">En savoir plus</Link>
             </Button>
           </div>
@@ -91,7 +91,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-black">Publications Récentes</h2>
-            <Button asChild variant="outline">
+            <Button asChild variant="secondary">
               <Link href="/publications">Voir plus des publications</Link>
             </Button>
           </div>
@@ -135,7 +135,7 @@ export default function Home() {
         </div>
         <h3 className="font-bold mb-2">Articles Scientifiques</h3>
         <p className="text-gray-600 mb-4">Soumettez vos articles de recherche pour publication</p>
-        <Button asChild variant="outline">
+        <Button asChild variant="secondary">
           <Link href="/publications/soumettre">Soumettre un article</Link>
         </Button>
       </Card>
@@ -145,7 +145,7 @@ export default function Home() {
         </div>
         <h3 className="font-bold mb-2">Livres</h3>
         <p className="text-gray-600 mb-4">Publiez vos ouvrages académiques</p>
-        <Button asChild variant="outline">
+        <Button asChild variant="secondary">
           <Link href="/soumission">Proposer un livre</Link>
         </Button>
       </Card>
@@ -155,7 +155,7 @@ export default function Home() {
         </div>
         <h3 className="font-bold mb-2">Rapports</h3>
         <p className="text-gray-600 mb-4">Partagez vos rapports de recherche</p>
-        <Button asChild variant="outline">
+        <Button asChild variant="secondary">
           <Link href="/soumission">Soumettre un rapport</Link>
         </Button>
       </Card>
@@ -246,7 +246,7 @@ export default function Home() {
       ))}
     </div>
     <div className="text-center mt-4">
-      <Button asChild variant="outline">
+      <Button asChild variant="secondary">
         <Link href="/about">En savoir plus sur nos Membres</Link>
       </Button>
       </div>
