@@ -74,7 +74,7 @@ export default function Home() {
             ].map((feature, index) => (
               <Card key={index} className="border-none shadow-lg">
                 <CardHeader>
-                  <feature.icon className="h-12 w-12 text-primary mb-4" />
+                  <feature.icon className="h-12 w-12 text-white dark:text-gray-100 mb-4" />
                   <CardTitle>{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
