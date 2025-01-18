@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'CRIDUPN - Centre de Recherche Interdisciplinaire',
-  description: 'Centre de Recherche Interdisciplinaire le Développement de l\'Université Pédagogique Nationale (RDC)',
+  description: 'Centre de Recherche Interdisciplinaire de l\'Université Pédagogique Nationale (RDC)',
 };
 
 export default function RootLayout({

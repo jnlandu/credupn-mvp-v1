@@ -18,7 +18,7 @@ export default function Home() {
       <section className="relative h-[600px]">
         <Image
           src="https://images.unsplash.com/photo-1606761568499-6d2451b23c66"
-          alt="CREDUPN Research Center"
+          alt="CRIDUPN Centre de Recherche Interdisciplinaire"
           fill
           className="object-cover"
           priority
