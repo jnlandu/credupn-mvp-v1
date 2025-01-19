@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { FileText } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function SoumissionPage() {
   const [formData, setFormData] = useState({
@@ -17,6 +18,8 @@ export default function SoumissionPage() {
     file: null as File | null
   })
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  // Add router at top of component
+  const router = useRouter()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -30,6 +33,11 @@ export default function SoumissionPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    // Save form data to state/local storage
+    localStorage.setItem('articleSubmission', JSON.stringify(formData))
+  
+  // Redirect to payment page
+    router.push('/payments')
     // TODO: Implement submission logic
     console.log('Form submitted:', formData)
   }

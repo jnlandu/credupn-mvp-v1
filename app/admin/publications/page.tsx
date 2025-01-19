@@ -158,7 +158,7 @@ export default function PublicationsAdmin() {
           <TableHeader>
           <TableRow className="bg-gray-100 hover:bg-gray-100">
           <TableHead className="text-gray-900 font-semibold">Titre</TableHead>
-        <TableHead className="text-gray-900 font-semibold">Auteur</TableHead>
+        <TableHead className="text-gray-900 font-semibold">Auteur.e(s)</TableHead>
         <TableHead className="text-gray-900 font-semibold">Date</TableHead>
         <TableHead className="text-gray-900 font-semibold">Catégorie</TableHead>
         <TableHead className="text-gray-900 font-semibold">Status</TableHead>

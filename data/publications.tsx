@@ -5,7 +5,8 @@ export interface Publication {
     date: string
     status: 'published' | 'pending' | 'rejected'
     category: string
-    pdfUrl: string
+    pdfUrl: string,
+    image?: string
   }
   
 export const Publications: Publication[] = [
