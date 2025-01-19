@@ -78,25 +78,46 @@ export default function PublicationsAdmin() {
   })
 
   // Handle Add Publication Form Submission
-  const handleAddPublication = (e: React.FormEvent) => {
+const handleAddPublication = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newPublication.title && newPublication.author && newPublication.date && newPublication.category && pdfFile) {
-      const newPub: Publication = {
-        id: `pub-${publications.length + 1}`,
-        title: newPublication.title,
-        author: newPublication.author,
-        date: newPublication.date,
-        status: newPublication.status as 'published' | 'pending' | 'rejected',
-        category: newPublication.category,
-        pdfUrl: pdfPreview || ''
-      }
-      setPublications([newPub, ...publications])
-      // Reset form
-      setNewPublication({})
-      setPdfFile(null)
-      setPdfPreview(null)
-      setIsAddDialogOpen(false)
-    }
+ if (newPublication.title && newPublication.author && newPublication.date && newPublication.category && pdfFile && newPublication.status) {
+   // Prepare form data
+   const formData = new FormData()
+   formData.append('title', newPublication.title)
+   formData.append('author', newPublication.author)
+   formData.append('date', newPublication.date)
+   formData.append('category', newPublication.category)
+   formData.append('status', newPublication.status as string)
+   formData.append('pdf', pdfFile)
+
+   try {
+     const response = await fetch('/api/admin/publications/add', {
+       method: 'POST',
+       body: formData
+     })
+
+     if (response.ok) {
+       const result = await response.json()
+       // Update the publications state with the new publication
+       setPublications([result.publication, ...publications])
+       // Reset form
+       setNewPublication({})
+       setPdfFile(null)
+       setPdfPreview(null)
+       setIsAddDialogOpen(false)
+       alert('Publication ajoutée avec succès.')
+     } else {
+       const error = await response.json()
+       console.error('Error adding publication:', error)
+       alert(`Erreur: ${error.error}`)
+     }
+   } catch (error) {
+     console.error('Error adding publication:', error)
+     alert('Une erreur est survenue lors de l\'ajout de la publication.')
+   }
+ } else {
+   alert('Veuillez remplir tous les champs et télécharger un PDF.')
+ }
   }
 
   return (
@@ -225,17 +246,17 @@ export default function PublicationsAdmin() {
         </div>
         </div>
 
-        {/* Add Publication Dialog */}
+
       {/* Add Publication Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Ajouter Nouvelle Publication</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAddPublication} className="space-y-4">
-            <div className="grid gap-2">
-              <label className="font-medium" htmlFor="title">Titre</label>
-              <Input 
+   <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+     <DialogContent className="max-w-2xl">
+       <DialogHeader>
+         <DialogTitle>Ajouter Nouvelle Publication</DialogTitle>
+       </DialogHeader>
+       <form onSubmit={handleAddPublication} className="space-y-4">
+         <div className="grid gap-2">
+          <label className="font-medium" htmlFor="title">Titre</label>
+          <Input 
                 id="title" 
                 value={newPublication.title || ''} 
                 onChange={(e) => setNewPublication({ ...newPublication, title: e.target.value })}
@@ -279,45 +300,61 @@ export default function PublicationsAdmin() {
                   {/* Add more categories as needed */}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="grid gap-2">
-              <label className="font-medium">Télécharger PDF</label>
-              <div 
-                {...getRootProps()} 
-                className={`w-full p-4 border-2 border-dashed rounded-md text-center cursor-pointer ${
-                  isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                }`}
-              >
-                <input {...getInputProps()} />
-                {
-                  isDragActive ?
-                    <p>Déposez le fichier ici...</p> :
-                    <p>Glissez-déposez un fichier PDF ici, ou cliquez pour sélectionner un fichier</p>
-                }
-              </div>
-              {pdfPreview && (
-                <div className="h-40 mt-2">
-                  <object
-                    data={pdfPreview}
-                    type="application/pdf"
-                    className="w-full h-full"
-                  >
-                    <p>Le PDF ne peut pas être affiché.</p>
-                  </object>
-                </div>
-              )}
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={!pdfFile}>
-                Ajouter
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+           <label className="font-medium" htmlFor="status">Statut</label>
+           <Select
+             value={newPublication.status || ''}
+             onValueChange={(value) => setNewPublication({ ...newPublication, status: value })}
+             required
+           >
+             <SelectTrigger className="w-full">
+               <SelectValue placeholder="Sélectionner le statut" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="published">Publié</SelectItem>
+               <SelectItem value="pending">En attente</SelectItem>
+               <SelectItem value="rejected">Rejeté</SelectItem>
+             </SelectContent>
+           </Select>
+         </div>
+         {/* PDF Dropzone */}
+         <div className="grid gap-2">
+           <label className="font-medium">Télécharger PDF</label>
+           <div 
+             {...getRootProps()} 
+             className={`w-full p-4 border-2 border-dashed rounded-md text-center cursor-pointer ${
+               isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+             }`}
+           >
+             <input {...getInputProps()} />
+             {
+               isDragActive ?
+                 <p>Déposez le fichier ici...</p> :
+                 <p>Glissez-déposez un fichier PDF ici, ou cliquez pour sélectionner un fichier</p>
+             }
+           </div>
+           {pdfPreview && (
+             <div className="h-40 mt-2">
+               <object
+                 data={pdfPreview}
+                 type="application/pdf"
+                 className="w-full h-full"
+               >
+                 <p>Le PDF ne peut pas être affiché.</p>
+               </object>
+             </div>
+           )}
+         </div>
+         <div className="flex justify-end gap-2">
+           <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+             Annuler
+           </Button>
+           <Button type="submit" disabled={!pdfFile}>
+             Ajouter
+           </Button>
+         </div>
+       </form>
+     </DialogContent>
+   </Dialog>
 
        {/* Publication Details Dialog */}
        <Dialog open={!!selectedPub} onOpenChange={() => setSelectedPub(null)}>
