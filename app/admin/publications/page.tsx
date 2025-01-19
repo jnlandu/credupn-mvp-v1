@@ -78,48 +78,59 @@ export default function PublicationsAdmin() {
   })
 
   // Handle Add Publication Form Submission
-const handleAddPublication = async (e: React.FormEvent) => {
-    e.preventDefault()
- if (newPublication.title && newPublication.author && newPublication.date && newPublication.category && pdfFile && newPublication.status) {
-   // Prepare form data
-   const formData = new FormData()
-   formData.append('title', newPublication.title)
-   formData.append('author', newPublication.author)
-   formData.append('date', newPublication.date)
-   formData.append('category', newPublication.category)
-   formData.append('status', newPublication.status as string)
-   formData.append('pdf', pdfFile)
+  const handleAddPublication = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    if (
+      newPublication.title &&
+      newPublication.author &&
+      newPublication.date &&
+      newPublication.category &&
+      pdfFile &&
+      newPublication.status
+    ) {
+      const formData = new FormData();
+      formData.append('title', newPublication.title);
+      formData.append('author', newPublication.author);
+      formData.append('date', newPublication.date);
+      formData.append('category', newPublication.category);
+      formData.append('status', newPublication.status as string);
+      formData.append('pdf', pdfFile);
+  
+      console.log('Form Data Submission:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+  
+      try {
+        const response = await fetch('/api/admin/publications/add', {
+          method: 'POST',
+          body: formData,
+        });
+  
+        if (response.ok) {
+          const result = await response.json();
+          setPublications([result.publication, ...publications]);
+          setNewPublication({});
+          setPdfFile(null);
+          setPdfPreview(null);
+          setIsAddDialogOpen(false);
+          alert('Publication ajoutée avec succès.');
+        } else {
+          const error = await response.json();
+          console.error('Error adding publication:', error);
+          alert(`Erreur: ${error.error}`);
+        }
+      } catch (error) {
+        console.error('Error adding publication:', error);
+        alert('Une erreur est survenue lors de l\'ajout de la publication.');
+      }
+    } else {
+      alert('Veuillez remplir tous les champs et télécharger un PDF.');
+    }
+  };
 
-   try {
-     const response = await fetch('/api/admin/publications/add', {
-       method: 'POST',
-       body: formData
-     })
-
-     if (response.ok) {
-       const result = await response.json()
-       // Update the publications state with the new publication
-       setPublications([result.publication, ...publications])
-       // Reset form
-       setNewPublication({})
-       setPdfFile(null)
-       setPdfPreview(null)
-       setIsAddDialogOpen(false)
-       alert('Publication ajoutée avec succès.')
-     } else {
-       const error = await response.json()
-       console.error('Error adding publication:', error)
-       alert(`Erreur: ${error.error}`)
-     }
-   } catch (error) {
-     console.error('Error adding publication:', error)
-     alert('Une erreur est survenue lors de l\'ajout de la publication.')
-   }
- } else {
-   alert('Veuillez remplir tous les champs et télécharger un PDF.')
- }
-  }
-
+  
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">

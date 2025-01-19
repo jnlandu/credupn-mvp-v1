@@ -1,6 +1,3 @@
-
-
-
 export interface Publication {
     id: string
     title: string
@@ -110,6 +107,15 @@ export const Publications: Publication[] = [
         status: 'published',
         category: 'Innovation',
         pdfUrl: '/publications/innovation-pedagogique.pdf'
+    },
+  {
+      id: '72285b35-f245-4416-9c34-b09939c6a212',
+      title: "Elements de mathematiques",
+      author: "Mayala Lemba Francis, Nlandu Mabiala Jeremie",
+      date: "2025-01-19",
+      status: 'published',
+      category: "Méthodologie",
+      pdfUrl: '/publications/167d24a53fb8fc2f07a2e6600.pdf'
     }
 ]
 
