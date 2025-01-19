@@ -19,7 +19,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
     <div className="flex min-h-screen">
@@ -64,7 +64,11 @@ export default function AdminLayout({
             className={`w-full justify-start text-white ${!isSidebarOpen && 'justify-center'}`}
           >
             <Users className="h-4 w-4" />
-            {isSidebarOpen && <span className="ml-2">Utilisateurs</span>}
+            {isSidebarOpen && 
+            <Link href="/admin/users" className="ml-2">
+              Utilisateurs
+            </Link>
+            }
           </Button>
           
           <Button 
