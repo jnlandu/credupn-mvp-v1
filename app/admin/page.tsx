@@ -13,6 +13,10 @@ import {
   Bell,
 } from "lucide-react"
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { NotificationsMenu } from "@/components/notifications"
+
+
+
 
 export default function AdminDashboard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -44,9 +48,9 @@ export default function AdminDashboard() {
       <main className="flex-1 p-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Tableau de bord</h1>
-          <Button variant="outline" size="icon">
-            <Bell className="h-4 w-4" />
-          </Button>
+          {/* <Button variant="outline" size="icon"> */}
+            <NotificationsMenu />
+          {/* </Button> */}
         </div>
 
         {/* Stats Grid */}

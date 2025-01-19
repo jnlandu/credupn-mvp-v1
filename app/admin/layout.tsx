@@ -27,7 +27,7 @@ export default function AdminLayout({
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-black text-white p-6 space-y-6 transition-all duration-300 relative`}>
       <div className="mb-8 flex items-center justify-between">
           <h2 className={`text-xl font-bold ${!isSidebarOpen && 'hidden'}`}>
-            CRIDUPN Admin
+            <Link href="/admin">Tableau de bord</Link>
           </h2>
           <Button
             variant="ghost"
@@ -91,7 +91,14 @@ export default function AdminLayout({
             className={`w-full justify-start text-white ${!isSidebarOpen && 'justify-center'}`}
           >
             <TrendingUp className="h-4 w-4" />
-            {isSidebarOpen && <span className="ml-2">Statistiques</span>}
+            {isSidebarOpen && 
+            <Link  
+            href="/admin/statistics/" 
+            className="ml-2"
+            >
+            Statistiques
+           </Link>
+            }
           </Button>
           
           <Button 
@@ -99,7 +106,14 @@ export default function AdminLayout({
             className={`w-full justify-start text-white ${!isSidebarOpen && 'justify-center'}`}
           >
             <Settings className="h-4 w-4" />
-            {isSidebarOpen && <span className="ml-2">Paramètres</span>}
+            {isSidebarOpen && 
+            <Link  
+            href="/admin/settings/" 
+            className="ml-2"
+            >
+            Paramètres
+           </Link>
+            }
           </Button>
         </nav>
       </aside>
