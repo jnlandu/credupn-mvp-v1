@@ -13,7 +13,23 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Eye, Download, Edit, Trash2, Search } from 'lucide-react'
+import { 
+    Eye, 
+    Download, 
+    Edit, 
+    Trash2, 
+    Search,
+    ChevronLeft,
+    ChevronRight 
+} from 'lucide-react'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select"
+
 
 interface Publication {
   id: string
@@ -28,6 +44,9 @@ interface Publication {
 export default function PublicationsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPub, setSelectedPub] = useState<Publication | null>(null)
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
 const publications: Publication[] = [
     {
@@ -131,6 +150,19 @@ const publications: Publication[] = [
     }
 ]
 
+
+    // Calculate pagination
+    const totalItems = publications.length
+    const totalPages = Math.ceil(totalItems / pageSize)
+    const startIndex = (currentPage - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    const currentItems = publications
+    .filter(pub => 
+        pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pub.author.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .slice(startIndex, endIndex)
+
   const statusStyles = {
     published: 'bg-green-100 text-green-800',
     pending: 'bg-yellow-100 text-yellow-800',
@@ -152,7 +184,8 @@ const publications: Publication[] = [
         </div>
       </div>
 
-      <div className=" bg-gray-600 rounded-lg shadow">
+      <div className="overflow-x-auto  bg-gray-600 rounded-lg shadow ">
+        <div className="min-w-[60px]"> {/* Set minimum width */}
         <Table>
           <TableHeader>
           <TableRow className="bg-gray-100 hover:bg-gray-100">
@@ -165,7 +198,7 @@ const publications: Publication[] = [
         </TableRow>
           </TableHeader>
           <TableBody>
-            {publications
+            {currentItems
               .filter(pub => 
                 pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 pub.author.toLowerCase().includes(searchTerm.toLowerCase())
@@ -205,8 +238,57 @@ const publications: Publication[] = [
               ))}
           </TableBody>
         </Table>
+        </div>
       </div>
+      {/* Pagination */}
+      <div className="mt- flex items-center justify-between">
+        <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Lignes par page:</span>
+            <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => {
+                setPageSize(Number(value))
+                setCurrentPage(1)
+            }}
+            >
+            <SelectTrigger className="w-[70px]">
+                <SelectValue>{pageSize}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+            </Select>
+        </div>
 
+        <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">
+            {startIndex + 1}-{Math.min(endIndex, totalItems)} sur {totalItems}
+            </span>
+            <div className="flex items-center gap-1">
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+            >
+                <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+            >
+                <ChevronRight className="h-4 w-4" />
+            </Button>
+            </div>
+        </div>
+        </div>
+
+        {/* Dialog for the preview  */}
       <Dialog open={!!selectedPub} onOpenChange={() => setSelectedPub(null)}>
         <DialogContent className="max-w-4xl h-[80vh]">
           <DialogTitle>{selectedPub?.title}</DialogTitle>
