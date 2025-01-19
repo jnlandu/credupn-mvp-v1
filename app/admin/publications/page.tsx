@@ -1,9 +1,7 @@
+// app/admin/publications/page.tsx
 "use client"
 
-import { useState } from 'react'
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { useState, useCallback  } from 'react'
 import {
   Table,
   TableBody,
@@ -12,143 +10,36 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { 
-    Eye, 
-    Download, 
-    Edit, 
-    Trash2, 
-    Search,
-    ChevronLeft,
-    ChevronRight 
-} from 'lucide-react'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
-
-
-interface Publication {
-  id: string
-  title: string
-  author: string
-  date: string
-  status: 'published' | 'pending' | 'rejected'
-  category: string
-  pdfUrl: string
-}
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Download,
+  Plus
+} from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useDropzone } from 'react-dropzone'
+import { Publications,statusStyles  } from "@/data/publications"
 
 export default function PublicationsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedPub, setSelectedPub] = useState<Publication | null>(null)
-
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [selectedPub, setSelectedPub] = useState<Publication | null>(null)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [newPublication, setNewPublication] = useState<Partial<Publication>>({})
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [pdfPreview, setPdfPreview] = useState<string | null>(null)
 
-const publications: Publication[] = [
-    {
-        id: 'pub-1',
-        title: "L'impact des Technologies Educatives",
-        author: "Dr. Marie Kabongo",
-        date: "2024-03-15", 
-        status: 'published',
-        category: 'Recherche',
-        pdfUrl: '/publications/tech-education.pdf'
-    },
-    {
-        id: 'pub-2',
-        title: "Méthodes d'Enseignement Innovantes",
-        author: "Prof. Jean Lutumba",
-        date: "2024-03-10",
-        status: 'pending', 
-        category: 'Pédagogie',
-        pdfUrl: '/publications/methodes-enseignement.pdf'
-    },
-    {
-        id: 'pub-3',
-        title: "Évaluation des Apprentissages à Distance",
-        author: "Dr. Sarah Mukendi",
-        date: "2024-03-08",
-        status: 'published',
-        category: 'Éducation', 
-        pdfUrl: '/publications/evaluation-distance.pdf'
-    },
-    {
-        id: 'pub-4',
-        title: "Intelligence Artificielle en Éducation",
-        author: "Prof. Paul Mbiya",
-        date: "2024-03-05",
-        status: 'rejected',
-        category: 'Technologie',
-        pdfUrl: '/publications/ia-education.pdf'
-    },
-    {
-        id: 'pub-5',
-        title: "Développement Professionnel des Enseignants",
-        author: "Dr. Claire Musau",
-        date: "2024-03-01",
-        status: 'published',
-        category: 'Formation',
-        pdfUrl: '/publications/dev-professionnel.pdf'
-    },
-    {
-        id: 'pub-6',
-        title: "Inclusion Numérique en Éducation",
-        author: "Prof. Marc Kabamba",
-        date: "2024-02-28",
-        status: 'pending',
-        category: 'Technologie',
-        pdfUrl: '/publications/inclusion-numerique.pdf'
-    },
-    {
-        id: 'pub-7',
-        title: "Apprentissage Collaboratif en Ligne",
-        author: "Dr. Alice Kalonda",
-        date: "2024-02-25",
-        status: 'published',
-        category: 'Pédagogie',
-        pdfUrl: '/publications/apprentissage-collaboratif.pdf'
-    },
-    {
-        id: 'pub-8',
-        title: "Éducation Hybride: Défis et Opportunités",
-        author: "Prof. Thomas Mukeba",
-        date: "2024-02-20",
-        status: 'pending',
-        category: 'Recherche',
-        pdfUrl: '/publications/education-hybride.pdf'
-    },
-    {
-        id: 'pub-9',
-        title: "Compétences Numériques des Étudiants",
-        author: "Dr. Emma Tshilombo",
-        date: "2024-02-15",
-        status: 'published',
-        category: 'Technologie',
-        pdfUrl: '/publications/competences-numeriques.pdf'
-    },
-    {
-        id: 'pub-10',
-        title: "Stratégies d'Évaluation Formative",
-        author: "Prof. Robert Kanda",
-        date: "2024-02-10",
-        status: 'rejected',
-        category: 'Évaluation',
-        pdfUrl: '/publications/evaluation-formative.pdf'
-    },
-    {
-        id: 'pub-11',
-        title: "Innovation Pédagogique en RDC",
-        author: "Dr. Sophie Mbuyi",
-        date: "2024-02-05",
-        status: 'published',
-        category: 'Innovation',
-        pdfUrl: '/publications/innovation-pedagogique.pdf'
-    }
-]
+  const [publications, setPublications] = useState<Publication[]>(Publications)
 
 
     // Calculate pagination
@@ -163,16 +54,56 @@ const publications: Publication[] = [
     )
     .slice(startIndex, endIndex)
 
-  const statusStyles = {
-    published: 'bg-green-100 text-green-800',
-    pending: 'bg-yellow-100 text-yellow-800',
-    rejected: 'bg-red-100 text-red-800'
+  // Handle PDF File Selection
+  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setPdfFile(file)
+      setPdfPreview(URL.createObjectURL(file))
+    }
+  }
+
+  // Handle PDF Drop
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]
+    if (file) {
+      setPdfFile(file)
+      setPdfPreview(URL.createObjectURL(file))
+    }
+  }, [])
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'application/pdf': ['.pdf'] },
+    multiple: false
+  })
+
+  // Handle Add Publication Form Submission
+  const handleAddPublication = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newPublication.title && newPublication.author && newPublication.date && newPublication.category && pdfFile) {
+      const newPub: Publication = {
+        id: `pub-${publications.length + 1}`,
+        title: newPublication.title,
+        author: newPublication.author,
+        date: newPublication.date,
+        status: newPublication.status as 'published' | 'pending' | 'rejected',
+        category: newPublication.category,
+        pdfUrl: pdfPreview || ''
+      }
+      setPublications([newPub, ...publications])
+      // Reset form
+      setNewPublication({})
+      setPdfFile(null)
+      setPdfPreview(null)
+      setIsAddDialogOpen(false)
+    }
   }
 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Publications</h1>
+        <div className="flex items-center gap-4">
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
@@ -181,6 +112,11 @@ const publications: Publication[] = [
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+          <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Ajouter Publication
+          </Button>
         </div>
       </div>
 
@@ -289,23 +225,141 @@ const publications: Publication[] = [
         </div>
         </div>
 
-        {/* Dialog for the preview  */}
-      <Dialog open={!!selectedPub} onOpenChange={() => setSelectedPub(null)}>
-        <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogTitle>{selectedPub?.title}</DialogTitle>
-          <div className="flex-1 bg-gray-100 rounded-lg overflow-hidden">
-            {selectedPub && (
-              <object
-                data={selectedPub.pdfUrl}
-                type="application/pdf"
-                className="w-full h-full"
+        {/* Add Publication Dialog */}
+      {/* Add Publication Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Ajouter Nouvelle Publication</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddPublication} className="space-y-4">
+            <div className="grid gap-2">
+              <label className="font-medium" htmlFor="title">Titre</label>
+              <Input 
+                id="title" 
+                value={newPublication.title || ''} 
+                onChange={(e) => setNewPublication({ ...newPublication, title: e.target.value })}
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="font-medium" htmlFor="author">Auteur</label>
+              <Input 
+                id="author" 
+                value={newPublication.author || ''} 
+                onChange={(e) => setNewPublication({ ...newPublication, author: e.target.value })}
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="font-medium" htmlFor="date">Date</label>
+              <Input 
+                id="date" 
+                type="date" 
+                value={newPublication.date || ''} 
+                onChange={(e) => setNewPublication({ ...newPublication, date: e.target.value })}
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="font-medium" htmlFor="category">Catégorie</label>
+              <Select
+                value={newPublication.category || ''}
+                onValueChange={(value) => setNewPublication({ ...newPublication, category: value })}
+                required
               >
-                <p>Le PDF ne peut pas être affiché</p>
-              </object>
-            )}
-          </div>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sélectionner une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Recherche">Recherche</SelectItem>
+                  <SelectItem value="Méthodologie">Méthodologie</SelectItem>
+                  <SelectItem value="Innovation">Innovation</SelectItem>
+                  <SelectItem value="Technologie">Technologie</SelectItem>
+                  {/* Add more categories as needed */}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <label className="font-medium">Télécharger PDF</label>
+              <div 
+                {...getRootProps()} 
+                className={`w-full p-4 border-2 border-dashed rounded-md text-center cursor-pointer ${
+                  isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                }`}
+              >
+                <input {...getInputProps()} />
+                {
+                  isDragActive ?
+                    <p>Déposez le fichier ici...</p> :
+                    <p>Glissez-déposez un fichier PDF ici, ou cliquez pour sélectionner un fichier</p>
+                }
+              </div>
+              {pdfPreview && (
+                <div className="h-40 mt-2">
+                  <object
+                    data={pdfPreview}
+                    type="application/pdf"
+                    className="w-full h-full"
+                  >
+                    <p>Le PDF ne peut pas être affiché.</p>
+                  </object>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={!pdfFile}>
+                Ajouter
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
+
+       {/* Publication Details Dialog */}
+       <Dialog open={!!selectedPub} onOpenChange={() => setSelectedPub(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Détails de la publication</DialogTitle>
+          </DialogHeader>
+          
+          {selectedPub && (
+            <div className="space-y-6">
+              <div className="grid gap-4">
+                <h3 className="text-lg font-semibold">{selectedPub.title}</h3>
+                <div className="grid gap-2">
+                  <p><span className="font-medium">Auteur:</span> {selectedPub.author}</p>
+                  <p><span className="font-medium">Date:</span> {selectedPub.date}</p>
+                  <p><span className="font-medium">Catégorie:</span> {selectedPub.category}</p>
+                  <p><span className="font-medium">Statut:</span> {selectedPub.status}</p>
+                </div>
+              </div>
+
+              <div className="h-[400px] bg-gray-100 rounded-lg overflow-hidden">
+                <object
+                  data={selectedPub.pdfUrl}
+                  type="application/pdf"
+                  className="w-full h-full"
+                >
+                  <p>Le PDF ne peut pas être affiché</p>
+                </object>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Télécharger
+                </Button>
+                {/* Add more action buttons if needed */}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }
