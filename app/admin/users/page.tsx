@@ -14,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ScrollArea } from "@/components/ui/scroll-area"
+
 import {
     Select,
     SelectContent,
@@ -32,7 +34,9 @@ import {
   Phone,
   Building,
   ChevronLeft,
-  ChevronRight 
+  ChevronRight,
+  Calendar, // Add this
+  Download  // Add this if you're using the Download icon 
 } from 'lucide-react'
 
 interface User {
@@ -55,6 +59,7 @@ export default function UsersAdmin() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [selectedUserPubs, setSelectedUserPubs] = useState<User | null>(null)
 
 
   const users: User[] = [
@@ -289,8 +294,20 @@ const currentUsers = filteredUsers.slice(startIndex, endIndex)
                       </Badge>
                     </TableCell>
                     <TableCell className="">{user.institution}</TableCell>
-                    <TableCell className="">
-                      {user.publications.length}
+                    <TableCell className="text-gray-700">
+                    <div className="flex items-center gap-2">
+                        <span>{user.publications.length}</span>
+                        {user.publications.length > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-primary hover:text-primary/80"
+                            onClick={() => setSelectedUserPubs(user)}
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                        )}
+                    </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -425,6 +442,53 @@ const currentUsers = filteredUsers.slice(startIndex, endIndex)
           )}
         </DialogContent>
       </Dialog>
+      {/* Publications Dialog */}
+    <Dialog open={!!selectedUserPubs} onOpenChange={() => setSelectedUserPubs(null)}>
+    <DialogContent className="max-w-3xl">
+        <DialogHeader>
+        <DialogTitle>Publications de {selectedUserPubs?.name}</DialogTitle>
+        </DialogHeader>
+        
+        <ScrollArea className="h-[500px] pr-4">
+        <div className="space-y-4">
+            {selectedUserPubs?.publications.map((pub) => (
+            <Card key={pub.id} className="p-4">
+                <div className="flex justify-between items-start gap-4">
+                <div className="flex-1">
+                    <h3 className="font-semibold mb-2">{pub.title}</h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <span className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {pub.date}
+                    </span>
+                    <Badge
+                        className={
+                        pub.status === 'published' ? 'bg-green-100 text-green-800' :
+                        pub.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                        }
+                    >
+                        {pub.status}
+                    </Badge>
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                    <Eye className="h-4 w-4 mr-1" />
+                    Aperçu
+                    </Button>
+                    <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-1" />
+                    PDF
+                    </Button>
+                </div>
+                </div>
+            </Card>
+            ))}
+        </div>
+    </ScrollArea>
+    </DialogContent>
+    </Dialog>
     </div>
   )
 }

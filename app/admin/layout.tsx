@@ -76,7 +76,14 @@ export default function AdminLayout({
             className={`w-full justify-start text-white ${!isSidebarOpen && 'justify-center'}`}
           >
             <FileText className="h-4 w-4" />
-            {isSidebarOpen && <span className="ml-2">Soumissions</span>}
+            {isSidebarOpen &&
+            <Link  
+            href="/admin/submissions/" 
+            className="ml-2"
+            >
+            Soumissions
+           </Link>
+            }
           </Button>
           
           <Button 
