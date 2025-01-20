@@ -27,6 +27,19 @@ To build the project, run:
 npm test
 ```
 
+## Test Credentials
+
+For demonstration purposes, you can use these credentials to test different user roles:
+
+| Role      | Email            | Password  |
+|-----------|------------------|-----------|
+| Admin     | admin@cridupn.cd | admin123  |
+| Author    | marie@upn.cd     | author123 |
+| Reviewer  | jean@upn.cd      | reviewer123|
+
+**Note:** These are test accounts. In a production environment, always use secure, randomly generated passwords and never share credentials in public repositories.
+
+
 Project Components
 app/: Contains the main application pages.
 components/: Contains reusable UI components.
