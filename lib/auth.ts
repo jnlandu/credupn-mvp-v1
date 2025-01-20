@@ -1,4 +1,20 @@
 // lib/auth.ts
+import { promises as fs } from 'fs'
+import path from 'path'
+import { parse } from 'csv-parse/sync'
+import bcrypt from 'bcryptjs'
+
+interface User {
+  id: string
+  name: string
+  email: string
+  password: string
+  institution: string
+  role: 'author' | 'reviewer' | 'admin'
+}
+
+
+
 export async function loginAdmin(email: string, password: string) {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
@@ -12,4 +28,24 @@ export async function loginAdmin(email: string, password: string) {
   
     const data = await response.json()
     return data.admin
+  }
+
+
+
+  export async function validateCredentials(email: string, password: string): Promise<User | null> {
+    const filePath = path.join(process.cwd(), 'data/users.csv')
+    const fileContent = await fs.readFile(filePath, 'utf-8')
+    
+    const users: User[] = parse(fileContent, {
+      columns: true,
+      skip_empty_lines: true
+    })
+  
+    const user = users.find(u => u.email === email)
+    if (!user) return null
+  
+    const isValid = await bcrypt.compare(password, user.password)
+    if (!isValid) return null
+  
+    return user
   }

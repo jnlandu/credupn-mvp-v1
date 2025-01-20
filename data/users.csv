@@ -1,0 +1,4 @@
+id,name,email,password,institution,role
+admin-1,Admin CREDUPN,admin@cridupn.cd,$2a$10$lZVBlNjPpDsBtluyJYPEGe31Nwi3y9QePtSE5YjNCapK1SdHqOt2e,CREDUPN,admin
+author-1,Dr. Marie Kabongo,marie@upn.cd,$2a$10$n43pbs1iMZMlJbgOup8dIeJ5xyZxiPV3ztysm/cf3342QcUzm5y.S,UPN,author
+reviewer-1,Prof. Jean Muteba,jean@upn.cd,$2a$10$rDitXi.2XU0Xp2akubfkROrthOsV4EdGFB5nqCKmKUl0XS8gKBFUm,UPN,reviewer
