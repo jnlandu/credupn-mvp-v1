@@ -22,8 +22,14 @@ interface Publication {
   submittedDate: string
 }
 
+// Add sidebar width constants
+const SIDEBAR_WIDTH = 240
+const COLLAPSED_WIDTH = 64
+
+
 export default function AuthorDashboard({ params }: { params: { id: string } }) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   // Mock data - replace with actual data fetch
   const authorStats = {
@@ -50,7 +56,7 @@ export default function AuthorDashboard({ params }: { params: { id: string } }) 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <div className="container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Tableau de bord</h1>

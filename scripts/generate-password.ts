@@ -3,9 +3,9 @@ import * as bcrypt from 'bcryptjs'
 
 async function generateHash() {
   const passwords = {
-    admin: 'admin123',
-    author: 'author123', 
-    reviewer: 'reviewer123'
+    // admin: 'admin123',
+    author: 'nlandu02', 
+    // reviewer: 'reviewer123'
   }
 
   for (const [role, password] of Object.entries(passwords)) {
@@ -15,3 +15,5 @@ async function generateHash() {
 }
 
 generateHash()
+
+//  Use this code to run: npx ts-node scripts/generate-password.ts
