@@ -1,98 +1,105 @@
 "use client"
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { 
   CreditCard, 
   Phone,
-  ChevronRight,
-  LockClosedIcon,
-  ShieldCheck, 
-  Lock
+  ArrowRight,
+  Shield,
+  CheckCircle2
 } from 'lucide-react'
 
 type PaymentMethod = 'card' | 'mpesa' | 'orange' | 'airtel'
 
 export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
+  const [step, setStep] = useState(1)
 
   const paymentMethods = [
+
     {
       id: 'card',
       name: 'Carte bancaire',
-      icon: CreditCard,
       description: 'Visa, Mastercard, etc.',
-      logoPath: '/images/payments/cards.png'
+      logoPath: '/images/payments/mastercard.svg'
     },
     {
       id: 'mpesa',
       name: 'M-Pesa',
-      icon: Phone,
-      description: 'Paiement mobile Vodacom',
+      description: 'Vodacom',
       logoPath: '/images/payments/mpesa.png'
     },
     {
       id: 'orange',
       name: 'Orange Money',
-      icon: Phone,
-      description: 'Paiement mobile Orange',
+      description: 'Orange',
       logoPath: '/images/payments/orange.png'
     },
     {
       id: 'airtel',
       name: 'Airtel Money',
-      icon: Phone,
-      description: 'Paiement mobile Airtel',
+      description: 'Airtel',
       logoPath: '/images/payments/airtel.png'
     }
   ]
 
   return (
-    <div className="container mx-auto py-12 px-4 max-w-3xl">
-      <Card className="border-2">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl">Paiement de la soumission</CardTitle>
-          <p className="text-gray-500">Choisissez votre méthode de paiement préférée</p>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {/* Amount Section */}
-          <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h3 className="font-medium text-gray-600">Montant à payer</h3>
-              <p className="text-3xl font-bold text-gray-600">50 USD</p>
+    <div className="min-h-screen py-12">
+      <div className="container max-w-4xl mx-auto px-4">
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between max-w-xs mx-auto">
+            <div className={`flex flex-col items-center ${step >= 1 ? 'text-primary' : 'text-gray-400'}`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+                1
+              </div>
+              <span className="text-sm mt-1">Méthode</span>
             </div>
-            <div className="flex items-center text-sm text-gray-500">
-              <ShieldCheck className="h-5 w-5 mr-2 text-primary" />
-              Paiement sécurisé
+            <div className={`flex-1 h-0.5 mx-2 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`} />
+            <div className={`flex flex-col items-center ${step >= 2 ? 'text-primary' : 'text-gray-400'}`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+                2
+              </div>
+              <span className="text-sm mt-1">Détails</span>
+            </div>
+            <div className={`flex-1 h-0.5 mx-2 ${step >= 3 ? 'bg-primary' : 'bg-gray-200'}`} />
+            <div className={`flex flex-col items-center ${step >= 3 ? 'text-primary' : 'text-gray-400'}`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+                3
+              </div>
+              <span className="text-sm mt-1">Confirmation</span>
             </div>
           </div>
+        </div>
 
-          {/* Payment Methods */}
-          <div className="space-y-4">
-            <RadioGroup 
-              value={paymentMethod} 
-              onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}
-              className="grid gap-4"
-            >
-              {paymentMethods.map((method) => (
-                <div key={method.id} className="relative">
-                  <RadioGroupItem
-                    value={method.id}
-                    id={method.id}
-                    className="peer sr-only"
-                  />
-                  <Label
-                    htmlFor={method.id}
-                    className="flex items-center justify-between rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="relative h-12 w-12">
+        {/* Main Content */}
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-8">
+            {step === 1 && (
+              <div className="space-y-8">
+                <div className="text-center">
+                  <h2 className="text-2xl font-semibold mb-2">Choisissez votre méthode de paiement</h2>
+                  <p className="text-gray-500">Montant à payer: <span className="font-semibold">50 USD</span></p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {paymentMethods.map((method) => (
+                    <button
+                      key={method.id}
+                      onClick={() => {
+                        setPaymentMethod(method.id as PaymentMethod)
+                        setStep(2)
+                      }}
+                      className={`relative p-6 rounded-xl border-2 transition-all hover:shadow-md ${
+                        paymentMethod === method.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="relative h-12 w-full mb-4">
                         <Image
                           src={method.logoPath}
                           alt={method.name}
@@ -100,65 +107,95 @@ export default function PaymentPage() {
                           className="object-contain"
                         />
                       </div>
+                      <h3 className="font-medium">{method.name}</h3>
+                      <p className="text-sm text-gray-500">{method.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="max-w-md mx-auto space-y-8">
+                <div className="text-center">
+                  <h2 className="text-2xl font-semibold mb-2">Détails du paiement</h2>
+                  <p className="text-gray-600">Via {paymentMethods.find(m => m.id === paymentMethod)?.name}</p>
+                </div>
+
+                {paymentMethod === 'card' ? (
+                  <div className="space-y-6">
+                    <div>
+                      <Label htmlFor="cardNumber">Numéro de carte</Label>
+                      <Input id="cardNumber" placeholder="4242 4242 4242 4242" className="mt-1" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="font-semibold">{method.name}</p>
-                        <p className="text-sm text-gray-500">{method.description}</p>
+                        <Label htmlFor="expiry">Expiration</Label>
+                        <Input id="expiry" placeholder="MM/YY" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label htmlFor="cvc">CVC</Label>
+                        <Input id="cvc" placeholder="123" className="mt-1" />
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor="phone">Numéro de téléphone</Label>
+                    <Input 
+                      id="phone" 
+                      className="mt-1"
+                      placeholder={`+243 ${
+                        paymentMethod === 'mpesa' ? '81' : 
+                        paymentMethod === 'orange' ? '89' : 
+                        '99'} XXXXXXX`}
+                    />
+                  </div>
+                )}
 
-          {/* Payment Details Form */}
-          <div className="space-y-4">
-            {paymentMethod === 'card' && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="cardNumber">Numéro de carte</Label>
-                  <Input id="cardNumber" placeholder="4242 4242 4242 4242" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="expiry">Date d'expiration</Label>
-                    <Input id="expiry" placeholder="MM/YY" />
-                  </div>
-                  <div>
-                    <Label htmlFor="cvc">CVC</Label>
-                    <Input id="cvc" placeholder="123" />
-                  </div>
+                <div className="flex gap-4 pt-4">
+                  <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                    Retour
+                  </Button>
+                  <Button onClick={() => setStep(3)} className="flex-1">
+                    Continuer
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             )}
 
-            {(paymentMethod === 'mpesa' || paymentMethod === 'orange' || paymentMethod === 'airtel') && (
-              <div className="space-y-4">
+            {step === 3 && (
+              <div className="max-w-md mx-auto text-center space-y-6">
+                <div className="flex justify-center">
+                  <Shield className="h-16 w-16 text-primary" />
+                </div>
                 <div>
-                  <Label htmlFor="phone">Numéro de téléphone</Label>
-                  <Input 
-                    id="phone" 
-                    placeholder={`+243 ${
-                      paymentMethod === 'mpesa' ? '81' : 
-                      paymentMethod === 'orange' ? '89' : 
-                      '99'} XXXXXXX`}
-                  />
+                  <h2 className="text-2xl font-semibold mb-2">Confirmer le paiement</h2>
+                  <p className="text-gray-500">
+                    Vous allez payer <span className="font-semibold">50 USD</span> via{' '}
+                    {paymentMethods.find(m => m.id === paymentMethod)?.name}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-center text-sm text-gray-500">
+                    <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                    Transaction sécurisée et cryptée
+                  </div>
+                </div>
+                <div className="flex gap-4 pt-4">
+                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                    Retour
+                  </Button>
+                  <Button className="flex-1">
+                    Payer maintenant
+                  </Button>
                 </div>
               </div>
             )}
-          </div>
-
-          <Button className="w-full" size="lg">
-            <Lock className="h-4 w-4 mr-2" />
-            Payer maintenant
-          </Button>
-
-          <p className="text-center text-sm text-gray-500">
-            Vos informations de paiement sont sécurisées et cryptées
-          </p>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
