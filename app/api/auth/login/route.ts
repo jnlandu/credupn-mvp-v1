@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   }
   const JWT_SECRET = process.env.JWT_SECRET
   try {
-    const { email, password } = await req.json()
+    const { email, password }: any = await req.json()
     
     // const admin = await validateAdmin(email, password)
     const user = await validateCredentials(email, password)

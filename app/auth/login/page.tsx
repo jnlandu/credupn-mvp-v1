@@ -46,6 +46,7 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [selectedRole, setSelectedRole] = useState<Role>('author')
   const router = useRouter()
   const { toast } = useToast()
   
@@ -61,12 +62,16 @@ export default function LoginPage() {
 
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('Submitting with role:', data.role) // Debug log
     setIsLoading(true)
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          ...data,
+          role: selectedRole // Ensure role is included
+        })
       })
 
       const responseData: any  = await res.json()
@@ -235,53 +240,56 @@ export default function LoginPage() {
               <div>
                 <Label>Type de compte</Label>
                 <RadioGroup
-                defaultValue="author"
-                className="grid grid-cols-3 gap-4"
-                {...form.register("role")}
-              >
-                <div className="relative">
-                  <RadioGroupItem
-                    value="author"
-                    id="author"
-                    className="peer sr-only"
-                  />
-                  <Label
-                    htmlFor="author"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
+                    value={selectedRole}
+                    onValueChange={(value: Role) => {
+                      setSelectedRole(value)
+                      form.setValue('role', value) // Update form value
+                    }}
+                    className="grid grid-cols-3 gap-4"
                   >
-                    <BookOpen className="mb-3 h-6 w-6" />
-                    Auteur
-                  </Label>
-                </div>
-                <div className="relative">
-                  <RadioGroupItem
-                    value="reviewer"
-                    id="reviewer"
-                    className="peer sr-only"
-                  />
-                  <Label
-                    htmlFor="reviewer"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
-                  >
-                    <Users className="mb-3 h-6 w-6" />
-                    Reviewer
-                  </Label>
-                </div>
-                <div className="relative">
-                  <RadioGroupItem
-                    value="admin"
-                    id="admin"
-                    className="peer sr-only"
-                  />
-                  <Label
-                    htmlFor="admin"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
-                  >
-                    <GraduationCap className="mb-3 h-6 w-6" />
-                    Admin
-                  </Label>
-                </div>
-              </RadioGroup>
+                    <div className="relative">
+                      <RadioGroupItem
+                        value="author"
+                        id="author"
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor="author"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
+                      >
+                        <BookOpen className="mb-3 h-6 w-6" />
+                        Auteur
+                      </Label>
+                    </div>
+                    <div className="relative">
+                      <RadioGroupItem
+                        value="reviewer"
+                        id="reviewer"
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor="reviewer"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
+                      >
+                        <Users className="mb-3 h-6 w-6" />
+                        Évaluateur
+                      </Label>
+                    </div>
+                    <div className="relative">
+                      <RadioGroupItem
+                        value="admin"
+                        id="admin"
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor="admin"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
+                      >
+                        <GraduationCap className="mb-3 h-6 w-6" />
+                        Admin
+                      </Label>
+                    </div>
+                  </RadioGroup>
               </div>
 
               <div className="flex items-center space-x-2">
