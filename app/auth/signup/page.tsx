@@ -7,15 +7,16 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, ArrowLeft, GraduationCap, BookOpen, Globe, Users } from 'lucide-react'
+import { Loader2, ArrowLeft, GraduationCap, BookOpen, Globe, Users, Mail, Building2, Lock, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
+import { Progress } from '@/components/ui/progress'
 
 const signupSchema = z.object({
   name: z.string().min(2, "Le nom est requis"),
@@ -38,7 +39,18 @@ type SignupData = z.infer<typeof signupSchema>
 export default function SignupPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [step, setStep] = useState(1)
+  const totalSteps = 3
   const router = useRouter()
+
+  const calculatePasswordStrength = (password: string): number => {
+    let strength = 0
+    if (password.length >= 8) strength += 25
+    if (/[A-Z]/.test(password)) strength += 25
+    if (/[0-9]/.test(password)) strength += 25
+    if (/[^A-Za-z0-9]/.test(password)) strength += 25
+    return strength
+  }
 
   const form = useForm<SignupData>({
     resolver: zodResolver(signupSchema),
@@ -90,17 +102,17 @@ export default function SignupPage() {
     <div className="hidden lg:flex lg:w-1/2 relative bg-gray-900">
       <Image
         src="/images/library-bg.jpg"
-        alt="CREDUPN Research Center"
+        alt="CRIDUPN Research Center"
         fill
         className="object-cover opacity-60"
         priority
       />
       <div className="absolute inset-0 flex flex-col justify-center p-12 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-gray-900/50">
         <h1 className="text-4xl font-bold text-white mb-4">
-          CREDUPN
+          CRIDUPN
         </h1>
         <p className="text-xl text-white/90 max-w-md mb-8">
-          Centre de Recherche pour le Développement de l'Université Pédagogique Nationale
+          Centre de Recherche Interdisciplinaire de l'Université Pédagogique Nationale
         </p>
         
         <div className="space-y-6">
@@ -140,147 +152,238 @@ export default function SignupPage() {
     </div>
 
     {/*  Right side Signup form  */}
+    {/* Right side - Signup form */}
     <div className="w-full lg:w-1/2 flex flex-col">
-    <div className="flex-1 flex items-center justify-center p-4 sm:px-6 lg:px-8">
-    <div className="w-full max-w-md space-y-8">
-        <Button
-          variant="ghost"
-          className="w-fit mb-8"
-          asChild
-        >
-          <Link href="/auth/login" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour à la connexion
-          </Link>
-        </Button>
+        <div className="flex-1 flex items-center justify-center p-4 sm:px-6 lg:px-8">
+          <div className="w-full max-w-md space-y-4">
+            <Button
+              variant="ghost"
+              className="w-fit"
+              asChild
+            >
+              <Link href="/auth/login" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Retour à la connexion
+              </Link>
+            </Button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Créer un compte</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nom complet</Label>
-                  <Input
-                    id="name"
-                    {...form.register("name")}
-                    disabled={isLoading}
-                  />
-                  {form.formState.errors.name && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {form.formState.errors.name.message}
-                    </p>
-                  )}
+            <Card className="border-2">
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl">Créer un compte</CardTitle>
+                <CardDescription>
+                  Rejoignez notre communauté de chercheurs
+                </CardDescription>
+                <div className="flex justify-between mt-4">
+                  {Array.from({length: totalSteps}).map((_, index) => (
+                    <div
+                      key={index}
+                      className={`h-2 flex-1 mx-1 rounded-full ${
+                        index + 1 <= step ? 'bg-primary' : 'bg-gray-200'
+                      }`}
+                    />
+                  ))}
                 </div>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {step === 1 && (
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <Label htmlFor="name">Nom complet</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="name"
+                            className="pl-10"
+                            {...form.register("name")}
+                            disabled={isLoading}
+                          />
+                        </div>
+                        {form.formState.errors.name && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {form.formState.errors.name.message}
+                          </p>
+                        )}
+                      </div>
 
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    {...form.register("email")}
-                    disabled={isLoading}
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {form.formState.errors.email.message}
-                    </p>
+                      <div className="relative">
+                        <Label htmlFor="email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="email"
+                            type="email"
+                            className="pl-10"
+                            {...form.register("email")}
+                            disabled={isLoading}
+                          />
+                        </div>
+                        {form.formState.errors.email && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {form.formState.errors.email.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <Label htmlFor="institution">Institution</Label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="institution"
+                            className="pl-10"
+                            {...form.register("institution")}
+                            disabled={isLoading}
+                          />
+                        </div>
+                        {form.formState.errors.institution && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {form.formState.errors.institution.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   )}
-                </div>
 
-                <div>
-                  <Label htmlFor="institution">Institution</Label>
-                  <Input
-                    id="institution"
-                    {...form.register("institution")}
-                    disabled={isLoading}
-                  />
-                  {form.formState.errors.institution && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {form.formState.errors.institution.message}
-                    </p>
+                  {step === 2 && (
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <Label htmlFor="password">Mot de passe</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="password"
+                            type="password"
+                            className="pl-10"
+                            {...form.register("password")}
+                            disabled={isLoading}
+                          />
+                        </div>
+                        {form.watch("password") && (
+                          <Progress 
+                            value={calculatePasswordStrength(form.watch("password"))} 
+                            className="h-1 mt-2"
+                          />
+                        )}
+                        {form.formState.errors.password && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {form.formState.errors.password.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            className="pl-10"
+                            {...form.register("confirmPassword")}
+                            disabled={isLoading}
+                          />
+                        </div>
+                        {form.formState.errors.confirmPassword && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {form.formState.errors.confirmPassword.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   )}
-                </div>
 
-                <div>
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...form.register("password")}
-                    disabled={isLoading}
-                  />
-                  {form.formState.errors.password && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {form.formState.errors.password.message}
-                    </p>
+                  {step === 3 && (
+                    <div className="space-y-4">
+                      <Label>Type de compte</Label>
+                      <RadioGroup
+                        defaultValue="author"
+                        className="grid grid-cols-2 gap-4"
+                        {...form.register("role")}
+                      >
+                        <div className="relative">
+                          <RadioGroupItem
+                            value="author"
+                            id="author"
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor="author"
+                            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          >
+                            <BookOpen className="mb-3 h-6 w-6" />
+                            Auteur
+                          </Label>
+                        </div>
+                        <div className="relative">
+                          <RadioGroupItem
+                            value="reviewer"
+                            id="reviewer"
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor="reviewer"
+                            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          >
+                            <GraduationCap className="mb-3 h-6 w-6" />
+                            Évaluateur
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
                   )}
-                </div>
 
-                <div>
-                  <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    {...form.register("confirmPassword")}
-                    disabled={isLoading}
-                  />
-                  {form.formState.errors.confirmPassword && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {form.formState.errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
+                  <div className="flex gap-4">
+                    {step > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setStep(step - 1)}
+                      >
+                        Précédent
+                      </Button>
+                    )}
+                    {step < totalSteps ? (
+                      <Button
+                        type="button"
+                        className="flex-1"
+                        onClick={() => setStep(step + 1)}
+                      >
+                        Suivant
+                      </Button>
+                    ) : (
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Inscription en cours...
+                          </>
+                        ) : (
+                          "S'inscrire"
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </form>
 
-                <div>
-                  <Label>Type de compte</Label>
-                  <RadioGroup
-                    defaultValue="author"
-                    className="flex space-x-4 mt-2"
-                    {...form.register("role")}
+                <div className="mt-6 text-center text-sm text-gray-600">
+                  Vous avez déjà un compte?{" "}
+                  <Link 
+                    href="/auth/login" 
+                    className="font-semibold text-primary hover:text-primary/80 transition-colors"
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="author" id="author" />
-                      <Label htmlFor="author">Auteur</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="reviewer" id="reviewer" />
-                      <Label htmlFor="reviewer">Évaluateur</Label>
-                    </div>
-                  </RadioGroup>
+                    Se connecter
+                  </Link>
                 </div>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Inscription en cours...
-                  </>
-                ) : (
-                  "S'inscrire"
-                )}
-              </Button>
-              <div className="text-center text-sm text-gray-600">
-                Vous avez déjà un compte?{" "}
-                <Link 
-                href="/auth/login" 
-                className="font-semibold text-primary hover:text-primary/80 transition-colors"
-                >
-                Se connecter
-                </Link>
-                </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   )
