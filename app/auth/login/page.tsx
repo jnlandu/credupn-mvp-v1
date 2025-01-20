@@ -13,12 +13,22 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Icons } from "@/components/icons"
 import Link from 'next/link'
 import Image from 'next/image'
-import { BookOpen, Users, GraduationCap, Globe } from 'lucide-react'
+import { BookOpen, Users, GraduationCap, Globe, Loader2  } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 
 
 // Define role type as union
 type Role = "author" | "admin"
+
+// First define interface for form data
+interface LoginFormData {
+  email: string;
+  password: string;
+  role: "author" | "admin";
+  rememberMe: boolean;
+}
 
 
 const loginSchema = z.object({
@@ -30,10 +40,12 @@ const loginSchema = z.object({
   rememberMe: z.boolean().default(false),
 })
 
-type LoginFormData = z.infer<typeof loginSchema>
+// type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
   
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -45,13 +57,34 @@ export default function LoginPage() {
     },
   })
 
+
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     try {
-      // TODO: Implement login logic based on role
-      console.log(data)
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+
+      const responseData = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseData.error || 'Login failed')
+      }
+
+      toast({
+        title: "Connexion réussie",
+        description: "Redirection vers le tableau de bord...",
+      })
+
+      router.push('/admin')
     } catch (error) {
-      console.error(error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -113,10 +146,7 @@ export default function LoginPage() {
     </div>
 
 
-
-
     {/* Right side - Login form */}
-    {/* <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-4 lg:p-8">  */}
     <div className="w-full lg:w-1/2 flex flex-col">
     <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
       <Card className="w-full max-w-md">
@@ -186,16 +216,20 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading && (
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Se connecter
-            </Button>
+            <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Connexion en cours...
+                  </>
+                ) : (
+                  'Se connecter'
+                )}
+              </Button>
 
             {/* Add social login options after your form fields */}
               <div className="relative">

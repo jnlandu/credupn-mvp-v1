@@ -14,6 +14,9 @@ export default function FooterClient() {
   if (pathname === '/auth/login') {
     return null
   }
+  if (pathname === '/auth/signup') {
+    return null
+  }
 
   return <Footer />
 }
