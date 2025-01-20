@@ -3,9 +3,9 @@ export const members = [
       name: "Prof. Dr Jean-Paul Yawidi Mayinzambi",
       title: "Directeur  et Rédacteur en Chef",
       image: "/images/prof-yawidi.jpg",
-      specialization: "Sciences de l'Éducation",
+      specialization: "Psychologie, Psychologie Analytique",
       institution: "Université Pédagogique Nationale, CRIDUPN",
-      bio: "Professeur titulaire spécialisé en méthodologie de recherche éducative à l'UPN. Directeur de plusieurs thèses doctorales.",
+      bio: "Professeur Dr. Jean-Paul Yawidi Mayinzambi est un expert international, académicien et spécialiste en psychologie analytique et management des ressources humaines. Docteur en Sciences de l'Éducation, il a été Doyen à l'UPN et dirige des recherches sur la santé mentale et les dynamiques familiales. Reconnu internationalement, il contribue à l’évolution des pratiques éducatives et psychologiques."
     },
     {
       name: "Prof. Dr Joseph NDAKAISHE MUANAMULENDA",

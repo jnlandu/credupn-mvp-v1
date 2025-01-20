@@ -12,6 +12,7 @@ import {members} from '@/lib/members'
 
 
 export default function Home() {
+  
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -247,7 +248,7 @@ export default function Home() {
     </div>
     <div className="text-center mt-4">
       <Button asChild variant="secondary">
-        <Link href="/about">En savoir plus sur nos Membres</Link>
+        <Link href="/members/">En savoir plus sur nos Membres</Link>
       </Button>
       </div>
   </div>
