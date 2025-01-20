@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Icons } from "@/components/icons"
 import Link from 'next/link'
 import Image from 'next/image'
-import { BookOpen, Users, GraduationCap, Globe, Loader2  } from 'lucide-react'
+import { BookOpen, Users, GraduationCap, Globe, Loader2, Eye, EyeOff  } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
@@ -44,6 +44,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   
@@ -67,7 +68,7 @@ export default function LoginPage() {
         body: JSON.stringify(data)
       })
 
-      const responseData = await res.json()
+      const responseData: any  = await res.json()
 
       if (!res.ok) {
         throw new Error(responseData.error || 'Login failed')
@@ -191,14 +192,30 @@ export default function LoginPage() {
                 )}
               </div>
               
-              <div>
+              <div className="relative">
                 <Label htmlFor="password">Mot de passe</Label>
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   disabled={isLoading}
                   {...form.register("password")}
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-3 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  )}
+                  <span className="sr-only">
+                    {showPassword ? "Hide password" : "Show password"}
+                  </span>
+                </Button>
                 {form.formState.errors.password && (
                   <p className="text-sm text-red-500 mt-1">
                     {form.formState.errors.password.message}
