@@ -17,10 +17,11 @@ import { BookOpen, Users, GraduationCap, Globe, Loader2, Eye, EyeOff  } from 'lu
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import Cookies from 'js-cookie'
 
 
 // Define role type as union
-type Role = "author" | "lecteur" | "admin"
+type Role = "author" | "reviewer" | "admin"
 
 // First define interface for form data
 interface LoginFormData {
@@ -75,15 +76,23 @@ export default function LoginPage() {
       }
 
       // Store auth token
-      document.cookie = `auth-token=${responseData.token}; path=/; secure; samesite=strict`
-
+      Cookies.set('auth-token', responseData.token, { 
+        path: '/',
+        secure: true,
+        sameSite: 'strict'
+      })
+      Cookies.set('user-role', responseData.user.role, {
+        path: '/',
+        secure: true,
+        sameSite: 'strict'
+      })
+      
       toast({
         title: "Connexion réussie",
         description: "Redirection vers le tableau de bord...",
       })
 
       // Role-based redirection
-      // router.push('/admin')
       switch (responseData.user.role) {
         case 'admin':
           router.push(`/admin`)

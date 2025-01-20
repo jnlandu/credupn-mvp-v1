@@ -73,7 +73,7 @@ export default function SignupPage() {
         body: JSON.stringify(data)
       })
 
-      const responseData = await res.json()
+      const responseData : any = await res.json()
 
       if (!res.ok) {
         throw new Error(responseData.error || 'Inscription échouée')

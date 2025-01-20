@@ -117,6 +117,15 @@ export const Publications: Publication[] = [
       status: 'published',
       category: "Méthodologie",
       pdfUrl: '/publications/167d24a53fb8fc2f07a2e6600.pdf'
+    },
+  {
+      id: 'aa05c8b3-87af-4b3a-8d7f-7186a9313145',
+      title: "Elements des sciences de donnnées",
+      author: "Mayala Lemba Francis, Nlandu Mabiala Jeremie",
+      date: "2025-01-19",
+      status: 'pending',
+      category: "Méthodologie",
+      pdfUrl: '/publications/c792ba5960fffce6c757acc00.pdf'
     }
 ]
 
