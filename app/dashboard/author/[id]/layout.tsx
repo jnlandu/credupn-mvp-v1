@@ -55,7 +55,7 @@ export default function AuthorLayout({
           </Link>
 
           <Link
-            href="/author/submissions"
+            href="/publications/soumettre"
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <PlusCircle className="h-5 w-5" />

@@ -13,7 +13,8 @@ import {
   XCircle,
   Search,
   FileText,
-  ChartBar
+  ChartBar,
+  UserCheck 
 } from 'lucide-react'
 
 interface Review {
@@ -52,9 +53,17 @@ export default function ReviewerDashboard({ params }: { params: { id: string } }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-8">Tableau de bord Évaluateur</h1>
+        <div className="flex justify-between items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Tableau de bord Évaluateur</h1>
+            <p className="text-gray-500">Gérez vos évaluations et suivez leurs statuts</p>
+          </div>
+          <div className="p-3 bg-primary/10 rounded-lg">
+            <UserCheck className="h-8 w-8 text-primary" />
+          </div>
+        </div>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

@@ -1,7 +1,7 @@
 // app/dashboard/reviewer/[id]/layout.tsx
 "use client"
 
-import { useState } from 'react'
+import { use, useState } from 'react'
 import Link from 'next/link'
 import { 
   ClipboardList,
@@ -16,11 +16,14 @@ import {
   TrendingUp
 } from "lucide-react"
 
-export default function ReviewerLayout({
-  children
-}: {
+
+interface LayoutProps {
   children: React.ReactNode
-}) {
+  params: Promise<{ id: string }>
+}
+
+export default function ReviewerLayout({ children, params }: LayoutProps) {
+  const { id } = use(params) // Unwrap params using React.use()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   return (
@@ -29,7 +32,7 @@ export default function ReviewerLayout({
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-black text-white p-6 space-y-6 transition-all duration-300 relative`}>
         <div className="mb-8 flex items-center justify-between">
           <h2 className={`text-xl font-bold ${!isSidebarOpen && 'hidden'}`}>
-            <Link href="/reviewer">Espace Évaluateur</Link>
+            <Link href="#">Espace du reviewer</Link>
           </h2>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -46,7 +49,7 @@ export default function ReviewerLayout({
         {/* Navigation Links */}
         <nav className="space-y-2">
           <Link
-            href="/reviewer"
+            href={`/dashboard/reviewer/${id}`}
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <Layout className="h-5 w-5" />
@@ -54,7 +57,7 @@ export default function ReviewerLayout({
           </Link>
 
           <Link
-            href="/reviewer/pending"
+            href={`/dashboard/reviewer/${id}/pending`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <Clock className="h-5 w-5" />
