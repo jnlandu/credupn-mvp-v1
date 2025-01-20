@@ -150,8 +150,6 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
-
-    {/*  Right side Signup form  */}
     {/* Right side - Signup form */}
     <div className="w-full lg:w-1/2 flex flex-col">
         <div className="flex-1 flex items-center justify-center p-4 sm:px-6 lg:px-8">
@@ -384,6 +382,21 @@ export default function SignupPage() {
             </Card>
           </div>
         </div>
+        {/* Footer */}
+        <footer className="p-4 text-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} CRIDUPN. Tous droits réservés.</p>
+          <div className="mt-2 space-x-4">
+            <Link href="/privacy" className="hover:text-gray-700 transition-colors">
+              Confidentialité
+            </Link>
+            <Link href="/terms" className="hover:text-gray-700 transition-colors">
+              Conditions
+            </Link>
+            <Link href="/contact" className="hover:text-gray-700 transition-colors">
+              Contact
+            </Link>
+          </div>
+        </footer>
       </div>
     </div>
   )

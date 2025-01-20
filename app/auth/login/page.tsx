@@ -20,13 +20,13 @@ import { useToast } from '@/hooks/use-toast'
 
 
 // Define role type as union
-type Role = "author" | "admin"
+type Role = "author" | "lecteur" | "admin"
 
 // First define interface for form data
 interface LoginFormData {
   email: string;
   password: string;
-  role: "author" | "admin";
+  role: Role;
   rememberMe: boolean;
 }
 
@@ -34,7 +34,7 @@ interface LoginFormData {
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
-  role: z.enum(["author", "admin"] as const, {
+  role: z.enum(["author", "reviewer","admin"] as const, {
     required_error: "Veuillez sélectionner un rôle",
   }),
   rememberMe: z.boolean().default(false),
@@ -73,12 +73,29 @@ export default function LoginPage() {
         throw new Error(responseData.error || 'Login failed')
       }
 
+      // Store auth token
+      document.cookie = `auth-token=${responseData.token}; path=/; secure; samesite=strict`
+
       toast({
         title: "Connexion réussie",
         description: "Redirection vers le tableau de bord...",
       })
 
-      router.push('/admin')
+      // Role-based redirection
+      // router.push('/admin')
+      switch (responseData.user.role) {
+        case 'admin':
+          router.push(`/admin`)
+          break
+        case 'author':
+          router.push(`/dashboard/author/${responseData.user.id}`)
+          break
+        case 'reviewer':
+          router.push(`/dashboard/reviewer/${responseData.user.id}`)
+          break
+        default:
+          throw new Error('Rôle non reconnu')
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -153,7 +170,7 @@ export default function LoginPage() {
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center space-x-2">
             <Icons.logo className="h-8 w-8" />
-            <CardTitle className="text-2xl text-center">CREDUPN</CardTitle>
+            <CardTitle className="text-2xl text-center">CRIDUPN</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -192,19 +209,53 @@ export default function LoginPage() {
               <div>
                 <Label>Type de compte</Label>
                 <RadioGroup
-                  defaultValue="author"
-                  className="flex space-x-4 mt-2"
-                  {...form.register("role")}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="author" id="author" />
-                    <Label htmlFor="author">Auteur</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="admin" id="admin" />
-                    <Label htmlFor="admin">Administrateur</Label>
-                  </div>
-                </RadioGroup>
+                defaultValue="author"
+                className="grid grid-cols-3 gap-4"
+                {...form.register("role")}
+              >
+                <div className="relative">
+                  <RadioGroupItem
+                    value="author"
+                    id="author"
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor="author"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
+                  >
+                    <BookOpen className="mb-3 h-6 w-6" />
+                    Auteur
+                  </Label>
+                </div>
+                <div className="relative">
+                  <RadioGroupItem
+                    value="reviewer"
+                    id="reviewer"
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor="reviewer"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
+                  >
+                    <Users className="mb-3 h-6 w-6" />
+                    Reviewer
+                  </Label>
+                </div>
+                <div className="relative">
+                  <RadioGroupItem
+                    value="admin"
+                    id="admin"
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor="admin"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary"
+                  >
+                    <GraduationCap className="mb-3 h-6 w-6" />
+                    Admin
+                  </Label>
+                </div>
+              </RadioGroup>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -254,6 +305,26 @@ export default function LoginPage() {
                 </Button>
               </div>
           </form>
+          {/* Add signup section */}
+            <div className="mt-6 relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Pas encore de compte?
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center">
+              <Link 
+                href="/auth/signup" 
+                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                Créer un compte
+              </Link>
+            </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 text-center text-sm text-gray-600">
           <Link
