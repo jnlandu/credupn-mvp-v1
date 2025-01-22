@@ -3,6 +3,9 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { parse } from 'csv-parse/sync'
 import bcrypt from 'bcryptjs'
+import jwt, { JwtPayload } from 'jsonwebtoken'
+
+
 
 interface User {
   id: string
@@ -12,7 +15,31 @@ interface User {
   institution: string
   role: 'author' | 'reviewer' | 'admin'
 }
+interface TokenPayload extends JwtPayload {
+  id: string
+  role: string
+}
 
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET must be defined in environment variables')
+}
+
+export function verifyToken(token: string): TokenPayload {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as unknown as TokenPayload
+    return decoded
+  } catch (error) {
+    throw new Error('Invalid token')
+  }
+}
+
+
+export function generateToken(user: { id: string; role: string }) {
+
+  return jwt.sign(user, JWT_SECRET, { expiresIn: '24h' })
+}
 
 
 export async function loginAdmin(email: string, password: string) {
@@ -26,7 +53,7 @@ export async function loginAdmin(email: string, password: string) {
       throw new Error('Login failed')
     }
   
-    const data = await response.json()
+    const data  : any = await response.json()
     return data.admin
   }
 

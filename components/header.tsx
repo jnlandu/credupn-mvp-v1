@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Book, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FileText, BookOpen, ScrollText } from 'lucide-react'
+import Image from 'next/image'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -23,7 +24,20 @@ export default function Header() {
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
+            {/* <Link href="/" className="flex items-center space-x-2">
+              <Book className="h-8 w-8 text-black" />
+              <span className="text-xl font-bold text-black">CRIDUPN</span>
+            </Link> */}
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="relative h-10 w-10">
+                <Image
+                  src="/images/logo/upn-logo.jpeg"  // Make sure to add logo to public/images/
+                  alt="UPN Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
               <Book className="h-8 w-8 text-black" />
               <span className="text-xl font-bold text-black">CRIDUPN</span>
             </Link>

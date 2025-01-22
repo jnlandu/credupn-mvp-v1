@@ -1,24 +1,34 @@
 "use client"
 
-import { useState } from 'react'
+import { useState} from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Image from 'next/image'
+import Router from 'next/router'
 import { 
   CreditCard, 
   Phone,
   ArrowRight,
   Shield,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
 
 type PaymentMethod = 'card' | 'mpesa' | 'orange' | 'airtel'
 
 export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
   const [step, setStep] = useState(1)
+
+  const { toast } = useToast()
+  const router = useRouter()
 
   const paymentMethods = [
 
@@ -187,8 +197,37 @@ export default function PaymentPage() {
                   <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
                     Retour
                   </Button>
-                  <Button className="flex-1">
-                    Payer maintenant
+                  <Button 
+                    className="w-full" 
+                    onClick={async () => {
+                      setIsProcessing(true)
+                      try {
+                        // Simulate payment processing
+                        await new Promise(resolve => setTimeout(resolve, 2000))
+                        
+                        setIsSuccess(true)
+                        toast({
+                          title: "Paiement réussi",
+                          description: "Votre paiement a été traité avec succès.",
+                        })
+                      } catch (error) {
+                        toast({
+                          variant: "destructive",
+                          title: "Erreur",
+                          description: "Le paiement a échoué. Veuillez réessayer.",
+                        })
+                      } finally {
+                        setIsProcessing(false)
+                      }
+                    }}
+                    disabled={isProcessing || isSuccess}
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : isSuccess ? (
+                      <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                    ) : null}
+                    {isSuccess ? "Paiement effectué" : "Payer maintenant"}
                   </Button>
                 </div>
               </div>
@@ -196,6 +235,23 @@ export default function PaymentPage() {
           </CardContent>
         </Card>
       </div>
+      <Dialog open={isProcessing} onOpenChange={setIsProcessing}>
+      <DialogHeader>
+      <DialogTitle className="text-center">
+        Traitement du paiement
+      </DialogTitle>
+    </DialogHeader>
+      <DialogContent className="sm:max-w-[425px]">
+        <div className="flex flex-col items-center justify-center p-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+          <h3 className="text-lg font-semibold mb-2">Traitement du paiement</h3>
+          <p className="text-center text-gray-500">
+            Veuillez patienter pendant que nous traitons votre paiement...
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+
     </div>
   )
 }

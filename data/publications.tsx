@@ -126,6 +126,15 @@ export const Publications: Publication[] = [
       status: 'pending',
       category: "Méthodologie",
       pdfUrl: '/publications/c792ba5960fffce6c757acc00.pdf'
+    },
+  {
+      id: '998d9a5e-a637-4b4c-a537-b6053ed286d8',
+      title: "Elements",
+      author: "CT MATHY",
+      date: "2025-02-09",
+      status: 'pending',
+      category: "Méthodologie",
+      pdfUrl: '/publications/d8061934cbe46b2fec2d55100.pdf'
     }
 ]
 

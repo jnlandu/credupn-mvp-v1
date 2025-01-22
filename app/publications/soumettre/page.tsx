@@ -1,16 +1,24 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { FileText } from 'lucide-react'
+import { FileText, Info } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
+import { CheckCircle2, AlertCircle, List, HelpCircle } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
+
+
 
 export default function SoumissionPage() {
   const router = useRouter()
+  const [showSchema, setShowSchema] = useState(false)
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     title: '',
     authors: '',
@@ -19,8 +27,74 @@ export default function SoumissionPage() {
     file: null as File | null
   })
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
-  // Add router at top of component
-
+  const requirements = [
+    {
+      title: "Résumé",
+      items: ["Français et version anglaise"],
+    },
+    {
+      title: "Mots Clés",
+      items: ["Français et version anglaise"],
+    },
+    {
+      title: "Introduction",
+      items: [
+        "Problème : Théories, Situation désirée, Situation vécue",
+        "Problématique (Questions de recherche) = Réponse provisoire",
+        "Hypothèse",
+        "Objectif",
+      ],
+    },
+    {
+      title: "II. Méthodologie",
+      items: [
+        "Méthodes et techniques de collecte, d’analyse et d’interprétation des données",
+        "Population",
+        "Échantillon",
+      ],
+    },
+    {
+      title: "III. Résultats",
+      items: ["Présentation des résultats"],
+    },
+    {
+      title: "IV. Discussion",
+      items: [
+        "Analyse et interprétation des résultats",
+        "Vérification (confrontation de l’écart entre théories et résultats existants et actuels)",
+      ],
+    },
+    {
+      title: "Conclusion",
+      items: [],
+    },
+    {
+      title: "Références",
+      items: ["Normes APA"],
+    },
+  ];
+  // Update useEffect with toast
+useEffect(() => {
+  toast({
+    title: "Directives de soumission",
+    description: (
+      <div className="flex items-start space-x-2">
+        <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+        <div>
+          <p>Veuillez consulter le schéma de publication avant de soumettre votre article.</p>
+          <Button 
+            variant="link" 
+            className="p-0 h-auto font-normal text-primary hover:text-primary/80"
+            onClick={() => setShowSchema(true)}
+          >
+            Voir le schéma de publication →
+          </Button>
+        </div>
+      </div>
+    ),
+    duration: 100000,
+  })
+}, [toast])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -57,7 +131,7 @@ export default function SoumissionPage() {
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e: any) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Entrez le titre de votre article"
                   required
                 />
@@ -68,7 +142,7 @@ export default function SoumissionPage() {
                 <Input
                   id="authors"
                   value={formData.authors}
-                  onChange={(e) => setFormData({ ...formData, authors: e.target.value })}
+                  onChange={(e: any) => setFormData({ ...formData, authors: e.target.value })}
                   placeholder="Noms des auteurs (séparés par des virgules)"
                   required
                 />
@@ -79,7 +153,7 @@ export default function SoumissionPage() {
                 <Textarea
                   id="abstract"
                   value={formData.abstract}
-                  onChange={(e) => setFormData({ ...formData, abstract: e.target.value })}
+                  onChange={(e: any) => setFormData({ ...formData, abstract: e.target.value })}
                   placeholder="Résumé de votre article"
                   className="h-32"
                   required
@@ -91,7 +165,7 @@ export default function SoumissionPage() {
                 <Input
                   id="keywords"
                   value={formData.keywords}
-                  onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                  onChange={(e: any) => setFormData({ ...formData, keywords: e.target.value })}
                   placeholder="Mots-clés (séparés par des virgules)"
                   required
                 />
@@ -130,7 +204,6 @@ export default function SoumissionPage() {
             </form>
           </CardContent>
         </Card>
-
         {/* PDF Preview */}
         <div className="flex-1 max-w-xl">
           {pdfUrl ? (
@@ -154,6 +227,57 @@ export default function SoumissionPage() {
           )}
         </div>
       </div>
+      <Dialog open={showSchema} onOpenChange={setShowSchema}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">
+              Directives de Publication
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-8">
+            <Card className="mb-8">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-primary" />
+                  <CardTitle>Important</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">
+                  Avant de soumettre votre article, veuillez vous assurer que votre manuscrit 
+                  respecte toutes les directives suivantes.
+                </p>
+              </CardContent>
+            </Card>
+            {requirements.map((section, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    {index === 0 ? (
+                      <FileText className="h-5 w-5 text-primary" />
+                    ) : index === 1 ? (
+                      <List className="h-5 w-5 text-primary" />
+                    ) : (
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                    )}
+                    <CardTitle>{section.title}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc list-inside space-y-2">
+                    {section.items.map((item, itemIndex) => (
+                      <li key={itemIndex} className="text-gray-600">
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

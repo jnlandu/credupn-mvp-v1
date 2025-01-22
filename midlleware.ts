@@ -3,49 +3,53 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const authToken = request.cookies.get('auth-token')?.value
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
-//   const isAuthenticated = request.cookies.get('admin-token')
-  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-  const isReviewerRoute = request.nextUrl.pathname.startsWith('/dashboard/reviewer')
-  const isAuthorRoute = request.nextUrl.pathname.startsWith('/dashboard/author')
+  // Add debug logging
+  console.log('Middleware running for path:', request.nextUrl.pathname)
+  console.log('Auth token:', !!request.cookies.get('auth-token')?.value)
+  console.log('User role:', request.cookies.get('user-role')?.value)
 
-   // Check role from token if available
+  const authToken = request.cookies.get('auth-token')?.value
   const userRole = request.cookies.get('user-role')?.value
 
-  if (isAdminRoute) {
-    if (!authToken || userRole !== 'admin') {
-        return NextResponse.redirect(new URL('/auth/login', request.url))
-      }
+  // Protected routes configuration
+  const protectedRoutes = {
+    '/admin': ['admin'],
+    '/dashboard/author': ['author'],
+    '/dashboard/reviewer': ['reviewer']
   }
-  // Protect reviewer routes
-  if (isReviewerRoute) {
-    if (!authToken || userRole !== 'reviewer') {
+
+  // Check if current path matches any protected route
+  const matchedPath = Object.keys(protectedRoutes).find(path => 
+    request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`)
+  )
+
+  if (matchedPath) {
+    // No auth token - redirect to login
+    if (!authToken) {
+      console.log('No auth token - redirecting to login')
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
-  }
-  // Protect reviewer routes
-  if (isAuthorRoute) {
-    if (!authToken || userRole !== 'author') {
+
+    // Check if user has required role
+    const requiredRoles = protectedRoutes[matchedPath]
+    if (!requiredRoles.includes(userRole as string)) {
+      console.log('Invalid role - redirecting to login')
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
-  }
-  if (isDashboardPage && !authToken) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
-  }
-  if (isAuthPage && authToken) {
-     // Redirect based on role
-    if (userRole === 'admin') {
-        return NextResponse.redirect(new URL('/admin', request.url))
-      } else {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
   }
 
   return NextResponse.next()
 }
 
+// Update config to match exact paths and their children
 export const config = {
-    matcher: ['/admin/:path*','/dashboard/:path*', '/auth/:path*', '/dashboard/reviewer/:path*', '/dashboard/author/:path*']
+  matcher: [
+    '/',
+    '/admin',
+    '/admin/:path*',
+    '/dashboard/author/:path*',
+    '/dashboard/reviewer/:path*',
+    '/auth/login',
+    '/auth/signup'
+  ]
 }
