@@ -1,13 +1,13 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { FileText, Info } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { CheckCircle2, AlertCircle, List, HelpCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -27,6 +27,15 @@ export default function SoumissionPage() {
     file: null as File | null
   })
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const ABSTRACT_WORD_LIMIT = 250;
+
+  // Add word count state
+  const [wordCount, setWordCount] = useState(0);
+  // Add word count calculation function
+  const countWords = (text: string) => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
+
   const requirements = [
     {
       title: "Résumé",
@@ -92,18 +101,27 @@ useEffect(() => {
         </div>
       </div>
     ),
-    duration: 100000,
+    duration: 10500,
   })
 }, [toast])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e:any) => {
     const file = e.target.files?.[0]
+    if (file.type !== 'application/pdf') {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez sélectionner un fichier PDF"
+      });
+      return;
+    }
     if (file) {
       setFormData({ ...formData, file })
       // Create a URL for the PDF preview
       const url = URL.createObjectURL(file)
       setPdfUrl(url)
     }
+    
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -150,14 +168,32 @@ useEffect(() => {
 
               <div>
                 <Label htmlFor="abstract">Résumé</Label>
-                <Textarea
-                  id="abstract"
-                  value={formData.abstract}
-                  onChange={(e: any) => setFormData({ ...formData, abstract: e.target.value })}
-                  placeholder="Résumé de votre article"
-                  className="h-32"
-                  required
-                />
+                <div className="relative">
+                  <Textarea
+                    id="abstract"
+                    value={formData.abstract}
+                    onChange={(e: any) => {
+                      const newText = e.target.value;
+                      const words = countWords(newText);
+                      if (words <= ABSTRACT_WORD_LIMIT) {
+                        setFormData({ ...formData, abstract: newText });
+                        setWordCount(words);
+                      }
+                    }}
+                    className="min-h-[100px]"
+                    placeholder="Entrez le résumé de votre article..."
+                  />
+                  <div className={`text-sm mt-1 flex justify-end ${
+                    wordCount > ABSTRACT_WORD_LIMIT ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    {wordCount}/{ABSTRACT_WORD_LIMIT} mots
+                  </div>
+                </div>
+                {wordCount > ABSTRACT_WORD_LIMIT && (
+                  <p className="text-sm text-red-500 mt-1">
+                    Le résumé ne doit pas dépasser {ABSTRACT_WORD_LIMIT} mots
+                  </p>
+                )}
               </div>
 
               <div>
@@ -194,7 +230,7 @@ useEffect(() => {
               </div>
 
               <div className="flex gap-4 justify-end">
-                <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                <Button type="button" variant="outline" onClick={() => router.back()}>
                   Annuler
                 </Button>
                 <Button type="submit">
