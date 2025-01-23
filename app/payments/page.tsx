@@ -1,6 +1,8 @@
 "use client"
 
 import { useState} from 'react'
+import axios from "axios";
+
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +20,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
+import { number, string } from 'zod';
 
 type PaymentMethod = 'card' | 'mpesa' | 'orange' | 'airtel'
 
@@ -26,6 +29,10 @@ export default function PaymentPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [step, setStep] = useState(1)
+  const [formData, setFormData] = useState({
+    orderNumber: '',
+    phone: ''
+  })
 
   const { toast } = useToast()
   const router = useRouter()
@@ -57,6 +64,59 @@ export default function PaymentPage() {
       logoPath: '/images/payments/airtel.png'
     }
   ]
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value }: any = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handlePayement = async () => {
+    const data = {
+      Numero: formData.phone,
+      Montant: 1000, // Example amount
+      currency: 'CDF',
+      description: 'Payment description'
+    }
+
+    console.log("Debugg", data)
+
+    // URL of the gateway
+    const gateway = "http://localhost:8000/payment"
+    // Headers
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzc5OTcwMTc1LCJzdWIiOiJlNzFiM2I4ZDMyNGFmYTMwOWU0NzY4MGI1ZjE0NDhhNCJ9.cLawA7kXCwBNYADRdwy9BJKwxQJOjUf0nTQ1i2Wipnw",
+    }
+
+    setIsProcessing(true)
+
+   try{ 
+    console.log('Debugging data number:',data.Numero)
+    const response = await axios.post(gateway, data, { headers, timeout: 300000 })
+    const responseData = response.data
+    const code = responseData.code
+    if (code !== "0") {
+          console.log("Impossible de traiter la demande, veuillez réessayer")
+          console.log('Debug 2', data)
+      } else {
+        const message = responseData.message
+        console.log('Debug 3', data)
+        const orderNumber = responseData.orderNumber
+        console.log(`Message: ${message}, Order Number: ${orderNumber}`)
+        toast({
+          title: "Statut du paiement",
+          description: "Votre paiement a été effectué avec succès!"
+        });
+      }
+      }catch(error: any){
+      toast({
+        title: "Paiement",
+        description: "Votre paiement a été effectué avec succès!"
+      });
+      }finally{
+        setIsProcessing(false)
+      }
+  }
 
   return (
     <div className="min-h-screen py-12">
@@ -154,11 +214,14 @@ export default function PaymentPage() {
                     <Label htmlFor="phone">Numéro de téléphone</Label>
                     <Input 
                       id="phone" 
+                      name="phone"
                       className="mt-1"
-                      placeholder={`+243 ${
+                      placeholder={`+243${
                         paymentMethod === 'mpesa' ? '81' : 
                         paymentMethod === 'orange' ? '89' : 
                         '99'} XXXXXXX`}
+                      value={formData.phone}
+                      onChange={handleChange}
                     />
                   </div>
                 )}
@@ -199,28 +262,7 @@ export default function PaymentPage() {
                   </Button>
                   <Button 
                     className="w-full" 
-                    onClick={async () => {
-                      setIsProcessing(true)
-                      try {
-                        // Simulate payment processing
-                        await new Promise(resolve => setTimeout(resolve, 2000))
-                        
-                        setIsSuccess(true)
-                        toast({
-                          title: "Paiement réussi",
-                          description: "Votre paiement a été traité avec succès.",
-                        })
-                      } catch (error) {
-                        toast({
-                          variant: "destructive",
-                          title: "Erreur",
-                          description: "Le paiement a échoué. Veuillez réessayer.",
-                        })
-                      } finally {
-                        setIsProcessing(false)
-                      }
-                    }}
-                    disabled={isProcessing || isSuccess}
+                    onClick={() => handlePayement()}
                   >
                     {isProcessing ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

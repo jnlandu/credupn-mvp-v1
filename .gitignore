@@ -9,6 +9,8 @@ pids
 *.pid
 *.seed
 
+./backend/.venv
+
 .env
 .env.local
 

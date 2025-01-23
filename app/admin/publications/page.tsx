@@ -23,11 +23,14 @@ import {
   ChevronRight,
   Calendar,
   Download,
-  Plus
+  Plus,
+  Send
 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDropzone } from 'react-dropzone'
-import { Publications,statusStyles  } from "@/data/publications"
+import { Publication, Publications,statusStyles  } from "@/data/publications"
+import { useToast } from '@/hooks/use-toast'
+import { Tooltip } from '@radix-ui/react-tooltip'
 
 export default function PublicationsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -40,7 +43,14 @@ export default function PublicationsAdmin() {
   const [pdfPreview, setPdfPreview] = useState<string | null>(null)
 
   const [publications, setPublications] = useState<Publication[]>(Publications)
+  const [showReviewerModal, setShowReviewerModal] = useState(false)
+  const [selectedReviewers, setSelectedReviewers] = useState<string[]>([])
+  // Add state for filtering reviewers
+  const [filterTerm, setFilterTerm] = useState('')
+  // const [selectedPub, setSelectedPub] = useState(null)
+  
 
+  const { toast } = useToast()
 
     // Calculate pagination
     const totalItems = publications.length
@@ -54,8 +64,27 @@ export default function PublicationsAdmin() {
     )
     .slice(startIndex, endIndex)
 
+  // Mock data for reviewers
+  const reviewers = [
+    { id: 'rev-1', name: 'Prof. Dr Jean Paul Yawidi', specialization: 'Psychologie Analytique', institution: 'UPN' },
+    { id: 'rev-2', name: 'Prof. Dr Mayala Francis', specialization: 'Informatique, Cybersécurité, Cryptographie', institution: 'UPN' },
+    { id: 'rev-3', name: 'Prof. Dr Musesa', specialization: 'Mathematiques, Géométrie Différentielle', institution: 'UNIKIN' },
+    { id: 'rev-4', name: 'Prof. Dr Makiese Sarah', specialization: 'Sciences Politiques, Relations Internationales', institution: 'UPN' },
+    { id: 'rev-5', name: 'Prof. Dr Ngoma Pierre', specialization: 'Économie, Finance', institution: 'UNIKIN' },
+    { id: 'rev-6', name: 'Prof. Dr Kabamba John', specialization: 'Sociologie, Anthropologie', institution: 'UPN' },
+    { id: 'rev-7', name: 'Prof. Dr Tshienda Marie', specialization: 'Droit International', institution: 'UNIKIN' },
+    { id: 'rev-8', name: 'Prof. Dr Mutombo Eric', specialization: 'Physique Quantique', institution: 'UPN' },
+    { id: 'rev-9', name: 'Prof. Dr Lukusa Anne', specialization: 'Biologie Moléculaire', institution: 'UNIKIN' },
+    { id: 'rev-10', name: 'Prof. Dr Mbala David', specialization: 'Chimie Organique', institution: 'UPN' },
+    { id: 'rev-11', name: 'Prof. Dr Kasongo Rebecca', specialization: 'Sciences de l\'Éducation', institution: 'UPN' },
+    { id: 'rev-12', name: 'Prof. Dr Mwamba Joseph', specialization: 'Linguistique, Langues Africaines', institution: 'UNIKIN' },
+    { id: 'rev-13', name: 'Prof. Dr Nkulu Claire', specialization: 'Histoire, Archéologie', institution: 'UPN' },
+    { id: 'rev-14', name: 'Prof. Dr Kalala Michel', specialization: 'Études Environnementales', institution: 'UNIKIN' },
+    { id: 'rev-15', name: 'Prof. Dr Bokoko Alice', specialization: 'Philosophie, Éthique', institution: 'UPN' },
+  ]
+  
   // Handle PDF File Selection
-  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfChange = (e: any) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setPdfFile(file)
@@ -109,24 +138,37 @@ export default function PublicationsAdmin() {
         });
   
         if (response.ok) {
-          const result = await response.json();
+          const result: any = await response.json();
           setPublications([result.publication, ...publications]);
           setNewPublication({});
           setPdfFile(null);
           setPdfPreview(null);
           setIsAddDialogOpen(false);
-          alert('Publication ajoutée avec succès.');
+          toast({
+            title: "Succès",
+            description: "Publication ajoutée avec succès",
+          })
+         
         } else {
-          const error = await response.json();
+          const error: any = await response.json();
           console.error('Error adding publication:', error);
-          alert(`Erreur: ${error.error}`);
+          toast({
+            title: "Erreur!",
+            description: `Erreur: ${error.error}`
+          })
         }
       } catch (error) {
         console.error('Error adding publication:', error);
-        alert('Une erreur est survenue lors de l\'ajout de la publication.');
+        toast({
+          title: "Erreur!",
+          description: 'Une erreur est survenue lors de l\'ajout de la publication.'
+        })
       }
     } else {
-      alert('Veuillez remplir tous les champs et télécharger un PDF.');
+      toast({
+        title: "Erreur!",
+        description: 'Veuillez remplir tous les champs et télécharger un PDF'
+      })
     }
   };
 
@@ -142,7 +184,7 @@ export default function PublicationsAdmin() {
             placeholder="Rechercher..."
             className="pl-8"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
           />
         </div>
           <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
@@ -189,6 +231,7 @@ export default function PublicationsAdmin() {
                         size="sm"
                         onClick={() => setSelectedPub(pub)}
                       >
+                        
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="sm">
@@ -200,6 +243,33 @@ export default function PublicationsAdmin() {
                       <Button variant="ghost" size="sm">
                         <Trash2 className="h-4 w-4" />
                       </Button>
+                      <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/publications/${selectedPub?.id}/forward`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reviewers: selectedReviewers })
+                          })
+                          if (!res.ok) throw new Error('Failed to forward publication')
+                          toast({
+                            title: "Succès",
+                            description: "Publication envoyée aux évaluateurs sélectionnés.",
+                          })
+                          setShowReviewerModal(false)
+                        } catch (error) {
+                          toast({
+                            variant: "destructive",
+                            title: "Erreur",
+                            description: "Impossible d'envoyer la publication. Veuillez réessayer.",
+                          })
+                        }
+                      }}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -223,7 +293,7 @@ export default function PublicationsAdmin() {
             <SelectTrigger className="w-[70px]">
                 <SelectValue>{pageSize}</SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent> 
                 <SelectItem value="5">5</SelectItem>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="20">20</SelectItem>
@@ -270,7 +340,7 @@ export default function PublicationsAdmin() {
           <Input 
                 id="title" 
                 value={newPublication.title || ''} 
-                onChange={(e) => setNewPublication({ ...newPublication, title: e.target.value })}
+                onChange={(e: any) => setNewPublication({ ...newPublication, title: e.target.value })}
                 required 
               />
             </div>
@@ -279,7 +349,7 @@ export default function PublicationsAdmin() {
               <Input 
                 id="author" 
                 value={newPublication.author || ''} 
-                onChange={(e) => setNewPublication({ ...newPublication, author: e.target.value })}
+                onChange={(e: any) => setNewPublication({ ...newPublication, author: e.target.value })}
                 required 
               />
             </div>
@@ -289,7 +359,7 @@ export default function PublicationsAdmin() {
                 id="date" 
                 type="date" 
                 value={newPublication.date || ''} 
-                onChange={(e) => setNewPublication({ ...newPublication, date: e.target.value })}
+                onChange={(e: any) => setNewPublication({ ...newPublication, date: e.target.value })}
                 required 
               />
             </div>
@@ -314,7 +384,7 @@ export default function PublicationsAdmin() {
            <label className="font-medium" htmlFor="status">Statut</label>
            <Select
              value={newPublication.status || ''}
-             onValueChange={(value) => setNewPublication({ ...newPublication, status: value })}
+             onValueChange={(value: any) => setNewPublication({ ...newPublication, status: value })}
              required
            >
              <SelectTrigger className="w-full">
@@ -407,6 +477,80 @@ export default function PublicationsAdmin() {
           )}
         </DialogContent>
       </Dialog>
+
+  <Dialog open={showReviewerModal} onOpenChange={setShowReviewerModal}>
+  <DialogContent className="max-w-lg">
+    <DialogHeader>
+      <DialogTitle>Sélectionner des évaluateurs</DialogTitle>
+    </DialogHeader>
+    <div className="space-y-4">
+      <Input
+        placeholder="Filtrer par spécialisation ou institution..."
+        value={filterTerm}
+        onChange={(e: any) => setFilterTerm(e.target.value)}
+      />
+      <div className="max-h-60 overflow-y-auto">
+        {reviewers
+          .filter(reviewer => 
+            reviewer.specialization.toLowerCase().includes(filterTerm.toLowerCase()) ||
+            reviewer.institution.toLowerCase().includes(filterTerm.toLowerCase())
+          )
+          .map((reviewer) => (
+            <div key={reviewer.id} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id={reviewer.id}
+                value={reviewer.id}
+                checked={selectedReviewers.includes(reviewer.id)}
+                onChange={(e) => {
+                  const { checked, value } :  any= e.target
+                  setSelectedReviewers((prev) =>
+                    checked ? [...prev, value] : prev.filter((id) => id !== value)
+                  )
+                }}
+              />
+              <label htmlFor={reviewer.id}>
+                <div>
+                  <p className="font-medium">{reviewer.name}</p>
+                  <p className="text-sm text-gray-500">{reviewer.specialization} - {reviewer.institution}</p>
+                </div>
+              </label>
+            </div>
+          ))}
+      </div>
+    </div>
+    <div className="flex justify-end gap-2 mt-4">
+      <Button variant="outline" onClick={() => setShowReviewerModal(false)}>
+        Annuler
+      </Button>
+      <Button
+        onClick={async () => {
+          try {
+            const res = await fetch(`/api/publications/${selectedPub?.id}/forward`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reviewers: selectedReviewers })
+            })
+            if (!res.ok) throw new Error('Failed to forward publication')
+            toast({
+              title: "Succès",
+              description: "Publication envoyée aux évaluateurs sélectionnés.",
+            })
+            setShowReviewerModal(false)
+          } catch (error) {
+            toast({
+              variant: "destructive",
+              title: "Erreur",
+              description: "Impossible d'envoyer la publication. Veuillez réessayer.",
+            })
+          }
+        }}
+      >
+        Envoyer
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
 
     </div>
   )
