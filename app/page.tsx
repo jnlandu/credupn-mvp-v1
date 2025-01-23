@@ -125,7 +125,7 @@ export default function Home() {
     <div className="text-center mb-12">
       <h2 className="text-3xl font-bold mb-4 text-black">Appel à publications</h2>
       <p className="text-gray-600 max-w-2xl mx-auto">
-        CRIDUPN accepte les soumissions de recherches originales dans tous les domaines. 
+        La revue CRIDUPN accepte les soumissions de recherches originales dans tous les domaines. 
         Nous publions des articles scientifiques, des livres et des rapports de recherche.
       </p>
     </div>
@@ -147,7 +147,7 @@ export default function Home() {
         <h3 className="font-bold mb-2">Livres</h3>
         <p className="text-gray-600 mb-4">Publiez vos ouvrages académiques</p>
         <Button asChild variant="secondary">
-          <Link href="/soumission">Proposer un livre</Link>
+          <Link href="/publications/soumettre-livre">Proposer un livre</Link>
         </Button>
       </Card>
       <Card className="text-center p-6">
@@ -268,13 +268,13 @@ export default function Home() {
           image: "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?auto=format&fit=crop&q=80"
         },
         {
-          name: "Prof. Marie Kabongo",
+          name: "Prof. Marie Thérèse",
           role: "Professeure en Pédagogie",
           comment: "Une revue de qualité qui contribue significativement à la recherche en éducation en RDC.",
           image: "https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?auto=format&fit=crop&q=80"
         },
         {
-          name: "Dr. Paul Ntumba",
+          name: "Dr. Paul Lilian",
           role: "Auteur et Chercheur",
           comment: "La plateforme idéale pour partager ses recherches avec la communauté académique africaine.",
           image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80"

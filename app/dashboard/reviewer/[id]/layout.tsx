@@ -65,7 +65,7 @@ export default function ReviewerLayout({ children, params }: LayoutProps) {
           </Link>
 
           <Link
-            href="/reviewer/completed"
+            href={`/dashboard/reviewer/${id}/completed`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <CheckCircle2 className="h-5 w-5" />
@@ -73,7 +73,7 @@ export default function ReviewerLayout({ children, params }: LayoutProps) {
           </Link>
 
           <Link
-            href="/reviewer/history"
+            href={`/dashboard/reviewer/${id}/history`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <History className="h-5 w-5" />
@@ -92,7 +92,7 @@ export default function ReviewerLayout({ children, params }: LayoutProps) {
         {/* Settings at bottom */}
         <div className="absolute bottom-6 w-full left-0 px-6">
           <Link
-            href="/reviewer/settings"
+            href={`/dashboard/reviewer/${id}/setting`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <Settings className="h-5 w-5" />

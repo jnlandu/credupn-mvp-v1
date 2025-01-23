@@ -1,6 +1,7 @@
 // app/dashboard/author/[id]/page.tsx
 "use client"
 
+import { use } from 'react'
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,8 +13,10 @@ import {
   CheckCircle2,
   XCircle,
   PlusCircle,
-  ChartBar
+  ChartBar,
+  UserCheck
 } from 'lucide-react'
+import Link from 'next/link'
 
 interface Publication {
   id: string
@@ -27,9 +30,28 @@ const SIDEBAR_WIDTH = 240
 const COLLAPSED_WIDTH = 64
 
 
-export default function AuthorDashboard({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function AuthorDashboard({ params }: {params: PageProps}) {
+
+
   const [activeTab, setActiveTab] = useState('overview')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
+//  try{
+//   const { id } =  params
+
+//  }catch{
+
+//  }
+
+
+
+
 
   // Mock data - replace with actual data fetch
   const authorStats = {
@@ -58,12 +80,24 @@ export default function AuthorDashboard({ params }: { params: { id: string } }) 
   return (
     <div className="min-h-screen ">
       <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center gap-4 mb-8">
+          <div>
           <h1 className="text-3xl font-bold">Tableau de bord</h1>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Nouvelle soumission
-          </Button>
+            
+          </div>
+          <div className="p-3 bg-primary/10 rounded-lg">
+            <UserCheck className="h-8 w-8 text-primary" />
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mb-8">
+        <p className="text-gray-500">Gérez vos soumissions et suivez leurs statuts</p>
+            <Button asChild>
+              <Link href="/publications/soumettre" className="flex items-center">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Nouvelle soumission
+              </Link>
+            </Button>
         </div>
 
         {/* Stats Overview */}

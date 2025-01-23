@@ -1,7 +1,7 @@
 // app/dashboard/author/[id]/layout.tsx
 "use client"
 
-import { useState } from 'react'
+import { use, useState } from 'react'
 import Link from 'next/link'
 import { 
   BookOpen, 
@@ -17,11 +17,18 @@ import {
   PlusCircle
 } from "lucide-react"
 
-export default function AuthorLayout({
-  children
-}: {
+
+
+
+interface LayoutProps {
   children: React.ReactNode
-}) {
+  params: Promise<{ id: string }>
+}
+
+export default function AuthorLayout({
+  children, params
+}: LayoutProps) {
+  const { id } = use(params) // Unwrap params using React.use()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   return (
@@ -30,7 +37,8 @@ export default function AuthorLayout({
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-black text-white p-6 space-y-6 transition-all duration-300 relative`}>
         <div className="mb-8 flex items-center justify-between">
           <h2 className={`text-xl font-bold ${!isSidebarOpen && 'hidden'}`}>
-            <Link href="/author">Espace Auteur</Link>
+            
+            <Link href="#">Espace Auteur</Link>
           </h2>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -47,7 +55,7 @@ export default function AuthorLayout({
         {/* Navigation Links */}
         <nav className="space-y-2">
           <Link
-            href="/author"
+            href={`/dashboard/author/${id}`}
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <Layout className="h-5 w-5" />
@@ -63,7 +71,7 @@ export default function AuthorLayout({
           </Link>
 
           <Link
-            href="/author/pending"
+             href={`/dashboard/author/${id}/pending`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <Clock className="h-5 w-5" />
@@ -71,7 +79,7 @@ export default function AuthorLayout({
           </Link>
 
           <Link
-            href="/author/published"
+            href={`/dashboard/author/${id}/published`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <CheckCircle2 className="h-5 w-5" />
@@ -90,7 +98,7 @@ export default function AuthorLayout({
         {/* Settings at bottom */}
         <div className="absolute bottom-6 w-full left-0 px-6">
           <Link
-            href="/author/settings"
+            href={`/dashboard/author/${id}/settings`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <Settings className="h-5 w-5" />
