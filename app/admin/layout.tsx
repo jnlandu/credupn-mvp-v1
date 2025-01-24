@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Settings,
   Bell,
+  DollarSign,
 } from "lucide-react"
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Toaster } from '@/components/ui/toaster'
@@ -103,7 +104,6 @@ export default function AdminLayout({
             </Link>
               }
             </Button>
-
             <Button 
                   variant="ghost" 
                   className={`w-full justify-start text-white ${!isSidebarOpen && 'justify-center'}`}
@@ -117,7 +117,21 @@ export default function AdminLayout({
                       Paiements
                     </Link>
                   }
-                </Button>                 
+                </Button>   
+                <Button 
+                  variant="ghost" 
+                  className={`w-full justify-start text-white ${!isSidebarOpen && 'justify-center'}`}
+                >
+                  <DollarSign className="h-4 w-4" />
+                  {isSidebarOpen && 
+                    <Link  
+                      href="/admin/revenue/" 
+                      className="ml-2"
+                    >
+                      Revenus
+                    </Link>
+                  }
+                </Button>              
           </nav>
           <Button 
             variant="ghost" 

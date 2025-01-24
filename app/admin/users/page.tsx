@@ -38,6 +38,7 @@ import {
   Calendar, // Add this
   Download  // Add this if you're using the Download icon 
 } from 'lucide-react'
+import { AddUserModal } from '@/components/users/AddUserModal'
 
 interface User {
   id: string
@@ -249,15 +250,19 @@ const currentUsers = filteredUsers.slice(startIndex, endIndex)
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
+        <div className=''>
         <h1 className="text-2xl font-bold">Utilisateurs</h1>
-        <div className="relative w-64">
+        <p className="text-sm text-gray-500"> Gerer les utilisateurs, ajouter un auteur, un lecteur, etc.</p>
+        </div>
+        <div className="flex justify-between items-center mb-8 gap-4">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Rechercher..."
             className="pl-8"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
           />
+           <AddUserModal />
         </div>
       </div>
 

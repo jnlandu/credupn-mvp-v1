@@ -1,0 +1,281 @@
+// components/AddUserModal.tsx
+import { useState, useRef, DragEvent } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { UserPlus,  Eye, EyeOff, X, FileText, Upload} from "lucide-react"
+
+
+
+interface Publication {
+  file: File
+  title: string
+  uploadDate: Date
+}
+interface UserFormData {
+  name: string
+  email: string
+  role: 'author' | 'reviewer' | 'other'
+  password: string
+  publications: Publication[]
+  institution: string
+}
+interface PDFPreviewProps {
+  file: File
+  onRemove: () => void
+}
+
+
+
+  // Update PDF Preview component
+const PDFPreview = ({ publication, onRemove, onTitleChange }: {
+  publication: Publication
+  onRemove: () => void
+  onTitleChange: (title: string) => void
+}) => (
+  <div className="space-y-2 p-3 bg-gray-50 rounded-md">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-2">
+        <FileText className="h-4 w-4 text-gray-500" />
+        <span className="text-sm truncate max-w-[200px]">{publication.file.name}</span>
+      </div>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={onRemove}
+        className="hover:bg-red-100"
+      >
+        <X className="h-4 w-4 text-red-500" />
+      </Button>
+    </div>
+    
+    <Input
+      placeholder="Titre de la publication"
+      value={publication.title}
+      onChange={(e: any) => onTitleChange(e.target.value)}
+      className="mt-2"
+    />
+    
+    <span className="text-xs text-gray-500">
+      Ajouté le {publication.uploadDate.toLocaleDateString()}
+    </span>
+  </div>
+)
+
+
+  
+export function AddUserModal() {
+  const fileInputRef = useRef<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [formData, setFormData] = useState<UserFormData>({
+    name: '',
+    email: '',
+    role: 'author',
+    password: '',
+    publications: [],
+    institution: ''
+  })
+
+  const { toast } = useToast()
+  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
+  // Update file handling in AddUserModal
+const handleFileChange = (e: any) => {
+  const files : any = Array.from(e.target.files || [])
+  const pdfs = files.filter((file : any) => file.type === 'application/pdf')
+  
+  if (pdfs.length !== files.length) {
+    toast({
+      title: "Erreur",
+      description: "Seuls les fichiers PDF sont acceptés",
+      variant: "destructive"
+    })
+    return
+  }
+
+  const newPublications = pdfs.map((file: any) => ({
+    file,
+    title: '',
+    uploadDate: new Date()
+  }))
+
+  setFormData(prev => ({
+    ...prev,
+    publications: [...prev.publications, ...newPublications]
+  }))
+}
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const formDataToSend = new FormData()
+      formDataToSend.append('name', formData.name)
+      formDataToSend.append('email', formData.email)
+      formDataToSend.append('password', formData.password)
+      formDataToSend.append('institution', formData.institution)
+      formData.publications.forEach(file => {
+        formDataToSend.append('publications', file)
+      })
+
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        body: formDataToSend
+      })
+
+      if (!response.ok) throw new Error('Failed to create user')
+
+      toast({
+        title: "Succès",
+        description: "Utilisateur créé avec succès"
+      })
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer l'utilisateur",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Ajouter un Utilisateur
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Ajouter un Nouvel Utilisateur</DialogTitle>
+        </DialogHeader>
+        <div className='py-4'>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nom</Label>
+            <Input
+              id="name"
+              required
+              value={formData.name}
+              onChange={(e: any) => setFormData({ ...formData, name: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e: any) => setFormData({ ...formData, email: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+          <Label htmlFor="password">Mot de passe</Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              required
+              value={formData.password}
+              onChange={(e: any) => setFormData({ ...formData, password: e.target.value })}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="role">Rôle</Label>
+            <select
+              id="role"
+              className="w-full border rounded-md p-2"
+              value={formData.role}
+              onChange={(e: any) => setFormData({ ...formData, role: e.target.value as 'author' | 'reviewer' | 'other' })}
+            >
+              <option value="user" className='text-sm'>Auteur</option>
+              <option value="reviewer" className='text-sm'>Reviewer</option>
+              <option value="othher" className='text-sm'>Autre</option>
+            </select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="institution">Institution</Label>
+          <Input
+            id="institution"
+            required
+            value={formData.institution}
+            onChange={(e: any) => setFormData({ ...formData, institution: e.target.value })}
+            placeholder="Nom de l'institution"
+          />
+        </div>
+        <div className="space-y-2">
+        <Label>Publications (PDF)</Label>
+        <div className="space-y-2">
+          {formData.publications.map((file, index) => (
+              <PDFPreview
+                key={index}
+                publication={file}
+                onRemove={() => {
+                  const newPublications = formData.publications.filter((_, i) => i !== index)
+                  setFormData(prev => ({ ...prev, publications: newPublications }))
+                }}
+                onTitleChange={(title) => {
+                  const newPublications = [...formData.publications]
+                  newPublications[index] = { ...newPublications[index], title }
+                  setFormData(prev => ({ ...prev, publications: newPublications }))
+                }}
+              />
+            ))}
+          <div className="flex justify-center p-4 border-2 border-dashed rounded-md">
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              multiple
+              accept=".pdf"
+              onChange={handleFileChange}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Ajouter des PDFs
+            </Button>
+          </div>
+        </div>
+      </div>
+        <div className="flex justify-end space-x-2">
+          <DialogTrigger asChild>
+            <Button variant="outline">Annuler</Button>
+          </DialogTrigger>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Création..." : "Créer"}
+          </Button>
+        </div>
+      </form>
+      </div>
+    </DialogContent>
+    </Dialog>
+  )
+}
