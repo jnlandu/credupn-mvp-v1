@@ -70,7 +70,7 @@ export default function PublicationsPage() {
                   <Input
                     placeholder="Rechercher..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e: any) => setSearchQuery(e.target.value)}
                     className="pl-9"
                   />
                 </div>

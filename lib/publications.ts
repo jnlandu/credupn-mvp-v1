@@ -14,7 +14,7 @@ export interface Publication {
   pages?: string;
   doi?: string;
   citations: number;
-  image: string;
+  image?: string,
   isRestricted: boolean;
   previewUrl?: string; // URL for preview-only PDF (first 2 pages)
   pdfUrl?: string;
@@ -25,14 +25,14 @@ export interface Publication {
 export const publications = [
     {
       id: 'pub-1',
-      title: "L'impact des Technologies Éducatives sur l'Apprentissage en RDC",
-      authors: ["Dr. Marie Kalonji", "Prof. Jean-Pierre Mbula"],
+      title: "L'impact des Technologies Éducatives sur l'Apprentissage  en RDC dans les fillières des sciences fondamentales, cas de la Chimie",
+      authors: ["Prof. Dr. Yvonne Ibebe"],
       date: "2024-01-15",
       abstract: `Cette étude examine l'impact de l'introduction des technologies éducatives dans les écoles 
       congolaises, en mettant l'accent sur les zones urbaines et rurales. Les résultats montrent une 
       amélioration significative des résultats d'apprentissage lorsque la technologie est intégrée de 
       manière appropriée.`,
-      keywords: ["technologie éducative", "apprentissage", "RDC", "éducation numérique"],
+      keywords: ["technologie éducative", "Femmes dans les Sciences", "Excellence en Feminin", "éducation numérique", "Chimie"],
       category: "Recherche",
       type: "Article",
       journal: "Revue Africaine des Sciences de l'Éducation",
@@ -41,7 +41,7 @@ export const publications = [
       pages: "45-67",
       doi: "10.1234/rase.2024.12.3.45",
       citations: 8,
-      image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80",
+      image: "/images/divers/upn-0.jpg",
       isRestricted: true,
       previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
@@ -61,7 +61,7 @@ export const publications = [
       institution: "Université Pédagogique Nationale",
       pages: "245",
       citations: 12,
-      image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80",
+      image: "/images/divers/upn-2.jpg",
       isRestricted: true,
       previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
@@ -84,7 +84,7 @@ export const publications = [
       pages: "123-145",
       doi: "10.5678/jipu.2023.8.2.123",
       citations: 5,
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80",
+      image: "/images/divers/upn-3.jpg",
       isRestricted: false,
       previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
@@ -104,7 +104,7 @@ export const publications = [
       pages: "180",
       isbn: "978-2-12345-678-9",
       citations: 15,
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80",
+      image: "/images/divers/upn-4.jpg",
       isRestricted: false,
       previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
@@ -124,7 +124,7 @@ export const publications = [
       institution: "CREDUPN",
       pages: "95",
       citations: 7,
-      image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80",
+      image: "/images/divers/upn-1.jpg",
       isRestricted: true,
       previewUrl: '/pdfs/previews/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
@@ -147,7 +147,7 @@ export const publications = [
       pages: "78-95",
       doi: "10.3456/rsea.2023.15.4.78",
       citations: 6,
-      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80",
+      image: "/images/divers/upn-6.jpg",
       isRestricted: false,
       previewUrl: '/pdfs/previews/tech-education-preview.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
@@ -170,7 +170,7 @@ export const publications = [
       pages: "112-130",
       doi: "10.5678/tea.2023.7.2.112",
       citations: 4,
-      image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80",
+      image: "/images/divers/upn-5.jpg",
       isRestricted: false,
       previewUrl: '/pdfs/previews/tech-education-preview.pdf',
       pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',
@@ -190,7 +190,7 @@ export const publications = [
         institution: "Université de Kinshasa",
         pages: "278",
         citations: 3,
-        image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80",
+        image: "/images/divers/upn-3.jpg",
         isRestricted: false,
         previewUrl: '/pdfs/previews/tech-education-preview.pdf',
         pdfUrl: '/pdfs/L_impact_des_Technologies_Educatives_en_RDC_with_Graphics.pdf',

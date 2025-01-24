@@ -109,10 +109,7 @@ export default function PaymentPage() {
         });
       }
       }catch(error: any){
-      toast({
-        title: "Paiement",
-        description: "Votre paiement a été effectué avec succès!"
-      });
+        console.log(`Votre paiement a été effectué avec succès! ${error.message}`)
       }finally{
         setIsProcessing(false)
       }
