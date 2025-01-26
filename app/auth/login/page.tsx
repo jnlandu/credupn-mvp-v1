@@ -101,7 +101,7 @@ export default  function LoginPage() {
             title: "Compte inexistant",
             description: (
               <div className="space-y-2">
-                <p>Aucun compte trouvé avec cet email.</p>
+                <p>Aucun compte trouvé avec cet email ou ce mot de passe.</p>
                 <Link href="/auth/signup">
                   <Button  size="sm" className='text-black mt-1'>
                     Créer un compte
