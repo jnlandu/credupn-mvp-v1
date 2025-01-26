@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import Cookies from 'js-cookie'
 import { createClient } from '@/utils/supabase/client'
+import { saveAuthData } from '@/utils/auth'
 // import { createClient } from '@/lib/supabase'
 // import { login, signup } from './actions'
 
@@ -126,6 +127,12 @@ export default  function LoginPage() {
       if (userData.role !== selectedRole) {
         throw new Error('Le rôle sélectionné ne correspond pas à votre compte')
       }
+      // Save auth data with remember me option
+     saveAuthData(
+      authData.session?.access_token || '',
+      userData.role,
+      data.rememberMe
+    )
       // Store session data
       Cookies.set('auth-token', authData.session?.access_token || '', {
         path: '/',
@@ -141,7 +148,9 @@ export default  function LoginPage() {
   
       toast({
         title: "Connexion réussie",
-        description: "Redirection vers le tableau de bord...",
+        description: data.rememberMe ? 
+          "Session persistante activée" : 
+          "Session temporaire"
       })
   
       // Role-based redirection
