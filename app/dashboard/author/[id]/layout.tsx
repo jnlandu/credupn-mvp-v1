@@ -29,7 +29,7 @@ export default function AuthorLayout({
   children, params
 }: LayoutProps) {
   const { id } = use(params) // Unwrap params using React.use()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
     <div className="flex min-h-screen">

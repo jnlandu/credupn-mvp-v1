@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import Cookies from 'js-cookie'
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/client'
 // import { createClient } from '@/lib/supabase'
 // import { login, signup } from './actions'
 
@@ -71,19 +71,19 @@ export default  function LoginPage() {
         password: data.password,
       })
   
-      if (authError) throw new Error(authError.message)
+      if (authError) throw authError
   
       // Get user role from profiles table
-      const { data: profileData, error: profileError } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('role')
         .eq('id', authData.user.id)
         .single()
   
-      if (profileError) throw new Error(profileError.message)
+      if (userError) throw userError
   
       // Verify role matches
-      if (profileData.role !== selectedRole) {
+      if (userData.role !== selectedRole) {
         throw new Error('Le rôle sélectionné ne correspond pas à votre compte')
       }
   
@@ -94,7 +94,7 @@ export default  function LoginPage() {
         sameSite: 'strict'
       })
       
-      Cookies.set('user-role', profileData.role, {
+      Cookies.set('user-role', userData.role, {
         path: '/',
         secure: true,
         sameSite: 'strict'
@@ -106,7 +106,7 @@ export default  function LoginPage() {
       })
   
       // Role-based redirection
-      switch (profileData.role) {
+      switch (userData.role) {
         case 'admin':
           router.push('/admin')
           break
@@ -131,9 +131,8 @@ export default  function LoginPage() {
     }
   }
 //  Google login and Github login
-
 const  handleGoogleLogin = async () => {
-  const supabase =  await createClient()
+  const supabase =   createClient()
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -151,7 +150,7 @@ const  handleGoogleLogin = async () => {
 }
 
 const handleGithubLogin = async () => {
-  const supabase =  await createClient()
+  const supabase =  createClient()
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {

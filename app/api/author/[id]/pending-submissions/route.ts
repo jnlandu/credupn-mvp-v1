@@ -1,9 +1,13 @@
 // app/api/authors/[id]/pending-submissions/route.ts
 import { NextResponse } from 'next/server'
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params
-
+export async function GET(
+   req: Request, 
+   context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const params = await context.params
+    const { id } = params
   // Mock data - replace with actual data fetching logic
   const pendingSubmissions = [
     {
@@ -23,4 +27,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   ]
 
   return NextResponse.json(pendingSubmissions)
+}catch(error){
+  console.error('Error fetching pending submissions:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch pending submissions' },
+      { status: 500 }
+    )
+}
 }
