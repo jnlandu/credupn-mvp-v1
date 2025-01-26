@@ -63,16 +63,57 @@ export default  function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
-    const supabase = await createClient()
+    const supabase = createClient()
     try {
       // Sign in with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       })
-  
-      if (authError) throw authError
-  
+
+      // Handle specific auth errors
+      if (authError) {
+        if (authError.message.includes('Email not confirmed')) {
+          toast({
+            variant: "destructive",
+            title: "Email non vérifié",
+            description: (
+              <div className="space-y-2">
+                <p>Veuillez vérifier votre email avant de vous connecter.</p>
+                <Button 
+                  className='text-black'
+                  size="sm" 
+                  onClick={() => resendVerificationEmail(data.email)}
+                >
+                  Renvoyer l'email de vérification
+                </Button>
+              </div>
+            ),
+            duration: 10000,
+          })
+          return
+        }
+        
+        if (authError.message.includes('Invalid login credentials')) {
+          toast({
+            variant: "destructive",
+            title: "Compte inexistant",
+            description: (
+              <div className="space-y-2">
+                <p>Aucun compte trouvé avec cet email.</p>
+                <Link href="/auth/signup">
+                  <Button  size="sm" className='text-black mt-1'>
+                    Créer un compte
+                  </Button>
+                </Link>
+              </div>
+            ),
+          })
+          return
+        }
+        
+        throw authError
+      }
       // Get user role from profiles table
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -81,12 +122,10 @@ export default  function LoginPage() {
         .single()
   
       if (userError) throw userError
-  
       // Verify role matches
       if (userData.role !== selectedRole) {
         throw new Error('Le rôle sélectionné ne correspond pas à votre compte')
       }
-  
       // Store session data
       Cookies.set('auth-token', authData.session?.access_token || '', {
         path: '/',
@@ -167,6 +206,31 @@ const handleGithubLogin = async () => {
   }
 }
 
+// Add resend verification email function
+const resendVerificationEmail = async (email: string) => {
+  const supabase = createClient()
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+    }
+  })
+
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible d'envoyer l'email de vérification"
+    })
+    return
+  }
+
+  toast({
+    title: "Email envoyé",
+    description: "Veuillez vérifier votre boîte de réception"
+  })
+}
 
 
 
@@ -427,15 +491,6 @@ return (
           >
             Mot de passe oublié ?
           </Link>
-          {/* <div>
-            Pas encore de compte ?{" "}
-            <Link
-              href="/auth/register"
-              className="font-semibold hover:text-primary transition-colors"
-            >
-              S'inscrire
-            </Link>
-          </div> */}
         </CardFooter>
       </Card>
       </div>
