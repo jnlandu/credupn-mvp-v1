@@ -428,7 +428,7 @@ return (
           >
             Mot de passe oublié ?
           </Link>
-          <div>
+          {/* <div>
             Pas encore de compte ?{" "}
             <Link
               href="/auth/register"
@@ -436,7 +436,7 @@ return (
             >
               S'inscrire
             </Link>
-          </div>
+          </div> */}
         </CardFooter>
       </Card>
       </div>
