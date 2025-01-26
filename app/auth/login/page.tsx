@@ -18,8 +18,9 @@ import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import Cookies from 'js-cookie'
-import { createClient } from '@/lib/supabase'
-
+import { createClient } from '@/utils/supabase/server'
+// import { createClient } from '@/lib/supabase'
+// import { login, signup } from './actions'
 
 // Define role type as union
 type Role = "author" | "reviewer" | "admin"
@@ -42,7 +43,7 @@ const loginSchema = z.object({
   rememberMe: z.boolean().default(false),
 })
 
-export default function LoginPage() {
+export default  function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [selectedRole, setSelectedRole] = useState<Role>('author')
@@ -62,7 +63,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
-    const supabase = createClient()
+    const supabase = await createClient()
     try {
       // Sign in with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -131,8 +132,8 @@ export default function LoginPage() {
   }
 //  Google login and Github login
 
-const handleGoogleLogin = async () => {
-  const supabase = createClient()
+const  handleGoogleLogin = async () => {
+  const supabase =  await createClient()
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -150,7 +151,7 @@ const handleGoogleLogin = async () => {
 }
 
 const handleGithubLogin = async () => {
-  const supabase = createClient()
+  const supabase =  await createClient()
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {

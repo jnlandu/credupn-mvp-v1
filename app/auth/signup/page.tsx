@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,8 +29,8 @@ import { Badge } from '@/components/ui/badge'
 import { Icons } from "@/components/icons"
 import Image from 'next/image'
 import { Progress } from '@/components/ui/progress'
-import { createClient } from '@/lib/supabase'
-import Cookies from 'js-cookie'
+import { createClient } from '@/utils/supabase/client'
+
 
 const signupSchema = z.object({
   name: z.string().min(2, "Le nom est requis"),
@@ -42,7 +42,7 @@ const signupSchema = z.object({
     .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
     .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre"),
   confirmPassword: z.string(),
-  role: z.enum(["admin", "author", "reviewer"]),
+  role: z.enum(["admin", "author", "reviewer", ""]),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -76,13 +76,13 @@ export default function SignupPage() {
       institution: "",
       password: "",
       confirmPassword: "",
-      role: "author",
+      role: "",
     },
   })
 
   const onSubmit = async (data: SignupData) => {
     setIsLoading(true)
-    const supabase = createClient()
+    const supabase =  createClient()
     try {
       // 1. Create auth user in Supabase
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -97,54 +97,61 @@ export default function SignupPage() {
         }
       })
   
-      if (signUpError) throw new Error(signUpError.message)
-      // 2. Insert into users table
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: authData.user?.id,
-            role: data.role,
-            created_at: new Date().toISOString(),
-            email: data.email,
-            institution: data.institution,
-            name: data.name,          
+      if (signUpError) throw signUpError
+      // 2. Create user record immediately after signup
+      if (authData.user?.id) {
+        console.log('Debugging user session:', authData.session?.user)
+        console.log('Debugging user:', authData.user)
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: authData.user.id,
+              email: data.email,
+              name: data.name,        
+              role: data.role,
+              institution: data.institution,
+              created_at: new Date().toISOString(), 
+            }
+          ])
+  
+          if (insertError) {
+            console.error('Insert Error:', insertError)
+            throw new Error('Failed to create user profile')
           }
-        ])
-  
-      if (profileError) throw new Error(profileError.message)
-  
+      }
       toast({
         title: "Inscription réussie",
         description: "Veuillez vérifier votre email pour confirmer votre compte",
       })
-      // Optional: Auto-login after signup
-      const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      })
+      router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`)
+      // // Optional: Auto-login after signup
+      // const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
+      //   email: data.email,
+      //   password: data.password,
+      // })
   
-      if (signInError) throw new Error(signInError.message)
+      // if (signInError) throw new Error(signInError.message)
   
-      // Store session
-      Cookies.set('auth-token', sessionData.session?.access_token || '', {
-        secure: true,
-        sameSite: 'strict'
-      })
+      // // Store session
+      // Cookies.set('auth-token', sessionData.session?.access_token || '', {
+      //   secure: true,
+      //   sameSite: 'strict'
+      // })
       // Redirect based on role
-      switch (data.role) {
-        case 'admin':
-          router.push('/admin')
-          break
-        case 'author':
-          router.push(`/dashboard/author/${authData.user?.id}`)
-          break
-        case 'reviewer':
-          router.push(`/dashboard/reviewer/${authData.user?.id}`)
-          break
-        default:
-          router.push('/dashboard')
-      }
+      // switch (data.role) {
+      //   case 'admin':
+      //     router.push('/admin')
+      //     break
+      //   case 'author':
+      //     router.push(`/dashboard/author/${authData.user?.id}`)
+      //     break
+      //   case 'reviewer':
+      //     router.push(`/dashboard/reviewer/${authData.user?.id}`)
+      //     break
+      //   default:
+      //     router.push('/dashboard')
+      // }
   
     } catch (error) {
       toast({
@@ -152,7 +159,7 @@ export default function SignupPage() {
         title: "Erreur d'inscription",
         description: error instanceof Error ? error.message : "Une erreur est survenue",
       })
-      console.log(error)
+      console.error('Signup Error:', error)
     } finally {
       setIsLoading(false)
     }
@@ -178,7 +185,7 @@ const handleGoogleSignup = async () => {
 }
   
   const handleGithubSignup = async () => {
-  const supabase = createClient()
+  const supabase =  createClient()
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
