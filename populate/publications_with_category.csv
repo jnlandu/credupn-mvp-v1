@@ -1,0 +1,11 @@
+id,user_id,title,abstract,status,submitted_at,updated_at,pdfUrl,category
+1,user-1,L'impact des Technologies Educatives,Une étude sur les impacts des technologies éducatives modernes.,published,2024-03-15T10:00:00Z,2024-03-15T10:00:00Z,https://example.com/pdfs/pub-1.pdf,Education
+2,user-2,Research on AI,An analysis of the current trends in artificial intelligence.,pending,2023-11-20T11:00:00Z,2023-11-20T11:00:00Z,https://example.com/pdfs/pub-2.pdf,Artificial Intelligence
+3,user-3,Quantum Computing Advances,Exploring the recent advancements in quantum computing.,published,2023-10-05T12:00:00Z,2023-10-05T12:00:00Z,https://example.com/pdfs/pub-3.pdf,Quantum Computing
+4,user-4,Nanotechnology in Medicine,Applications of nanotechnology in the field of medicine.,rejected,2023-09-15T13:00:00Z,2023-09-15T13:00:00Z,https://example.com/pdfs/pub-4.pdf,Nanotechnology
+5,user-5,Climate Change Effects,A study on the effects of climate change on ecosystems.,published,2023-08-25T14:00:00Z,2023-08-25T14:00:00Z,https://example.com/pdfs/pub-5.pdf,Climate Science
+6,user-6,Blockchain Technology,Innovations and use cases in blockchain technology.,pending,2023-07-30T15:00:00Z,2023-07-30T15:00:00Z,https://example.com/pdfs/pub-6.pdf,Blockchain
+7,user-7,Cybersecurity Trends,Emerging trends in cybersecurity for the modern age.,published,2023-06-10T16:00:00Z,2023-06-10T16:00:00Z,https://example.com/pdfs/pub-7.pdf,Cybersecurity
+8,user-8,Renewable Energy Sources,A review of renewable energy technologies and innovations.,rejected,2023-05-20T17:00:00Z,2023-05-20T17:00:00Z,https://example.com/pdfs/pub-8.pdf,Renewable Energy
+9,user-9,Artificial Intelligence Ethics,Ethical considerations in the development of AI systems.,published,2023-04-15T18:00:00Z,2023-04-15T18:00:00Z,https://example.com/pdfs/pub-9.pdf,Ethics
+10,user-10,Machine Learning Algorithms,Optimization techniques in machine learning algorithms.,pending,2023-03-25T19:00:00Z,2023-03-25T19:00:00Z,https://example.com/pdfs/pub-10.pdf,Machine Learning

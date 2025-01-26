@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import Cookies from 'js-cookie'
+import { createClient } from '@/lib/supabase'
 
 
 // Define role type as union
@@ -41,8 +42,6 @@ const loginSchema = z.object({
   rememberMe: z.boolean().default(false),
 })
 
-// type LoginFormData = z.infer<typeof loginSchema>
-
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -62,67 +61,116 @@ export default function LoginPage() {
 
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('Submitting with role:', data.role) // Debug log
     setIsLoading(true)
+    const supabase = createClient()
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          role: selectedRole // Ensure role is included
-        })
+      // Sign in with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
       })
-
-      const responseData: any  = await res.json()
-
-      if (!res.ok) {
-        throw new Error(responseData.error || 'Login failed')
+  
+      if (authError) throw new Error(authError.message)
+  
+      // Get user role from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single()
+  
+      if (profileError) throw new Error(profileError.message)
+  
+      // Verify role matches
+      if (profileData.role !== selectedRole) {
+        throw new Error('Le rôle sélectionné ne correspond pas à votre compte')
       }
-
-      // Store auth token
-      Cookies.set('auth-token', responseData.token, { 
-        path: '/',
-        secure: true,
-        sameSite: 'strict'
-      })
-      Cookies.set('user-role', responseData.user.role, {
+  
+      // Store session data
+      Cookies.set('auth-token', authData.session?.access_token || '', {
         path: '/',
         secure: true,
         sameSite: 'strict'
       })
       
+      Cookies.set('user-role', profileData.role, {
+        path: '/',
+        secure: true,
+        sameSite: 'strict'
+      })
+  
       toast({
         title: "Connexion réussie",
         description: "Redirection vers le tableau de bord...",
       })
-
+  
       // Role-based redirection
-      switch (responseData.user.role) {
+      switch (profileData.role) {
         case 'admin':
-          router.push(`/admin`)
+          router.push('/admin')
           break
         case 'author':
-          router.push(`/dashboard/author/${responseData.user.id}`)
+          router.push(`/dashboard/author/${authData.user.id}`)
           break
         case 'reviewer':
-          router.push(`/dashboard/reviewer/${responseData.user.id}`)
+          router.push(`/dashboard/reviewer/${authData.user.id}`)
           break
         default:
           throw new Error('Rôle non reconnu')
       }
+  
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erreur",
+        title: "Erreur de connexion",
         description: error instanceof Error ? error.message : "Une erreur est survenue",
       })
     } finally {
       setIsLoading(false)
     }
   }
+//  Google login and Github login
 
-  return (
+const handleGoogleLogin = async () => {
+  const supabase = createClient()
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: process.env.NEXT_PUBLIC_SITE_URL + '/auth/callback',
+    }
+  })
+  
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: error.message
+    })
+  }
+}
+
+const handleGithubLogin = async () => {
+  const supabase = createClient()
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo: process.env.NEXT_PUBLIC_SITE_URL + '/auth/callback',
+    }
+  })
+  
+  if (error) {
+    toast({
+      variant: "destructive", 
+      title: "Erreur",
+      description: error.message
+    })
+  }
+}
+
+
+
+
+return (
 <div className="min-h-[calc(100vh-4rem)] flex">
     {/* Left side - Image and Content */}
     <div className="hidden lg:flex lg:w-1/2 relative bg-gray-900">
@@ -329,14 +377,26 @@ export default function LoginPage() {
               </div>
               
               <div className="flex gap-4">
-                <Button variant="outline" type="button" className="w-full" disabled={isLoading}>
+              <Button 
+                  variant="outline" 
+                  type="button" 
+                  className="w-full" 
+                  disabled={isLoading}
+                  onClick={handleGoogleLogin}
+                >
                   <Icons.google className="h-5 w-5 mr-2" />
                   Google
                 </Button>
-                <Button variant="outline" type="button" className="w-full" disabled={isLoading}>
-                  <Icons.github className="h-5 w-5 mr-2" />
-                  GitHub
-                </Button>
+                <Button 
+                variant="outline" 
+                type="button" 
+                className="w-full" 
+                disabled={isLoading}
+                onClick={handleGithubLogin}
+              >
+                <Icons.github className="h-5 w-5 mr-2" />
+                GitHub
+              </Button>
               </div>
           </form>
           {/* Add signup section */}

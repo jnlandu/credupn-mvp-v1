@@ -13,10 +13,24 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, ArrowLeft, GraduationCap, BookOpen, Globe, Users, Mail, Building2, Lock, User } from 'lucide-react'
+import { 
+  Loader2,
+   ArrowLeft, 
+   GraduationCap, 
+   BookOpen, 
+   Globe, 
+   Users, 
+   Mail, 
+   Building2, 
+   Lock, 
+   User,
+   Eye, EyeOff } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Icons } from "@/components/icons"
 import Image from 'next/image'
 import { Progress } from '@/components/ui/progress'
+import { createClient } from '@/lib/supabase'
+import Cookies from 'js-cookie'
 
 const signupSchema = z.object({
   name: z.string().min(2, "Le nom est requis"),
@@ -28,7 +42,7 @@ const signupSchema = z.object({
     .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
     .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre"),
   confirmPassword: z.string(),
-  role: z.enum(["author", "reviewer"]),
+  role: z.enum(["admin", "author", "reviewer"]),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -41,6 +55,8 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(1)
   const totalSteps = 3
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
 
   const calculatePasswordStrength = (password: string): number => {
@@ -66,35 +82,118 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupData) => {
     setIsLoading(true)
+    const supabase = createClient()
     try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+      // 1. Create auth user in Supabase
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.name,
+            institution: data.institution,
+            role: data.role,
+          }
+        }
       })
-
-      const responseData : any = await res.json()
-
-      if (!res.ok) {
-        throw new Error(responseData.error || 'Inscription échouée')
-      }
-
+  
+      if (signUpError) throw new Error(signUpError.message)
+      // 2. Insert into users table
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: authData.user?.id,
+            role: data.role,
+            created_at: new Date().toISOString(),
+            email: data.email,
+            institution: data.institution,
+            name: data.name,          
+          }
+        ])
+  
+      if (profileError) throw new Error(profileError.message)
+  
       toast({
         title: "Inscription réussie",
-        description: "Vous pouvez maintenant vous connecter.",
+        description: "Veuillez vérifier votre email pour confirmer votre compte",
       })
-
-      router.push('/auth/login')
+      // Optional: Auto-login after signup
+      const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      })
+  
+      if (signInError) throw new Error(signInError.message)
+  
+      // Store session
+      Cookies.set('auth-token', sessionData.session?.access_token || '', {
+        secure: true,
+        sameSite: 'strict'
+      })
+      // Redirect based on role
+      switch (data.role) {
+        case 'admin':
+          router.push('/admin')
+          break
+        case 'author':
+          router.push(`/dashboard/author/${authData.user?.id}`)
+          break
+        case 'reviewer':
+          router.push(`/dashboard/reviewer/${authData.user?.id}`)
+          break
+        default:
+          router.push('/dashboard')
+      }
+  
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erreur",
+        title: "Erreur d'inscription",
         description: error instanceof Error ? error.message : "Une erreur est survenue",
       })
+      console.log(error)
     } finally {
       setIsLoading(false)
     }
   }
+
+ // Update OAuth handlers
+const handleGoogleSignup = async () => {
+  const supabase = createClient()
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: process.env.NEXT_PUBLIC_SITE_URL + '/auth/callback',
+    }
+  })
+  
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: error.message
+    })
+  }
+}
+  
+  const handleGithubSignup = async () => {
+  const supabase = createClient()
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo: process.env.NEXT_PUBLIC_SITE_URL + '/auth/callback',
+    }
+  })
+  
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: error.message
+    })
+  }
+}
 
   return (
     <div className="min-h-screen flex">
@@ -243,53 +342,88 @@ export default function SignupPage() {
                     </div>
                   )}
 
-                  {step === 2 && (
-                    <div className="space-y-4">
+                {step === 2 && (
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Label htmlFor="password">Mot de passe</Label>
                       <div className="relative">
-                        <Label htmlFor="password">Mot de passe</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="password"
-                            type="password"
-                            className="pl-10"
-                            {...form.register("password")}
-                            disabled={isLoading}
-                          />
-                        </div>
-                        {form.watch("password") && (
-                          <Progress 
-                            value={calculatePasswordStrength(form.watch("password"))} 
-                            className="h-1 mt-2"
-                          />
-                        )}
-                        {form.formState.errors.password && (
-                          <p className="text-sm text-red-500 mt-1">
-                            {form.formState.errors.password.message}
-                          </p>
-                        )}
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          className="pl-10 pr-10"
+                          {...form.register("password")}
+                          disabled={isLoading}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
                       </div>
-
-                      <div className="relative">
-                        <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="confirmPassword"
-                            type="password"
-                            className="pl-10"
-                            {...form.register("confirmPassword")}
-                            disabled={isLoading}
-                          />
-                        </div>
-                        {form.formState.errors.confirmPassword && (
-                          <p className="text-sm text-red-500 mt-1">
-                            {form.formState.errors.confirmPassword.message}
-                          </p>
-                        )}
-                      </div>
+                      {form.watch("password") && (
+                        <Progress 
+                          value={calculatePasswordStrength(form.watch("password"))} 
+                          className="h-1 mt-2"
+                        />
+                      )}
+                      {form.formState.errors.password && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {form.formState.errors.password.message}
+                        </p>
+                      )}
                     </div>
-                  )}
+
+                    <div className="relative">
+                      <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          className="pl-10 pr-10"
+                          {...form.register("confirmPassword")}
+                          disabled={isLoading}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                      </div>
+                      {form.watch("confirmPassword") && (
+                        <div className="mt-1">
+                          {form.watch("password") === form.watch("confirmPassword") ? (
+                            <p className="text-sm text-green-500">Les mots de passe correspondent</p>
+                          ) : (
+                            <p className="text-sm text-red-500">Les mots de passe ne correspondent pas</p>
+                          )}
+                        </div>
+                      )}
+                      {form.formState.errors.confirmPassword && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {form.formState.errors.confirmPassword.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                   {step === 3 && (
                     <div className="space-y-4">
@@ -368,7 +502,40 @@ export default function SignupPage() {
                     )}
                   </div>
                 </form>
+                 {/* // Add social signup section after the form */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Ou s'inscrire avec
+                    </span>
+                  </div>
+                </div>
 
+                <div className="flex gap-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleGoogleSignup}
+                    disabled={isLoading}
+                  >
+                    <Icons.google className="mr-2 h-4 w-4" />
+                    Google
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleGithubSignup}
+                    disabled={isLoading}
+                  >
+                    <Icons.github className="mr-2 h-4 w-4" />
+                    GitHub
+                  </Button>
+                </div>
                 <div className="mt-6 text-center text-sm text-gray-600">
                   Vous avez déjà un compte?{" "}
                   <Link 
@@ -380,6 +547,7 @@ export default function SignupPage() {
                 </div>
               </CardContent>
             </Card>
+            
           </div>
         </div>
         {/* Footer */}
