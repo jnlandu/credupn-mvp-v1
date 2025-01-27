@@ -1,7 +1,7 @@
 // app/admin/publications/page.tsx
 "use client"
 
-import { useState, useCallback  } from 'react'
+import { useState, useCallback, useEffect  } from 'react'
 import {
   Table,
   TableBody,
@@ -24,13 +24,18 @@ import {
   Calendar,
   Download,
   Plus,
-  Send
+  Send,
+  Loader2,
+  RefreshCw
 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDropzone } from 'react-dropzone'
-import { Publication, Publications,statusStyles  } from "@/data/publications"
+import { Publication,statusStyles  } from "@/data/publications"
 import { useToast } from '@/hooks/use-toast'
 import { Tooltip } from '@radix-ui/react-tooltip'
+
+
+import { createClient } from '@/utils/supabase/client'
 
 export default function PublicationsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -41,16 +46,21 @@ export default function PublicationsAdmin() {
   const [newPublication, setNewPublication] = useState<Partial<Publication>>({})
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [pdfPreview, setPdfPreview] = useState<string | null>(null)
+  const [previewPub, setPreviewPub] = useState<Publication | null>(null)
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
 
-  const [publications, setPublications] = useState<Publication[]>(Publications)
+  const [publications, setPublications] = useState<Publication[]>([])
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [showReviewerModal, setShowReviewerModal] = useState(false)
   const [selectedReviewers, setSelectedReviewers] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   // Add state for filtering reviewers
   const [filterTerm, setFilterTerm] = useState('')
   // const [selectedPub, setSelectedPub] = useState(null)
-  
-
   const { toast } = useToast()
+  const countWords = (text: string) => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  }
 
     // Calculate pagination
     const totalItems = publications.length
@@ -106,89 +116,264 @@ export default function PublicationsAdmin() {
     multiple: false
   })
 
+
+// Add refresh function
+const refreshPublications = async () => {
+  setIsRefreshing(true)
+  try {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('publications')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    setPublications(data || [])
+    
+    toast({
+      title: "Actualisé",
+      description: "Liste des publications mise à jour"
+    })
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible d'actualiser les publications"
+    })
+  } finally {
+    setIsRefreshing(false)
+  }
+}
+//   Fetch publications
+const fetchPublications = async () => {
+  const supabase = createClient()
+  
+  try {
+    const { data, error } = await supabase
+      .from('publications')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    setPublications(data || [])
+  } catch (error) {
+    console.error('Error fetching publications:', error)
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger les publications"
+    })
+  } finally {
+    setIsLoading(false)
+  }
+}
+
+// Add real-time subscription
+useEffect(() => {
+  const supabase = createClient()
+  
+  // Initial fetch
+  fetchPublications()
+
+  // Subscribe to changes
+  const channel = supabase
+    .channel('publications_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'publications'
+      },
+      (payload) => {
+        fetchPublications() // Refresh data when changes occur
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
+
+
   // Handle Add Publication Form Submission
   const handleAddPublication = async (e: React.FormEvent) => {
     e.preventDefault();
+    const supabase = createClient()
   
     if (
-      newPublication.title &&
-      newPublication.author &&
-      newPublication.date &&
-      newPublication.category &&
-      pdfFile &&
-      newPublication.status
+      !newPublication.title ||
+      !newPublication.author ||
+      !newPublication.date ||
+      !newPublication.category ||
+      !pdfFile ||
+      !newPublication.status
     ) {
-      const formData = new FormData();
-      formData.append('title', newPublication.title);
-      formData.append('author', newPublication.author);
-      formData.append('date', newPublication.date);
-      formData.append('category', newPublication.category);
-      formData.append('status', newPublication.status as string);
-      formData.append('pdf', pdfFile);
-  
-      console.log('Form Data Submission:');
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
-  
-      try {
-        const response = await fetch('/api/admin/publications/add', {
-          method: 'POST',
-          body: formData,
-        });
-  
-        if (response.ok) {
-          const result: any = await response.json();
-          setPublications([result.publication, ...publications]);
-          setNewPublication({});
-          setPdfFile(null);
-          setPdfPreview(null);
-          setIsAddDialogOpen(false);
-          toast({
-            title: "Succès",
-            description: "Publication ajoutée avec succès",
-          })
-         
-        } else {
-          const error: any = await response.json();
-          console.error('Error adding publication:', error);
-          toast({
-            title: "Erreur!",
-            description: `Erreur: ${error.error}`
-          })
-        }
-      } catch (error) {
-        console.error('Error adding publication:', error);
-        toast({
-          title: "Erreur!",
-          description: 'Une erreur est survenue lors de l\'ajout de la publication.'
-        })
-      }
-    } else {
       toast({
         title: "Erreur!",
         description: 'Veuillez remplir tous les champs et télécharger un PDF'
       })
-    }
-  };
+      return
+      }
+  
+      try {
+        setIsLoading(true)
+        // Check and create bucket if not exists
+          const { data: buckets, error: listError } = await supabase
+          .storage
+          .listBuckets()
 
+        if (listError) {
+          throw new Error(`Erreur liste buckets: ${listError.message}`)
+        }
+        const bucketExists = buckets.some(b => b.name === 'publications')
+
+        if (!bucketExists) {
+          const { error: createError } = await supabase
+            .storage
+            .createBucket('publications', {
+              public: true,
+              allowedMimeTypes: ['application/pdf'],
+              fileSizeLimit: 10485760 // 10MB
+            })
+    
+          if (createError) {
+            throw new Error(`Erreur création bucket: ${createError.message}`)
+          }
+        }
+        //  Check ig bucket exists:
+        const { data: bucket, error: bucketError } = await supabase
+        .storage
+        .getBucket('publications')
+
+        if (bucketError) {
+          console.error('Bucket error:', bucketError)
+          throw new Error('Erreur de configuration du stockage')
+        }
+  
+        // 1. Upload PDF to Supabase Storage
+        const fileExt = pdfFile.name.split('.').pop()
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
+        const filePath = fileName
+
+        const { error: uploadError } = await supabase.storage
+        .from('publications')
+        .upload(filePath, pdfFile)
+
+        if (uploadError) {
+          throw new Error(`Erreur d'upload: ${uploadError.message}`)
+        }
+
+        // 2. Get public URL for the uploaded file
+        const { data: { publicUrl } } = supabase.storage
+        .from('publications')
+        .getPublicUrl(filePath)
+
+
+        // 3. Insert publication data into database
+        const { data: publication, error: dbError } = await supabase
+        .from('publications')
+        .insert([
+          {
+            title: newPublication.title,
+            author: Array.isArray(newPublication.author) 
+              ? newPublication.author 
+              : newPublication.author.split(',').map(a => a.trim()),
+            date: newPublication.date,
+            category: newPublication.category,
+            status: newPublication.status,
+            pdf_url: publicUrl,
+            is_restricted: false,
+            citations: 0,
+            created_at: new Date().toISOString(),
+            abstract: newPublication.abstract,
+            keywords: newPublication.keywords
+          }
+        ])
+        .select()
+        .single()
+
+        if (dbError) {
+          // Log detailed database error
+          console.error('Database Error:', {
+            code: dbError.code,
+            message: dbError.message,
+            details: dbError.details,
+            hint: dbError.hint
+          })
+          throw new Error(`Erreur base de données: ${dbError.message}`)
+        }
+    
+        if (!publication) {
+          throw new Error("Données de publication non retournées")
+        }
+  
+        // 4. Update UI state
+        setPublications([publication, ...publications])
+        setNewPublication({})
+        setPdfFile(null)
+        setPdfPreview(null)
+        setIsAddDialogOpen(false)
+
+        toast({
+          title: "Succès",
+          description: "Publication ajoutée avec succès"
+        })
+      } catch (error: any) {
+        console.log('Publication Error:', {
+          error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          context: {
+            title: newPublication.title,
+            fileName: pdfFile?.name
+          }
+        })
+        toast({
+          variant: "destructive",
+          title: "Erreur!",
+          description: error instanceof Error ? error.message : 'Une erreur est survenue'
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
   
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Publications</h1>
         <div className="flex items-center gap-4">
-        <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Rechercher..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e: any) => setSearchTerm(e.target.value)}
-          />
-        </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={refreshPublications}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Actualisation...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Actualiser
+              </>
+            )}
+          </Button>
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Rechercher..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e: any) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
             Ajouter Publication
           </Button>
         </div>
@@ -198,82 +383,84 @@ export default function PublicationsAdmin() {
         <div className="min-w-[60px]"> {/* Set minimum width */}
         <Table>
           <TableHeader>
-          <TableRow className="bg-gray-100 hover:bg-gray-100">
-          <TableHead className="text-gray-900 font-semibold">Titre</TableHead>
-        <TableHead className="text-gray-900 font-semibold">Auteur.e(s)</TableHead>
-        <TableHead className="text-gray-900 font-semibold">Date</TableHead>
-        <TableHead className="text-gray-900 font-semibold">Catégorie</TableHead>
-        <TableHead className="text-gray-900 font-semibold">Status</TableHead>
-        <TableHead className="text-gray-900 font-semibold">Actions</TableHead>
-        </TableRow>
+            <TableRow className="bg-gray-100 hover:bg-gray-100">
+              <TableHead className="text-gray-900 font-semibold">Titre</TableHead>
+              <TableHead className="text-gray-900 font-semibold">Auteur.e(s)</TableHead>
+              <TableHead className="text-gray-900 font-semibold">Date</TableHead>
+              <TableHead className="text-gray-900 font-semibold">Catégorie</TableHead>
+              <TableHead className="text-gray-900 font-semibold">Status</TableHead>
+              <TableHead className="text-gray-900 font-semibold">Actions</TableHead>
+            </TableRow>
           </TableHeader>
           <TableBody>
-            {currentItems
-              .filter(pub => 
-                pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                pub.author.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-              .map((pub) => (
-                <TableRow key={pub.id}>
-                  <TableCell className="font-medium">{pub.title}</TableCell>
-                  <TableCell>{pub.author}</TableCell>
-                  <TableCell>{pub.date}</TableCell>
-                  <TableCell>{pub.category}</TableCell>
-                  <TableCell>
-                    <Badge className={statusStyles[pub.status]}>
-                      {pub.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedPub(pub)}
-                      >
-                        
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(`/api/publications/${selectedPub?.id}/forward`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ reviewers: selectedReviewers })
-                          })
-                          if (!res.ok) throw new Error('Failed to forward publication')
-                          toast({
-                            title: "Succès",
-                            description: "Publication envoyée aux évaluateurs sélectionnés.",
-                          })
-                          setShowReviewerModal(false)
-                        } catch (error) {
-                          toast({
-                            variant: "destructive",
-                            title: "Erreur",
-                            description: "Impossible d'envoyer la publication. Veuillez réessayer.",
-                          })
-                        }
-                      }}
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center">
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Chargement des publications...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : publications.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">
+                  Aucune publication trouvée
+                </TableCell>
+              </TableRow>
+            ) : (
+              publications
+                .filter(pub => 
+                  pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  pub.author.some(author => 
+                    author.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                )
+                .slice(startIndex, endIndex)
+                .map((pub) => (
+                  <TableRow key={pub.id}>
+                    <TableCell className="font-medium">{pub.title}</TableCell>
+                    <TableCell>{Array.isArray(pub.author) ? pub.author.join(', ') : pub.author}</TableCell>
+                    <TableCell>{new Date(pub.date).toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell>{pub.category}</TableCell>
+                    <TableCell>
+                      <Badge className={statusStyles[pub.status]}>
+                        {pub.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setIsPreviewLoading(true)
+                            setPreviewPub(pub)
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setShowReviewerModal(true)}
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+            )}
           </TableBody>
         </Table>
         </div>
@@ -328,13 +515,14 @@ export default function PublicationsAdmin() {
         </div>
 
 
-      {/* Add Publication Dialog */}
+    {/* Add Publication Dialog */}
    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-     <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
        <DialogHeader>
          <DialogTitle>Ajouter Nouvelle Publication</DialogTitle>
        </DialogHeader>
-       <form onSubmit={handleAddPublication} className="space-y-4">
+       <div className="flex-1 overflow-y-auto pr-2">
+       <form onSubmit={handleAddPublication} className="space-y-4 px-2">
          <div className="grid gap-2">
           <label className="font-medium" htmlFor="title">Titre</label>
           <Input 
@@ -345,14 +533,111 @@ export default function PublicationsAdmin() {
               />
             </div>
             <div className="grid gap-2">
-              <label className="font-medium" htmlFor="author">Auteur</label>
+              <label className="font-medium" htmlFor="author">Auteurs</label>
               <Input 
                 id="author" 
                 value={newPublication.author || ''} 
-                onChange={(e: any) => setNewPublication({ ...newPublication, author: e.target.value })}
+                onChange={(e: any) => {
+                  const authors = e.target.value.split(',').map((author: string) => author.trim())
+                  setNewPublication({ ...newPublication, author: e.target.value })
+                }}
+                placeholder="Séparez les auteurs par des virgules"
                 required 
               />
+              <p className="text-sm text-gray-500">
+                Ex: Yawidi Jean-paul, Mayala lemba Francis
+              </p>
             </div>
+            {/* // Add abstract field to form (after title field) */}
+            <div className="grid gap-2">
+              <label className="font-medium" htmlFor="abstract">Résumé</label>
+              <textarea
+                  id="abstract"
+                  rows={4}
+                  className={`w-full p-2 border rounded-md resize-none ${
+                    countWords(newPublication.abstract || '') > 150 ? 'border-red-500' : ''
+                  }`}
+                  value={newPublication.abstract || ''}
+                  onChange={(e: any) => {
+                    const wordCount = countWords(e.target.value);
+                    if (wordCount <= 150) {
+                      setNewPublication({ 
+                        ...newPublication, 
+                        abstract: e.target.value 
+                      });
+                    }
+                  }}
+                  required
+                  placeholder="Entrez le résumé de la publication (250 mots maximum)..."
+                />
+                {countWords(newPublication.abstract || '') > 150 && (
+                  <p className="text-sm text-red-500">
+                    Le résumé ne doit pas dépasser 250 mots
+                  </p>
+                )}
+                <span className={`text-sm text-end ${
+                  countWords(newPublication.abstract || '') > 150 ? 'text-red-500' : 'text-gray-500'
+                }`}>
+                  {countWords(newPublication.abstract || '')} / 150 mots
+                </span>
+            </div>
+            {/* Keywords  */}
+              <div className="grid gap-2">
+                <label className="font-medium" htmlFor="keywords">Mots-clés</label>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {newPublication.keywords?.map((keyword, index) => (
+                      <span 
+                        key={index} 
+                        className="bg-gray-100 px-2 py-1 rounded-full text-sm flex items-center gap-1"
+                      >
+                        {keyword}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newKeywords = [...(newPublication.keywords || [])];
+                            newKeywords.splice(index, 1);
+                            setNewPublication({ ...newPublication, keywords: newKeywords });
+                          }}
+                          className="hover:text-red-500"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      id="keywords"
+                      placeholder="Ajouter un mot-clé"
+                      onKeyDown={(e: any) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const input = e.target as any;
+                          const keyword = input.value.trim();
+                          
+                          if (keyword && (!newPublication.keywords || newPublication.keywords.length < 5)) {
+                            setNewPublication({
+                              ...newPublication,
+                              keywords: [...(newPublication.keywords || []), keyword]
+                            });
+                            input.value = '';
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Appuyez sur Entrée pour ajouter (maximum 5 mots-clés)
+                  </p>
+                  {newPublication.keywords && newPublication.keywords.length >= 5 && (
+                    <p className="text-sm text-amber-500">
+                      Nombre maximum de mots-clés atteint
+                    </p>
+                  )}
+                </div>
+              </div>
+
             <div className="grid gap-2">
               <label className="font-medium" htmlFor="date">Date</label>
               <Input 
@@ -391,9 +676,10 @@ export default function PublicationsAdmin() {
                <SelectValue placeholder="Sélectionner le statut" />
              </SelectTrigger>
              <SelectContent>
-               <SelectItem value="published">Publié</SelectItem>
-               <SelectItem value="pending">En attente</SelectItem>
-               <SelectItem value="rejected">Rejeté</SelectItem>
+               <SelectItem value="PUBLISHED">Publié</SelectItem>
+               <SelectItem value="PENDING">En attente</SelectItem>
+               <SelectItem value="REJECTED">Rejeté</SelectItem>
+               <SelectItem value="REVIEW">En cours de review</SelectItem>
              </SelectContent>
            </Select>
          </div>
@@ -429,11 +715,19 @@ export default function PublicationsAdmin() {
            <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
              Annuler
            </Button>
-           <Button type="submit" disabled={!pdfFile}>
-             Ajouter
-           </Button>
+           <Button type="submit" disabled={!pdfFile || isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Ajout en cours...
+              </>
+            ) : (
+              'Ajouter'
+            )}
+          </Button>
          </div>
        </form>
+       </div>
      </DialogContent>
    </Dialog>
 
@@ -552,6 +846,60 @@ export default function PublicationsAdmin() {
   </DialogContent>
 </Dialog>
 
+{/* Publication preview  */}
+<Dialog open={!!previewPub} onOpenChange={() => setPreviewPub(null)}>
+  <DialogContent className="max-w-4xl max-h-[90vh]">
+    <DialogHeader>
+      <DialogTitle>
+        {previewPub?.title}
+      </DialogTitle>
+    </DialogHeader>
+    <div className="mt-4 space-y-4">
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p className="font-semibold">Auteur(s):</p>
+          <p>{Array.isArray(previewPub?.author) ? previewPub?.author.join(', ') : previewPub?.author}</p>
+        </div>
+        <div>
+          <p className="font-semibold">Date:</p>
+          <p>{previewPub?.date && new Date(previewPub.date).toLocaleDateString('fr-FR')}</p>
+        </div>
+        <div>
+          <p className="font-semibold">Catégorie:</p>
+          <p>{previewPub?.category}</p>
+        </div>
+        <div>
+          <p className="font-semibold">Statut:</p>
+          <Badge className={statusStyles[previewPub?.status || '']}>
+            {previewPub?.status}
+          </Badge>
+        </div>
+      </div>
+
+      {previewPub?.abstract && (
+        <div>
+          <p className="font-semibold">Résumé:</p>
+          <p className="mt-1">{previewPub.abstract}</p>
+        </div>
+      )}
+
+      <div className="h-[60vh] border rounded-lg overflow-hidden">
+        {isPreviewLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <iframe
+            src={previewPub?.pdf_url}
+            className="w-full h-full"
+            onLoad={() => setIsPreviewLoading(false)}
+          />
+        )}
+      </div>
     </div>
+  </DialogContent>
+</Dialog>
+
+ </div>
   )
 }
