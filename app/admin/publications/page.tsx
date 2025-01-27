@@ -415,8 +415,9 @@ useEffect(() => {
               publications
                 .filter(pub => 
                   pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  pub.author.some(author => 
-                    author.toLowerCase().includes(searchTerm.toLowerCase())
+                  (Array.isArray(pub.author) 
+                    ? pub.author.some(author => author.toLowerCase().includes(searchTerm.toLowerCase()))
+                    : pub.author.toLowerCase().includes(searchTerm.toLowerCase())
                   )
                 )
                 .slice(startIndex, endIndex)

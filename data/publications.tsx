@@ -4,7 +4,7 @@
 export interface Publication {
     id: string
     title: string
-    author: string  // author: string[] for multiple authors
+    author: string[] | string  // author: string[] for multiple authors
     date: string
     status: 'PUBLISHED' | 'PENDING' | 'REJECTED' | 'REVIEW' 
     category: string
