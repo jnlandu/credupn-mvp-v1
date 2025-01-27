@@ -26,7 +26,9 @@ import {
   Plus,
   Send,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  ExternalLink,
+  AlertCircle
 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDropzone } from 'react-dropzone'
@@ -48,6 +50,7 @@ export default function PublicationsAdmin() {
   const [pdfPreview, setPdfPreview] = useState<string | null>(null)
   const [previewPub, setPreviewPub] = useState<Publication | null>(null)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+  const [pdfError, setPdfError] = useState(false)
 
   const [publications, setPublications] = useState<Publication[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -771,7 +774,7 @@ useEffect(() => {
           )}
         </DialogContent>
       </Dialog>
-
+  {/*  Send to the reviewers */}
   <Dialog open={showReviewerModal} onOpenChange={setShowReviewerModal}>
   <DialogContent className="max-w-lg">
     <DialogHeader>
@@ -848,54 +851,86 @@ useEffect(() => {
 
 {/* Publication preview  */}
 <Dialog open={!!previewPub} onOpenChange={() => setPreviewPub(null)}>
-  <DialogContent className="max-w-4xl max-h-[90vh]">
-    <DialogHeader>
-      <DialogTitle>
-        {previewPub?.title}
-      </DialogTitle>
+  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <DialogHeader className="sticky top-0  z-100 p-6 border-b">
+      <DialogTitle>Détails de la Publication: {previewPub?.title}</DialogTitle>
     </DialogHeader>
     <div className="mt-4 space-y-4">
-      <div className="grid grid-cols-2 gap-4 text-sm">
+    <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <p className="font-semibold">Auteur(s):</p>
-          <p>{Array.isArray(previewPub?.author) ? previewPub?.author.join(', ') : previewPub?.author}</p>
+          <span className="font-semibold">Auteur(s): </span>
+          {Array.isArray(previewPub?.author) ? previewPub?.author.join(', ') : previewPub?.author}
         </div>
         <div>
-          <p className="font-semibold">Date:</p>
-          <p>{previewPub?.date && new Date(previewPub.date).toLocaleDateString('fr-FR')}</p>
+          <span className="font-semibold">Date: </span>
+          {previewPub?.date && new Date(previewPub.date).toLocaleDateString('fr-FR')}
         </div>
         <div>
-          <p className="font-semibold">Catégorie:</p>
-          <p>{previewPub?.category}</p>
+          <span className="font-semibold">Catégorie: </span>
+          {previewPub?.category}
         </div>
-        <div>
-          <p className="font-semibold">Statut:</p>
-          <Badge className={statusStyles[previewPub?.status || '']}>
-            {previewPub?.status}
-          </Badge>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">Statut: </span>
+          <Badge>{previewPub?.status}</Badge>
         </div>
       </div>
-
       {previewPub?.abstract && (
         <div>
           <p className="font-semibold">Résumé:</p>
-          <p className="mt-1">{previewPub.abstract}</p>
+          <p className="mt-1 justify-center">{previewPub.abstract}</p>
         </div>
       )}
 
+      {/*  pdf previewing */}
       <div className="h-[60vh] border rounded-lg overflow-hidden">
-        {isPreviewLoading ? (
-          <div className="h-full flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          <iframe
-            src={previewPub?.pdf_url}
-            className="w-full h-full"
-            onLoad={() => setIsPreviewLoading(false)}
-          />
-        )}
+      {isPreviewLoading ? (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
+    ) : pdfError ? (
+      <div className="h-full flex items-center justify-center flex-col gap-2">
+        <AlertCircle className="h-8 w-8 text-red-500" />
+        <p>Impossible de charger le PDF</p>
+      </div>
+    ) : (
+    <object
+      data={previewPub?.pdfUrl}
+      type="application/pdf"
+      className="w-full h-full"
+      onLoad={() => {
+        setIsPreviewLoading(false)
+        setPdfError(false)
+      }}
+      onError={() => {
+        setIsPreviewLoading(false)
+        setPdfError(true)
+      }}
+    >
+      <div className="h-full flex items-center justify-center flex-col gap-2">
+        <p>Le PDF ne peut pas être affiché directement. </p>
+        <a
+          href={previewPub?.pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center"
+          onClick={(e) => {
+            if (!previewPub?.pdfUrl) {
+              e.preventDefault()
+              toast({
+                variant: "destructive",
+                title: "Erreur",
+                description: "PDF non disponible"
+              })
+            }
+          }}
+        >
+        <ExternalLink className="h-4 w-4 mr-2" />
+        Ouvrir PDF
+      </a>
+      </div>
+    </object>
+  )}
+</div>
     </div>
   </DialogContent>
 </Dialog>
