@@ -1,7 +1,7 @@
 // app/admin/users/page.tsx
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,9 +36,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar, // Add this
-  Download  // Add this if you're using the Download icon 
+  Download,  // Add this if you're using the Download icon 
+  Loader2,
+  RefreshCw
 } from 'lucide-react'
 import { AddUserModal } from '@/components/users/AddUserModal'
+import { createClient } from '@/utils/supabase/client'
+import { useToast } from '@/hooks/use-toast'
+
+
 
 interface User {
   id: string
@@ -61,184 +67,259 @@ export default function UsersAdmin() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [selectedUserPubs, setSelectedUserPubs] = useState<User | null>(null)
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [institutionFilter, setInstitutionFilter] = useState<string>('all')
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const institutions = Array.from(new Set(users.map(user => user.institution)))
+
+  const { toast } = useToast()
+//   const users: User[] = [
+//     {
+//       id: 'user-1',
+//       name: 'Dr. Marie Kabongo',
+//       email: 'marie.k@upn.ac.cd',
+//       role: 'author',
+//       institution: 'UPN',
+//       phone: '+243 123456789',
+//       publications: [
+//         {
+//           id: 'pub-1',
+//           title: "L'impact des Technologies Educatives",
+//           status: 'published',
+//           date: '2024-03-15'
+//         }
+//       ]
+//     },
+//     // Add more users...
+// {
+//   id: 'user-2',
+//   name: 'Dr. John Doe',
+//   email: 'john.doe@example.com',
+//   role: 'reviewer',
+//   institution: 'Example University',
+//   phone: '+123 456789012',
+//   publications: [
+//     {
+//       id: 'pub-2',
+//       title: 'Research on AI',
+//       status: 'pending',
+//       date: '2023-11-20'
+//     }
+//   ]
+// },
+// {
+//   id: 'user-3',
+//   name: 'Dr. Jane Smith',
+//   email: 'jane.smith@example.com',
+//   role: 'admin',
+//   institution: 'Tech Institute',
+//   phone: '+123 987654321',
+//   publications: [
+//     {
+//       id: 'pub-3',
+//       title: 'Quantum Computing Advances',
+//       status: 'published',
+//       date: '2023-10-05'
+//     }
+//   ]
+// },
+// {
+//   id: 'user-4',
+//   name: 'Dr. Alice Johnson',
+//   email: 'alice.johnson@example.com',
+//   role: 'author',
+//   institution: 'Science Academy',
+//   phone: '+123 123456789',
+//   publications: [
+//     {
+//       id: 'pub-4',
+//       title: 'Nanotechnology in Medicine',
+//       status: 'rejected',
+//       date: '2023-09-15'
+//     }
+//   ]
+// },
+// {
+//   id: 'user-5',
+//   name: 'Dr. Bob Brown',
+//   email: 'bob.brown@example.com',
+//   role: 'reviewer',
+//   institution: 'Research Center',
+//   phone: '+123 456123789',
+//   publications: [
+//     {
+//       id: 'pub-5',
+//       title: 'Climate Change Effects',
+//       status: 'published',
+//       date: '2023-08-25'
+//     }
+//   ]
+// },
+// {
+//   id: 'user-6',
+//   name: 'Dr. Charlie Davis',
+//   email: 'charlie.davis@example.com',
+//   role: 'admin',
+//   institution: 'Innovation Hub',
+//   phone: '+123 789456123',
+//   publications: [
+//     {
+//       id: 'pub-6',
+//       title: 'Blockchain Technology',
+//       status: 'pending',
+//       date: '2023-07-30'
+//     }
+//   ]
+// },
+// {
+//   id: 'user-7',
+//   name: 'Dr. Emily Evans',
+//   email: 'emily.evans@example.com',
+//   role: 'author',
+//   institution: 'Tech University',
+//   phone: '+123 321654987',
+//   publications: [
+//     {
+//       id: 'pub-7',
+//       title: 'Cybersecurity Trends',
+//       status: 'published',
+//       date: '2023-06-10'
+//     }
+//   ]
+// },
+// {
+//   id: 'user-8',
+//   name: 'Dr. Frank Green',
+//   email: 'frank.green@example.com',
+//   role: 'reviewer',
+//   institution: 'Global Institute',
+//   phone: '+123 654789321',
+//   publications: [
+//     {
+//       id: 'pub-8',
+//       title: 'Renewable Energy Sources',
+//       status: 'rejected',
+//       date: '2023-05-20'
+//     }
+//   ]
+// },
+// {
+//   id: 'user-9',
+//   name: 'Dr. Grace Harris',
+//   email: 'grace.harris@example.com',
+//   role: 'admin',
+//   institution: 'Future Labs',
+//   phone: '+123 987321654',
+//   publications: [
+//     {
+//       id: 'pub-9',
+//       title: 'Artificial Intelligence Ethics',
+//       status: 'published',
+//       date: '2023-04-15'
+//     }
+//   ]
+// },
+// {
+//   id: 'user-10',
+//   name: 'Dr. Henry King',
+//   email: 'henry.king@example.com',
+//   role: 'author',
+//   institution: 'Tech Research Center',
+//   phone: '+123 456987123',
+//   publications: [
+//     {
+//       id: 'pub-10',
+//       title: 'Machine Learning Algorithms',
+//       status: 'pending',
+//       date: '2023-03-25'
+//     }
+//   ]
+// }
+//   ]
 
 
-  const users: User[] = [
-    {
-      id: 'user-1',
-      name: 'Dr. Marie Kabongo',
-      email: 'marie.k@upn.ac.cd',
-      role: 'author',
-      institution: 'UPN',
-      phone: '+243 123456789',
-      publications: [
-        {
-          id: 'pub-1',
-          title: "L'impact des Technologies Educatives",
-          status: 'published',
-          date: '2024-03-15'
-        }
-      ]
-    },
-    // Add more users...
-{
-  id: 'user-2',
-  name: 'Dr. John Doe',
-  email: 'john.doe@example.com',
-  role: 'reviewer',
-  institution: 'Example University',
-  phone: '+123 456789012',
-  publications: [
-    {
-      id: 'pub-2',
-      title: 'Research on AI',
-      status: 'pending',
-      date: '2023-11-20'
-    }
-  ]
-},
-{
-  id: 'user-3',
-  name: 'Dr. Jane Smith',
-  email: 'jane.smith@example.com',
-  role: 'admin',
-  institution: 'Tech Institute',
-  phone: '+123 987654321',
-  publications: [
-    {
-      id: 'pub-3',
-      title: 'Quantum Computing Advances',
-      status: 'published',
-      date: '2023-10-05'
-    }
-  ]
-},
-{
-  id: 'user-4',
-  name: 'Dr. Alice Johnson',
-  email: 'alice.johnson@example.com',
-  role: 'author',
-  institution: 'Science Academy',
-  phone: '+123 123456789',
-  publications: [
-    {
-      id: 'pub-4',
-      title: 'Nanotechnology in Medicine',
-      status: 'rejected',
-      date: '2023-09-15'
-    }
-  ]
-},
-{
-  id: 'user-5',
-  name: 'Dr. Bob Brown',
-  email: 'bob.brown@example.com',
-  role: 'reviewer',
-  institution: 'Research Center',
-  phone: '+123 456123789',
-  publications: [
-    {
-      id: 'pub-5',
-      title: 'Climate Change Effects',
-      status: 'published',
-      date: '2023-08-25'
-    }
-  ]
-},
-{
-  id: 'user-6',
-  name: 'Dr. Charlie Davis',
-  email: 'charlie.davis@example.com',
-  role: 'admin',
-  institution: 'Innovation Hub',
-  phone: '+123 789456123',
-  publications: [
-    {
-      id: 'pub-6',
-      title: 'Blockchain Technology',
-      status: 'pending',
-      date: '2023-07-30'
-    }
-  ]
-},
-{
-  id: 'user-7',
-  name: 'Dr. Emily Evans',
-  email: 'emily.evans@example.com',
-  role: 'author',
-  institution: 'Tech University',
-  phone: '+123 321654987',
-  publications: [
-    {
-      id: 'pub-7',
-      title: 'Cybersecurity Trends',
-      status: 'published',
-      date: '2023-06-10'
-    }
-  ]
-},
-{
-  id: 'user-8',
-  name: 'Dr. Frank Green',
-  email: 'frank.green@example.com',
-  role: 'reviewer',
-  institution: 'Global Institute',
-  phone: '+123 654789321',
-  publications: [
-    {
-      id: 'pub-8',
-      title: 'Renewable Energy Sources',
-      status: 'rejected',
-      date: '2023-05-20'
-    }
-  ]
-},
-{
-  id: 'user-9',
-  name: 'Dr. Grace Harris',
-  email: 'grace.harris@example.com',
-  role: 'admin',
-  institution: 'Future Labs',
-  phone: '+123 987321654',
-  publications: [
-    {
-      id: 'pub-9',
-      title: 'Artificial Intelligence Ethics',
-      status: 'published',
-      date: '2023-04-15'
-    }
-  ]
-},
-{
-  id: 'user-10',
-  name: 'Dr. Henry King',
-  email: 'henry.king@example.com',
-  role: 'author',
-  institution: 'Tech Research Center',
-  phone: '+123 456987123',
-  publications: [
-    {
-      id: 'pub-10',
-      title: 'Machine Learning Algorithms',
-      status: 'pending',
-      date: '2023-03-25'
-    }
-  ]
+// Fetch users from Supabase
+const fetchUsers = async () => {
+  const supabase = createClient()
+  setIsLoading(true)
+  
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        id,
+        name,
+        email,
+        role,
+        institution,
+        phone,
+        publications (
+          id,
+          title,
+          status,
+          date
+        )
+      `)
+      .order('name')
+
+    if (error) throw error
+    setUsers(data || [])
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger les utilisateurs"
+    })
+  } finally {
+    setIsLoading(false)
+  }
 }
-  ]
+// Add useEffect
+useEffect(() => {
+  fetchUsers()
+}, [])
 
+// Update filtered users
+const filteredUsers = users.filter(user => {
+  const matchesSearch = 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  
+  const matchesRole = roleFilter === 'all' || user.role === roleFilter
+  const matchesInstitution = institutionFilter === 'all' || user.institution === institutionFilter
 
-  // Add pagination calculation before return
-const filteredUsers = users.filter(user => 
-user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-user.email.toLowerCase().includes(searchTerm.toLowerCase())
-)
+  return matchesSearch && matchesRole && matchesInstitution
+})
 
 const totalItems = filteredUsers.length
 const totalPages = Math.ceil(totalItems / pageSize)
 const startIndex = (currentPage - 1) * pageSize
 const endIndex = startIndex + pageSize
 const currentUsers = filteredUsers.slice(startIndex, endIndex)
+
+// Add refreshUsers function
+const refreshUsers = async () => {
+  setIsRefreshing(true)
+  try {
+    await fetchUsers()
+    toast({
+      title: "Actualisé",
+      description: "Liste des utilisateurs mise à jour"
+    })
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible d'actualiser la liste"
+    })
+  } finally {
+    setIsRefreshing(false)
+  }
+}
 
 
   const roleStyles = {
@@ -255,13 +336,67 @@ const currentUsers = filteredUsers.slice(startIndex, endIndex)
         <p className="text-sm text-gray-500"> Gerer les utilisateurs, ajouter un auteur, un lecteur, etc.</p>
         </div>
         <div className="flex justify-between items-center mb-8 gap-4">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Rechercher..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e: any) => setSearchTerm(e.target.value)}
-          />
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={refreshUsers}
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Actualisation...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Actualiser
+            </>
+          )}
+        </Button>
+         <div className="flex items-center gap-4">
+          <Select
+            value={roleFilter}
+            onValueChange={setRoleFilter}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrer par rôle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les rôles</SelectItem>
+              <SelectItem value="author">Auteur</SelectItem>
+              <SelectItem value="reviewer">Évaluateur</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={institutionFilter}
+            onValueChange={setInstitutionFilter}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrer par institution" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les institutions</SelectItem>
+              {institutions.map(institution => (
+                <SelectItem key={institution} value={institution}>
+                  {institution}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Rechercher..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e: any) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          </div>
            <AddUserModal />
         </div>
       </div>
@@ -272,6 +407,7 @@ const currentUsers = filteredUsers.slice(startIndex, endIndex)
           <Table>
             <TableHeader>
             <TableRow className="bg-gray-100 hover:bg-gray-100">
+                <TableHead className="w-[25px] text-gray-900 font-semibold">No</TableHead>
                 <TableHead className="w-[250px] text-gray-900 font-semibold">Nom</TableHead>
                 <TableHead className="w-[250px] text-gray-900 font-semibold">Email</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Rôle</TableHead>
@@ -286,11 +422,12 @@ const currentUsers = filteredUsers.slice(startIndex, endIndex)
                   user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                   user.email.toLowerCase().includes(searchTerm.toLowerCase())
                 )
-                .map((user) => (
+                .map((user, key) => (
                   <TableRow 
                     key={user.id}
                     // className="border-b hover:bg-gray-50 transition-colors"
                   >
+                    <TableCell className="font-medium text-gray-950">{key+1}</TableCell>
                     <TableCell className="font-medium text-gray-950">{user.name}</TableCell>
                     <TableCell className="">{user.email}</TableCell>
                     <TableCell>
@@ -346,8 +483,6 @@ const currentUsers = filteredUsers.slice(startIndex, endIndex)
           </Table>
         </div>
       </div>
-
-      {/*  Pagination  */}
       {/* // Add pagination controls after the table */}
     <div className="mt-4 flex items-center justify-between">
     <div className="flex items-center gap-2">
