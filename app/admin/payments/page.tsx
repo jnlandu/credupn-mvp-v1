@@ -149,6 +149,7 @@ export default function PaymentsAdmin() {
               <TableHead>Client</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Montant</TableHead>
+              <TableHead>Motif</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Méthode</TableHead>
               <TableHead>Statut</TableHead>
@@ -169,6 +170,7 @@ export default function PaymentsAdmin() {
                   <TableCell>{payment.customer_name}</TableCell>
                   <TableCell>{payment.customer_email}</TableCell>
                   <TableCell>€{payment.amount}</TableCell>
+                  <TableCell>€{payment.reason}</TableCell>
                   <TableCell>{new Date(payment.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>{payment.payment_method}</TableCell>
                   <TableCell>
