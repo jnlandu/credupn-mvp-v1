@@ -412,6 +412,7 @@ const refreshUsers = async () => {
                 <TableHead className="w-[250px] text-gray-900 font-semibold">Email</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Rôle</TableHead>
                 <TableHead className="w-[200px] text-gray-900 font-semibold">Institution</TableHead>
+                <TableHead className="w-[200px] text-gray-900 font-semibold">Phone</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Publications</TableHead>
                 <TableHead className="w-[100px] text-gray-900 font-semibold">Actions</TableHead>
               </TableRow>
@@ -436,6 +437,7 @@ const refreshUsers = async () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="">{user.institution}</TableCell>
+                    <TableCell className="font-medium text-gray-950">{user.phone || "Non enregistré"}</TableCell>
                     <TableCell className="text-gray-700">
                     <div className="flex items-center gap-2">
                         <span>{user.publications.length}</span>

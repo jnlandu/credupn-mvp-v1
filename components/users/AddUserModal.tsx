@@ -1,4 +1,5 @@
 // components/AddUserModal.tsx
+import { createClient } from '@/utils/supabase/client'
 import { useState, useRef, DragEvent } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { UserPlus,  Eye, EyeOff, X, FileText, Upload} from "lucide-react"
+import { z } from 'zod'
 
 
 
@@ -14,22 +16,36 @@ interface Publication {
   title: string
   uploadDate: Date
 }
-interface UserFormData {
-  name: string
-  email: string
-  role: 'author' | 'reviewer' | 'other'
-  password: string
-  publications: Publication[]
-  institution: string
-}
+
+const userSchema = z.object({
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  email: z.string().email("Email invalide"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  role: z.enum(["author", "reviewer", "admin", "other"]),
+  institution: z.string().min(2, "L'institution est requise"),
+  phone: z.string().optional(),
+  publications: z.array(z.object({
+    file: z.instanceof(File),
+    title: z.string().nonempty("Le titre de la publication est requis"),
+    uploadDate: z.instanceof(Date)
+  }))
+})
+
+type UserFormData = z.infer<typeof userSchema>
+// interface UserFormData {
+//   name: string
+//   email: string
+//   role: 'author' | 'reviewer' | 'other'
+//   password: string
+//   publications: Publication[]
+//   institution: string
+// }
 interface PDFPreviewProps {
   file: File
   onRemove: () => void
 }
 
-
-
-  // Update PDF Preview component
+// Update PDF Preview component
 const PDFPreview = ({ publication, onRemove, onTitleChange }: {
   publication: Publication
   onRemove: () => void
@@ -112,37 +128,98 @@ const handleFileChange = (e: any) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    const supabase = createClient()
 
     try {
-      const formDataToSend = new FormData()
-      formDataToSend.append('name', formData.name)
-      formDataToSend.append('email', formData.email)
-      formDataToSend.append('password', formData.password)
-      formDataToSend.append('institution', formData.institution)
-      formData.publications.forEach(file => {
-        formDataToSend.append('publications', file)
+      // 1. Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            role: formData.role
+          }
+        }
       })
 
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        body: formDataToSend
-      })
+      if (authError) throw authError
 
-      if (!response.ok) throw new Error('Failed to create user')
+    // 2. Upload PDFs to storage
+    const publicationUploads = await Promise.all(
+      formData.publications.map(async (pub) => {
+        const fileExt = pub.file.name.split('.').pop()
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
+        const filePath = `publications/${fileName}`
 
-      toast({
-        title: "Succès",
-        description: "Utilisateur créé avec succès"
+        const { error: uploadError } = await supabase.storage
+          .from('publications')
+          .upload(filePath, pub.file)
+
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('publications')
+          .getPublicUrl(filePath)
+
+        return {
+          title: pub.title,
+          pdf_url: publicUrl,
+          status: 'PENDING',
+          created_at: new Date().toISOString()
+        }
       })
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer l'utilisateur",
-        variant: "destructive"
-      })
-    } finally {
-      setIsLoading(false)
+    )
+    // 3. Create user profile and publications
+    const { error: profileError } = await supabase
+      .from('users')
+      .insert([{
+        id: authData.user?.id,
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        institution: formData.institution,
+        created_at: new Date().toISOString()
+      }])
+
+    if (profileError) throw profileError
+    // 4. Create publications if any
+    if (publicationUploads.length > 0) {
+      const { error: pubError } = await supabase
+        .from('publications')
+        .insert(
+          publicationUploads.map(pub => ({
+            ...pub,
+            author: authData.user?.id
+          }))
+        )
+
+      if (pubError) throw pubError
     }
+    toast({
+      title: "Succès",
+      description: "Utilisateur créé avec succès"
+    })
+  // Reset form
+  setFormData({
+    name: '',
+    email: '',
+    role: 'author',
+    password: '',
+    publications: [],
+    institution: ''
+  })
+
+  } catch (error) {
+  console.error('Error creating user:', error)
+  toast({
+    variant: "destructive",
+    title: "Erreur",
+    description: error instanceof Error ? error.message : "Une erreur est survenue"
+  })
+  } finally {
+  setIsLoading(false)
+  }
   }
 
   return (
@@ -226,6 +303,15 @@ const handleFileChange = (e: any) => {
             onChange={(e: any) => setFormData({ ...formData, institution: e.target.value })}
             placeholder="Nom de l'institution"
           />
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="phone">Téléphone (Optionnel)</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e: any) => setFormData({ ...formData, phone: e.target.value })}
+              disabled={isLoading}
+            />
         </div>
         <div className="space-y-2">
         <Label>Publications (PDF)</Label>
