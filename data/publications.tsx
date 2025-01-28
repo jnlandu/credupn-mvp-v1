@@ -77,25 +77,7 @@ export interface User {
     phone?: string
     publications?: PublicationWithRelationsUser[]
   }
-// export interface UserWithPublicationAndPayment {
-//     id: string;
-//     name: string;
-//     email: string;
-//     role: 'admin' | 'author' | 'reviewer';
-//     institution: string;
-//     phone?: string;
-//     created_at: string;
-//     publications?: Publication[];
-//   }
-//   export interface User {
-//     id: string;
-//     name: string;
-//     email: string;
-//     role: 'admin' | 'author' | 'reviewer';
-//     institution: string;
-//     phone?: string;
-//     created_at: string;
-//   }
+
 export interface Payment {
     id: number; // Primary key
     user_id: string; // Foreign key to users table
@@ -106,6 +88,8 @@ export interface Payment {
     created_at: string; // Timestamp when payment was made
     details?: string; // Additional payment details (optional)
     customer_email: string; // Email of the customer making the payment
+    customer_name: string; // Name of the customer making the payment
+    reason?: string; // Reason for payment failure (optional)
   }
 
 export interface PaymentWithRelations extends Payment {
