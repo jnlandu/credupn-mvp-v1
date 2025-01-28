@@ -1,7 +1,7 @@
 // app/admin/submissions/page.tsx
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,239 +32,209 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  Send,
+  AlertCircle,
+  ExternalLink,
 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { createClient } from '@/lib/supabase/client'
+import { 
+   PendingPublication,
+   PublicationStatus, 
+   Reviewer, 
+   statusStyles,
+   statusLabels,
+   Submission,
+   Author,
 
-interface Submission {
-  id: string
-  title: string
-  author: {
-    name: string
-    email: string
-    institution: string
-  }
-  status: 'pending' | 'under_review' | 'approved' | 'rejected'
-  submittedDate: string
-  category: string
-  reviewer?: string
-  pdfUrl: string
-}
+  } from '@/data/publications'
+
+// interface Submission {
+//   id: string
+//   title: string
+//   author: {
+//     name: string
+//     email: string
+//     institution: string
+//   }
+//   status: 'PENDING' | 'REVI' | 'approved' | 'rejected'
+//   submittedDate: string
+//   category: string
+//   reviewer?: string
+//   pdfUrl: string
+// }
 
 export default function SubmissionsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [submissions, setSubmissions] = useState<PendingPublication[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showReviewerModal, setShowReviewerModal] = useState(false)
+  const [selectedReviewers, setSelectedReviewers] = useState<string[]>([])
+  const [reviewerSearchTerm, setReviewerSearchTerm] = useState('')
+  const [reviewers, setReviewers] = useState<Reviewer[]>([])
+  const [isLoadingReviewers, setIsLoadingReviewers] = useState(false)
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+  const [pdfError, setPdfError] = useState(false)
 
-  const submissions: Submission[] = [
-    {
-      id: 'sub-1',
-      title: "L'impact des Technologies Educatives en RDC",
-      author: {
-        name: "Dr. Marie Kabongo",
-        email: "marie.k@upn.ac.cd",
-        institution: "UPN"
-      },
-      status: 'pending',
-      submittedDate: '2024-03-15',
-      category: 'Recherche',
-      pdfUrl: '/submissions/tech-education.pdf'
-    },
-    // Add more submissions...
-{
-  id: 'sub-2',
-  title: "L'enseignement à distance en Afrique",
-  author: {
-    name: "Prof. Jean Mukendi",
-    email: "jean.m@unikin.ac.cd",
-    institution: "UNIKIN"
-  },
-  status: 'under_review',
-  submittedDate: '2024-03-10',
-  category: 'Education',
-  pdfUrl: '/submissions/distance-learning.pdf'
-},
-{
-  id: 'sub-3',
-  title: "L'impact des réseaux sociaux sur les jeunes",
-  author: {
-    name: "Mme. Chantal Mbala",
-    email: "chantal.m@unikin.ac.cd",
-    institution: "UNIKIN"
-  },
-  status: 'approved',
-  submittedDate: '2024-02-25',
-  category: 'Sociologie',
-  pdfUrl: '/submissions/social-media-impact.pdf'
-},
-{
-  id: 'sub-4',
-  title: "Les énergies renouvelables en Afrique",
-  author: {
-    name: "Dr. Patrick Ilunga",
-    email: "patrick.i@upn.ac.cd",
-    institution: "UPN"
-  },
-  status: 'rejected',
-  submittedDate: '2024-01-30',
-  category: 'Environnement',
-  pdfUrl: '/submissions/renewable-energy.pdf'
-},
-{
-    id: 'sub-5',
-    title: "L'impact de l'intelligence artificielle sur l'éducation",
-    author: {
-        name: "Dr. Alain Kabasele",
-        email: "alain.k@upn.ac.cd",
-        institution: "UPN"
-    },
-    status: 'under_review',
-    submittedDate: '2024-03-20',
-    category: 'Technologie',
-    pdfUrl: '/submissions/ai-education.pdf'
-},
-{
-    id: 'sub-6',
-    title: "Les défis de la santé publique en Afrique",
-    author: {
-        name: "Dr. Sophie Mbala",
-        email: "sophie.m@unikin.ac.cd",
-        institution: "UNIKIN"
-    },
-    status: 'approved',
-    submittedDate: '2024-02-18',
-    category: 'Santé',
-    pdfUrl: '/submissions/public-health.pdf'
-},
-{
-    id: 'sub-7',
-    title: "L'impact des politiques économiques sur le développement",
-    author: {
-        name: "Prof. Jean-Pierre Kanku",
-        email: "jean-pierre.k@upn.ac.cd",
-        institution: "UPN"
-    },
-    status: 'rejected',
-    submittedDate: '2024-01-25',
-    category: 'Économie',
-    pdfUrl: '/submissions/economic-policies.pdf'
-},
-{
-    id: 'sub-8',
-    title: "L'importance de la biodiversité en Afrique",
-    author: {
-        name: "Dr. Claire Tshibangu",
-        email: "claire.t@unikin.ac.cd",
-        institution: "UNIKIN"
-    },
-    status: 'pending',
-    submittedDate: '2024-03-22',
-    category: 'Environnement',
-    pdfUrl: '/submissions/biodiversity.pdf'
-},
-{
-    id: 'sub-9',
-    title: "Les nouvelles technologies dans l'agriculture",
-    author: {
-        name: "Dr. Joseph Kabila",
-        email: "joseph.k@upn.ac.cd",
-        institution: "UPN"
-    },
-    status: 'under_review',
-    submittedDate: '2024-03-12',
-    category: 'Agriculture',
-    pdfUrl: '/submissions/agriculture-tech.pdf'
-},
-{
-    id: 'sub-10',
-    title: "L'impact des changements climatiques sur les ressources en eau",
-    author: {
-        name: "Dr. Aline Mukendi",
-        email: "aline.m@unikin.ac.cd",
-        institution: "UNIKIN"
-    },
-    status: 'approved',
-    submittedDate: '2024-02-28',
-    category: 'Environnement',
-    pdfUrl: '/submissions/climate-change-water.pdf'
-},
-{
-    id: 'sub-11',
-    title: "Les défis de l'urbanisation en Afrique",
-    author: {
-        name: "Prof. Michel Kabasele",
-        email: "michel.k@upn.ac.cd",
-        institution: "UPN"
-    },
-    status: 'rejected',
-    submittedDate: '2024-01-15',
-    category: 'Urbanisme',
-    pdfUrl: '/submissions/urbanization.pdf'
-},
-{
-    id: 'sub-12',
-    title: "L'impact des médias sur la société",
-    author: {
-        name: "Mme. Nadine Tshibangu",
-        email: "nadine.t@unikin.ac.cd",
-        institution: "UNIKIN"
-    },
-    status: 'pending',
-    submittedDate: '2024-03-18',
-    category: 'Sociologie',
-    pdfUrl: '/submissions/media-impact.pdf'
-},
-{
-    id: 'sub-13',
-    title: "Les innovations dans le secteur de l'énergie",
-    author: {
-        name: "Dr. Patrick Ilunga",
-        email: "patrick.i@upn.ac.cd",
-        institution: "UPN"
-    },
-    status: 'under_review',
-    submittedDate: '2024-03-05',
-    category: 'Technologie',
-    pdfUrl: '/submissions/energy-innovations.pdf'
-},
-{
-    id: 'sub-14',
-    title: "L'impact des politiques de santé sur le bien-être",
-    author: {
-        name: "Dr. Sophie Mbala",
-        email: "sophie.m@unikin.ac.cd",
-        institution: "UNIKIN"
-    },
-    status: 'approved',
-    submittedDate: '2024-02-10',
-    category: 'Santé',
-    pdfUrl: '/submissions/health-policies.pdf'
-}
-  ]
+  
+  const { toast } = useToast()
 
-  const statusStyles = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    under_review: 'bg-blue-100 text-blue-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800'
-  }
+  // const reviewers = [
+  //   { id: 'rev-1', name: 'Prof. Mayala Francis', specialization: 'Informatique', institution: 'UPN' },
+  //   { id: 'rev-2', name: 'Prof. Musesa', specialization: 'Mathematiques', institution: 'UNIKIN' },
+  //   { id: 'rev-3', name: 'Prof. Kabambi', specialization: 'Sciences Politiques', institution: 'UNIKIN' },
+  //   { id: 'rev-4', name: 'Dr. Nguyen', specialization: 'Economie', institution: 'UPN' },
+  //   { id: 'rev-5', name: 'Prof. Santos', specialization: 'Sciences Sociales', institution: 'UNIKIN' },
+  //   { id: 'rev-6', name: 'Dr. Mukendi', specialization: 'Droit', institution: 'UPN' },
+  //   { id: 'rev-7', name: 'Prof. Ibrahim', specialization: 'Histoire', institution: 'UNIKIN' },
+  //   { id: 'rev-8', name: 'Dr. Kalala', specialization: 'Philosophie', institution: 'UPN' },
+  //   { id: 'rev-9', name: 'Prof. Martinez', specialization: 'Littérature', institution: 'UNIKIN' },
+  //   { id: 'rev-10', name: 'Dr. Lukusa', specialization: 'Psychologie', institution: 'UPN' },
+  //   // Add more reviewers
+  // ]
 
-  const statusLabels = {
-    pending: 'En attente',
-    under_review: 'En cours d\'évaluation',
-    approved: 'Approuvé',
-    rejected: 'Rejeté'
-  }
 
   const filteredSubmissions = submissions.filter(sub => 
     sub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sub.author.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (Array.isArray(sub.author) 
+      ? sub.author.some((auth: string | Author) => 
+          typeof auth === 'string'
+            ? auth.toLowerCase().includes(searchTerm.toLowerCase())
+            : auth.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        : typeof sub.author === 'string'
+        ? (sub.author as string).toLowerCase().includes(searchTerm.toLowerCase())
+        : (sub.author as Author).name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   )
-
   const totalItems = filteredSubmissions.length
   const totalPages = Math.ceil(totalItems / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
   const currentSubmissions = filteredSubmissions.slice(startIndex, endIndex)
+
+  const fetchReviewers = async () => {
+    const supabase = createClient()
+    setIsLoadingReviewers(true)
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email, institution')
+        .eq('role', 'REVIEWER')
+        .order('name', { ascending: true })
+  
+      if (error) throw error
+  
+      setReviewers(data || [])
+    } catch (error) {
+      console.error('Error fetching reviewers:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger la liste des évaluateurs"
+      })
+    } finally {
+      setIsLoadingReviewers(false)
+    }
+  }
+  
+  // Add useEffect to fetch reviewers
+  useEffect(() => {
+    fetchReviewers()
+  }, [])
+
+  const fetchSubmissions = async () => {
+    const supabase = createClient()
+    try {
+      console.log('Fetching submissions...')
+      const { data, error } = await supabase
+        .from('publications')
+        .select('*')
+        .eq('status', 'PENDING')
+        .order('created_at', { ascending: false })
+  
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+  
+      console.log('Fetched data:', data)
+  
+      const mappedData: PendingPublication[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        author: Array.isArray(item.author) ? item.author : [item.author],
+        status: item.status,
+        date: item.created_at,
+        category: item.category,
+        pdf_url: item.pdf_url,
+        reviewer: item.reviewer,
+        abstract: item.abstract || '',
+        keywords: item.keywords || []
+      }))
+  
+      console.log('Mapped data:', mappedData)
+      setSubmissions(mappedData)
+  
+    } catch (error) {
+      console.error('Error details:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les soumissions en attente"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSubmissions()
+  }, [])
+// Add refresh function
+    const refreshSubmissions = async () => {
+      setIsRefreshing(true)
+      await fetchSubmissions()
+      setIsRefreshing(false)
+    }
+   
+  // Add send to reviewer function
+const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => {
+  const supabase = createClient()
+  try {
+    // Update publication status
+    const { error: statusError } = await supabase
+      .from('publications')
+      .update({ 
+        status: 'UNDER_REVIEW',
+        reviewers: reviewerIds 
+      })
+      .eq('id', publicationId)
+
+    if (statusError) throw statusError
+
+    // Notify reviewers (implement notification system)
+    toast({
+      title: "Succès",
+      description: "Publication envoyée aux évaluateurs"
+    })
+    
+    setShowReviewerModal(false)
+    refreshSubmissions()
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible d'envoyer aux évaluateurs"
+    })
+  }
+}
 
   return (
     <div className="p-8">
@@ -276,7 +246,7 @@ export default function SubmissionsAdmin() {
             placeholder="Rechercher..."
             className="pl-8"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
@@ -285,9 +255,9 @@ export default function SubmissionsAdmin() {
         <div className="min-w-[1000px]">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-100 hover:bg-gray-100">
-                <TableHead className="w-[300px] text-gray-900 font-semibold">Titre</TableHead>
-                <TableHead className="w-[200px] text-gray-900 font-semibold">Auteur</TableHead>
+                <TableRow className="bg-gray-100 hover:bg-gray-100">
+                <TableHead className="text-gray-900 font-semibold">Titre</TableHead>
+                <TableHead className="w-[200px] text-gray-900 font-semibold">Auteur.e(s)</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Date</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Catégorie</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Statut</TableHead>
@@ -295,57 +265,116 @@ export default function SubmissionsAdmin() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentSubmissions.map((submission) => (
-                <TableRow 
-                  key={submission.id}
-                  className="border-b hover:bg-gray-50 transition-colors"
-                >
-                  <TableCell className="font-medium text-gray-900">{submission.title}</TableCell>
-                  <TableCell className="text-gray-700">{submission.author.name}</TableCell>
-                  <TableCell className="text-gray-700">{submission.submittedDate}</TableCell>
-                  <TableCell className="text-gray-700">{submission.category}</TableCell>
-                  <TableCell>
-                    <Badge className={statusStyles[submission.status]}>
-                      {statusLabels[submission.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedSubmission(submission)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {submission.status === 'pending' && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-green-600"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                      >
-                        <UserCheck className="h-4 w-4" />
-                      </Button>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-4">
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="ml-2">Chargement...</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : currentSubmissions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-4">
+                    Aucune soumission trouvée
+                  </TableCell>
+                </TableRow>
+              ) : (
+                currentSubmissions.map((submission) => (
+                  <TableRow 
+                    key={submission.id}
+                    className="border-b"
+                  >
+                    <TableCell className="font-medium">
+                      {submission.title}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {Array.isArray(submission.author) 
+                        ? submission.author.map(auth => 
+                            typeof auth === 'string' 
+                              ? auth 
+                              : auth.name
+                          ).join(', ')
+                        : typeof submission.author === 'string'
+                          ? submission.author
+                          : submission.author.name
+                      }
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {new Date(submission.date).toLocaleDateString('fr-FR')}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {submission.category}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={statusStyles[submission.status]}>
+                        {statusLabels[submission.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const mappedSubmission: Submission = {
+                              id: submission.id,
+                              title: submission.title,
+                              author: Array.isArray(submission.author)
+                                ? submission.author.map(element => ({
+                                    name: element.name,
+                                    email: element.email,
+                                    institution: element.institution
+                                  }))
+                                : {
+                                    name: submission.author.name,
+                                    email: submission.author.email,
+                                    institution: submission.author.institution
+                                  },
+                              status: submission.status,
+                              abstract: submission.abstract,
+                              submittedDate: submission.date,
+                              category: submission.category,
+                              pdfUrl: submission.pdf_url,
+                              keywords: submission.keywords || []
+                            };
+                            setSelectedSubmission(mappedSubmission);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {submission.status.toLowerCase() === 'pending' && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-green-600"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600"  
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        {/*  Send to Reviewers */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowReviewerModal(true)}
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
@@ -397,58 +426,201 @@ export default function SubmissionsAdmin() {
           </div>
         </div>
       </div>
-
-      <Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Détails de la soumission</DialogTitle>
-          </DialogHeader>
+{/*  Publication preview and details */}
+<Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
+  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <DialogHeader className="sticky top-0  z-10 pb-4 border-b">
+      <DialogTitle>Détails de la soumission</DialogTitle>
+    </DialogHeader>
+    
+    {selectedSubmission && (
+      <div className="space-y-6 p-6">
+        {/* Basic Info */}
+        <div className="grid gap-4">
+          <h3 className="text-lg font-semibold text-gray-500">{selectedSubmission.title}</h3>
           
-          {selectedSubmission && (
-            <div className="space-y-6">
-              <div className="grid gap-4">
-                <h3 className="text-lg font-semibold">{selectedSubmission.title}</h3>
-                <div className="grid gap-2">
-                  <p><span className="font-medium">Auteur:</span> {selectedSubmission.author.name}</p>
-                  <p><span className="font-medium">Email:</span> {selectedSubmission.author.email}</p>
-                  <p><span className="font-medium">Institution:</span> {selectedSubmission.author.institution}</p>
-                  <p><span className="font-medium">Date de soumission:</span> {selectedSubmission.submittedDate}</p>
-                  <p><span className="font-medium">Catégorie:</span> {selectedSubmission.category}</p>
-                </div>
-              </div>
+          <div className="grid gap-2">
+            <p>
+              <span className="font-medium text-gray-500">Auteur.e(s):</span>{" "}
+              {Array.isArray(selectedSubmission.author) 
+                ? selectedSubmission.author.map(author => author.name).join(', ')
+                : selectedSubmission.author.name
+              }
+            </p>
+            <p>
+              <span className="font-medium text-gray-500">Email:</span>{" "}
+              {Array.isArray(selectedSubmission.author) 
+                ? selectedSubmission.author.map(author => author.email).join(', ')
+                : selectedSubmission.author.email
+              }
+            </p>
+            <p>
+              <span className="font-medium text-gray-500">Institution:</span>{" "}
+              {Array.isArray(selectedSubmission.author) 
+                ? selectedSubmission.author.map(author => author.institution).join(', ')
+                : selectedSubmission.author.institution
+              }
+            </p>
+          </div>
 
-              <div className="h-[400px] bg-gray-100 rounded-lg overflow-hidden">
-                <object
-                  data={selectedSubmission.pdfUrl}
-                  type="application/pdf"
-                  className="w-full h-full"
-                >
-                  <p>Le PDF ne peut pas être affiché</p>
-                </object>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Télécharger
-                </Button>
-                {selectedSubmission.status === 'pending' && (
-                  <>
-                    <Button variant="destructive">
-                      <X className="h-4 w-4 mr-2" />
-                      Rejeter
-                    </Button>
-                    <Button>
-                      <Check className="h-4 w-4 mr-2" />
-                      Approuver
-                    </Button>
-                  </>
-                )}
+          {/* Type and Keywords */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="font-medium">Type:</p>
+              <p>{selectedSubmission.type || 'Non spécifié'}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-500">Mots-clés:</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedSubmission.keywords?.map((keyword, index) => (
+                  <Badge key={index} variant="secondary">
+                    {keyword}
+                  </Badge>
+                ))}
               </div>
             </div>
+          </div>
+
+          {/* Abstract */}
+          {selectedSubmission?.abstract && (
+            <div>
+              <p className="font-semibold text-gray-500">Résumé:</p>
+              <p className="mt-1 text-justify text-sm">{selectedSubmission.abstract}</p>
+            </div>
           )}
-        </DialogContent>
-      </Dialog>
+          {/* <div>
+            <p className="font-medium mb-2">Résumé:</p>
+            <p className="text-gray-700 whitespace-pre-wrap">
+              {selectedSubmission.abstract || 'Aucun résumé disponible'}
+            </p>
+          </div> */}
+        </div>
+
+        {/* PDF Preview */}
+        <div className="h-[60vh] border rounded-lg overflow-hidden">
+          {isPreviewLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : pdfError ? (
+            <div className="h-full flex items-center justify-center flex-col gap-2">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+              <p>Impossible de charger le PDF</p>
+            </div>
+          ) : (
+            <object
+              data={selectedSubmission.pdfUrl}
+              type="application/pdf"
+              className="w-full h-full"
+              onLoad={() => {
+                setIsPreviewLoading(false)
+                setPdfError(false)
+              }}
+              onError={() => {
+                setIsPreviewLoading(false)
+                setPdfError(true)
+              }}
+            >
+              <div className="h-full flex items-center justify-center flex-col gap-2">
+                <p>Le PDF ne peut pas être affiché directement.</p>
+                <Button 
+                  variant="outline" 
+                >
+                  <a href={selectedSubmission.pdfUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Ouvrir dans un nouvel onglet
+                  </a>
+                </Button>
+              </div>
+            </object>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-2">
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Télécharger
+          </Button>
+          {selectedSubmission.status === 'PENDING' && (
+            <>
+              <Button variant="destructive" onClick={() => setSelectedSubmission(null)}>
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+              <Button onClick={() => setShowReviewerModal(true)}>
+                <Send className="h-4 w-4 mr-2" />
+                Envoyer aux évaluateurs
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
+
+ {/* / Update reviewer modal content */}
+    <Dialog open={showReviewerModal} onOpenChange={setShowReviewerModal}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Sélectionner les Évaluateurs</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <Input
+            placeholder="Rechercher un évaluateur..."
+            value={reviewerSearchTerm}
+            onChange={(e: any) => setReviewerSearchTerm(e.target.value)}
+          />
+          
+          <div className="max-h-[300px] overflow-y-auto space-y-2">
+            {isLoadingReviewers ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : reviewers
+              .filter(reviewer => 
+                reviewer.name.toLowerCase().includes(reviewerSearchTerm.toLowerCase()) ||
+                reviewer.institution.toLowerCase().includes(reviewerSearchTerm.toLowerCase())
+              )
+              .map(reviewer => (
+                <div key={reviewer.id} className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded">
+                  <input
+                    type="checkbox"
+                    id={reviewer.id}
+                    checked={selectedReviewers.includes(reviewer.id)}
+                    onChange={(e: any) => {
+                      if (e.target.checked) {
+                        setSelectedReviewers([...selectedReviewers, reviewer.id])
+                      } else {
+                        setSelectedReviewers(selectedReviewers.filter(id => id !== reviewer.id))
+                      }
+                    }}
+                  />
+                  <label htmlFor={reviewer.id} className="flex-1">
+                    <p className="font-medium">{reviewer.name}</p>
+                    <p className="text-sm text-gray-500">{reviewer.institution}</p>
+                    <p className="text-xs text-gray-400">{reviewer.email}</p>
+                  </label>
+                </div>
+              ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={() => setShowReviewerModal(false)}>
+            Annuler
+          </Button>
+          <Button
+            disabled={selectedReviewers.length === 0 || isLoadingReviewers}
+            onClick={() => sendToReviewers(selectedSubmission?.id!, selectedReviewers)}
+          >
+            Envoyer
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
     </div>
   )
 }

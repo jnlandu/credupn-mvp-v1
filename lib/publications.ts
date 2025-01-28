@@ -7,19 +7,42 @@ export interface Publication {
   abstract: string;
   keywords: string[];
   category: string;
-  type: string;
+  type: 'Tous' | 'Article' | 'These' | 'Livre' | 'Rapport';
   journal?: string;
   volume?: string;
   issue?: string;
   pages?: string;
   doi?: string;
   citations: number;
+  status?: string;
   image?: string,
   isRestricted: boolean;
   previewUrl?: string; // URL for preview-only PDF (first 2 pages)
   pdfUrl?: string;
   downloadUrl: string;
 }
+
+export type PublicationStatus = 'PUBLISHED' | 'PENDING' | 'REJECTED' | 'REVIEW';
+
+// Update statusStyles object
+export const statusStyles: Record<PublicationStatus, string> = {
+  'PUBLISHED': 'bg-green-100 text-green-800',
+  'PENDING': 'bg-yellow-100 text-yellow-800',
+  'REJECTED': 'bg-red-100 text-red-800',
+  'REVIEW': 'bg-blue-100 text-blue-800'
+}
+
+// Update status labels
+export const statusLabels: Record<PublicationStatus, string> = {
+  'PUBLISHED': 'Publié',
+  'PENDING': 'En attente',
+  'REJECTED': 'Rejeté',
+  'REVIEW': 'En évaluation'
+}
+
+export const categories = ["Tous", "Recherche", "Méthodologie", "Guide Pratique", "Politique Éducative"]
+export const types = ["Tous", "Article", "Thèse", "Livre", "Rapport"]
+
 
 
 export const publications = [
@@ -199,5 +222,3 @@ export const publications = [
   ]
   
 
-export const categories = ["Tous", "Recherche", "Méthodologie", "Guide Pratique", "Politique Éducative"]
-export const types = ["Tous", "Article", "Thèse", "Livre", "Rapport"]

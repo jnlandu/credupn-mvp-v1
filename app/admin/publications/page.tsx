@@ -32,7 +32,7 @@ import {
 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDropzone } from 'react-dropzone'
-import { Publication,statusStyles  } from "@/data/publications"
+import { Publication,statusLabels,statusStyles  } from "@/data/publications"
 import { useToast } from '@/hooks/use-toast'
 import { Tooltip } from '@radix-ui/react-tooltip'
 
@@ -72,8 +72,13 @@ export default function PublicationsAdmin() {
     const endIndex = startIndex + pageSize
     const currentItems = publications
     .filter(pub => 
-        pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pub.author.toLowerCase().includes(searchTerm.toLowerCase())
+      pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (Array.isArray(pub.author) 
+        ? pub.author.some(author => 
+            author.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : pub.author.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     )
     .slice(startIndex, endIndex)
 
@@ -429,7 +434,7 @@ useEffect(() => {
                     <TableCell>{pub.category}</TableCell>
                     <TableCell>
                       <Badge className={statusStyles[pub.status]}>
-                        {pub.status}
+                        {statusLabels[pub.status]}
                       </Badge>
                     </TableCell>
                     <TableCell>
