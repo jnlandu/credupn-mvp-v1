@@ -14,6 +14,18 @@ export interface Publication {
     keywords?: string[];
   }
 
+  export interface PublicationWithRelationsUser {
+    id: string
+    title: string
+    // author: string[] | string  // author: string[] for multiple authors
+    date: string
+    status: 'PUBLISHED' | 'PENDING' | 'REJECTED' | 'REVIEW' 
+    category: string
+    pdfUrl: string,
+    image?: string
+    abstract?: string;
+    keywords?: string[];
+  }
  export interface PendingPublication {
     id: string
     title: string
@@ -52,8 +64,65 @@ export interface Reviewer {
     name: string
     email: string
     institution: string
-    role: string
+    role: string,
+    specialization?: string
   }
+
+export interface User {
+    id: string
+    name: string
+    email: string
+    role: 'author' | 'reviewer' | 'admin'
+    institution: string
+    phone?: string
+    publications?: PublicationWithRelationsUser[]
+  }
+// export interface UserWithPublicationAndPayment {
+//     id: string;
+//     name: string;
+//     email: string;
+//     role: 'admin' | 'author' | 'reviewer';
+//     institution: string;
+//     phone?: string;
+//     created_at: string;
+//     publications?: Publication[];
+//   }
+//   export interface User {
+//     id: string;
+//     name: string;
+//     email: string;
+//     role: 'admin' | 'author' | 'reviewer';
+//     institution: string;
+//     phone?: string;
+//     created_at: string;
+//   }
+export interface Payment {
+    id: number; // Primary key
+    user_id: string; // Foreign key to users table
+    publication_id: string; // Foreign key to publications table
+    amount: number; // Payment amount
+    payment_method: string; // e.g., "Credit Card", "PayPal"
+    status: 'Pending' | 'Completed' | 'Failed'; // Payment status
+    created_at: string; // Timestamp when payment was made
+    details?: string; // Additional payment details (optional)
+    customer_email: string; // Email of the customer making the payment
+  }
+
+export interface PaymentWithRelations extends Payment {
+    user?: {
+      id: string;
+      name: string;
+      email: string;
+      institution: string;
+    };
+    publication?: {
+      id: string;
+      title: string;
+      category: string;
+      status: string;
+    };
+  }
+  
   
   
 export const statusStyles: Record<PublicationStatus, string> = {

@@ -48,18 +48,12 @@ import {
    statusLabels,
    Submission,
    Author,
+   Reviewer,
 
   } from '@/data/publications'
 
 
-interface Reviewer {
-  id: string
-  name: string
-  email: string
-  institution: string
-  role: string,
-  specialization?: string
-}
+
 
 export default function SubmissionsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -104,8 +98,6 @@ const filteredSubmissions = submissions.filter(sub =>
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
   const currentSubmissions = filteredSubmissions.slice(startIndex, endIndex)
-
-
 
 
 // Fetch reviewers

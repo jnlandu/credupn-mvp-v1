@@ -43,23 +43,11 @@ import {
 import { AddUserModal } from '@/components/users/AddUserModal'
 import { createClient } from '@/utils/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+import { Publication, User } from '@/data/publications'
 
 
 
-interface User {
-  id: string
-  name: string
-  email: string
-  role: 'author' | 'reviewer' | 'admin'
-  institution: string
-  phone: string
-  publications: {
-    id: string
-    title: string
-    status: 'published' | 'pending' | 'rejected'
-    date: string
-  }[]
-}
+
 
 export default function UsersAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -81,36 +69,49 @@ export default function UsersAdmin() {
 const fetchUsers = async () => {
   const supabase = createClient()
   setIsLoading(true)
-  
   try {
+    console.log('Fetching Users ...')
     const { data, error } = await supabase
-      .from('users')
-      .select(`
+    .from('users')
+    .select(`
+      *,
+      publications (
         id,
-        name,
-        email,
-        role,
-        institution,
-        phone,
-        publications (
-          id,
-          title,
-          status,
-          date
-        )
-      `)
-      .order('created_at', { ascending: false }) // Add ordering
-      .limit(100) // Add limit to avoid excessive data
-      // .order('name')
-
+        title,
+        status,
+        date,
+        category,
+        pdf_url,
+        abstract,
+        keywords
+      )
+    `)
+    .returns<Array<User & { publications: Publication[] }>>()
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('Supabase error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
       throw error
     }
-    console.log('Fetched users count:', data?.length)
-    console.log('First few users:', data?.slice(0, 3))
+    if (!data) {
+      throw new Error('No data returned from Supabase')
+    }
+    console.log('Users fetch successful:', {
+      totalUsers: data.length,
+      sampleUser: data[0],
+      totalPublications: data.reduce((acc, user) => acc + (user.publications?.length || 0), 0)
+    })
 
-    setUsers(data || [])
+    const mappedUsers = data.map(user => ({
+      ...user,
+      publications: user.publications || []
+    }))
+    setUsers(mappedUsers)
+
+    setUsers(mappedUsers);
   } catch (error) {
     console.error('Error fetching users:', error)
     toast({
@@ -126,6 +127,9 @@ const fetchUsers = async () => {
 useEffect(() => {
   fetchUsers()
 }, [])
+
+
+
 // Update filtered users
 const filteredUsers = users.filter(user => {
   const matchesSearch = 
@@ -283,8 +287,8 @@ const refreshUsers = async () => {
                     <TableCell className="font-medium text-gray-950">{user.phone || "Non enregistré"}</TableCell>
                     <TableCell className="text-gray-700">
                     <div className="flex items-center gap-2">
-                        <span>{user.publications.length}</span>
-                        {user.publications.length > 0 && (
+                      <span>{user.publications?.length ?? 0}</span>
+                        {user.publications?.length > 0 && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -402,7 +406,7 @@ const refreshUsers = async () => {
               <div>
                 <h3 className="font-semibold mb-3">Publications</h3>
                 <div className="space-y-2">
-                  {selectedUser.publications.map(pub => (
+                  {selectedUser.publications?.map(pub => (
                     <Card key={pub.id}>
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -411,8 +415,8 @@ const refreshUsers = async () => {
                             <p className="text-sm text-gray-500">{pub.date}</p>
                           </div>
                           <Badge className={
-                            pub.status === 'published' ? 'bg-green-100 text-green-800' :
-                            pub.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            pub.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' :
+                            pub.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                             'bg-red-100 text-red-800'
                           }>
                             {pub.status}
@@ -448,8 +452,8 @@ const refreshUsers = async () => {
                     </span>
                     <Badge
                         className={
-                        pub.status === 'published' ? 'bg-green-100 text-green-800' :
-                        pub.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        pub.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' :
+                        pub.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
                         }
                     >
