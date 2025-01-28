@@ -42,7 +42,7 @@ const signupSchema = z.object({
     .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
     .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre"),
   confirmPassword: z.string(),
-  role: z.enum(["admin", "author", "reviewer", ""]),
+  role: z.enum(["admin", "author", "reviewer"]),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -57,6 +57,11 @@ export default function SignupPage() {
   const totalSteps = 3
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [roleStateChange, setRoleStateChange] = useState(true)
+  const [formData, setFormData] = useState({
+    role: 'author',
+    publications: []
+  })
   const router = useRouter()
 
   const calculatePasswordStrength = (password: string): number => {
@@ -76,7 +81,7 @@ export default function SignupPage() {
       institution: "",
       password: "",
       confirmPassword: "",
-      role: "",
+      role: "author",
     },
   })
 
@@ -436,39 +441,62 @@ const handleGoogleSignup = async () => {
                     <div className="space-y-4">
                       <Label>Type de compte</Label>
                       <RadioGroup
-                        defaultValue="author"
-                        className="grid grid-cols-2 gap-4"
-                        {...form.register("role")}
-                      >
-                        <div className="relative">
-                          <RadioGroupItem
-                            value="author"
-                            id="author"
-                            className="peer sr-only"
-                          />
-                          <Label
-                            htmlFor="author"
-                            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                          >
-                            <BookOpen className="mb-3 h-6 w-6" />
-                            Auteur
-                          </Label>
-                        </div>
-                        <div className="relative">
-                          <RadioGroupItem
-                            value="reviewer"
-                            id="reviewer"
-                            className="peer sr-only"
-                          />
-                          <Label
-                            htmlFor="reviewer"
-                            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                          >
-                            <GraduationCap className="mb-3 h-6 w-6" />
-                            Évaluateur
-                          </Label>
-                        </div>
-                      </RadioGroup>
+                          defaultValue="author"
+                          className="grid grid-cols-3 gap-4"
+                          value={form.watch("role")}
+                          onValueChange={(value: 'author' | 'reviewer' | 'admin') => {
+                            form.setValue("role", value) // Update form value
+                            setRoleStateChange(value === 'author')
+                            setFormData(prev => ({
+                              ...prev,
+                              role: value,
+                              publications: value === 'author' ? prev.publications : []
+                            }))
+                          }}
+                        >
+                          <div className="relative">
+                            <RadioGroupItem
+                              value="author"
+                              id="author"
+                              className="peer sr-only"
+                            />
+                            <Label
+                              htmlFor="author"
+                              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                            >
+                              <BookOpen className="mb-3 h-6 w-6" />
+                              Auteur
+                            </Label>
+                          </div>
+                          <div className="relative">
+                            <RadioGroupItem
+                              value="reviewer"
+                              id="reviewer"
+                              className="peer sr-only"
+                            />
+                            <Label
+                              htmlFor="reviewer"
+                              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                            >
+                              <GraduationCap className="mb-3 h-6 w-6" />
+                              Évaluateur
+                            </Label>
+                          </div>
+                          <div className="relative">
+                            <RadioGroupItem
+                              value="admin"
+                              id="admin"
+                              className="peer sr-only"
+                            />
+                            <Label
+                              htmlFor="admin"
+                              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                            >
+                              <Lock className="mb-3 h-6 w-6" />
+                              Administrateur
+                            </Label>
+                          </div>
+                        </RadioGroup>
                     </div>
                   )}
 
@@ -493,19 +521,19 @@ const handleGoogleSignup = async () => {
                       </Button>
                     ) : (
                       <Button
-                        type="submit"
-                        className="flex-1"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Inscription en cours...
-                          </>
-                        ) : (
-                          "S'inscrire"
-                        )}
-                      </Button>
+                      type="submit"
+                      className="flex-1"
+                      disabled={isLoading || !form.watch("role")} // Add role check
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Inscription en cours...
+                        </>
+                      ) : (
+                        "S'inscrire"
+                      )}
+                    </Button>
                     )}
                   </div>
                 </form>

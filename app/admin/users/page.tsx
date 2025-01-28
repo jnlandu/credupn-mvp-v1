@@ -99,9 +99,17 @@ const fetchUsers = async () => {
           date
         )
       `)
-      .order('name')
+      .order('created_at', { ascending: false }) // Add ordering
+      .limit(100) // Add limit to avoid excessive data
+      // .order('name')
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error:', error)
+      throw error
+    }
+    console.log('Fetched users count:', data?.length)
+    console.log('First few users:', data?.slice(0, 3))
+
     setUsers(data || [])
   } catch (error) {
     console.error('Error fetching users:', error)
