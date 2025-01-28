@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { UserPlus,  Eye, EyeOff, X, FileText, Upload} from "lucide-react"
+import { UserPlus,  Eye, EyeOff, X, FileText, Upload, Loader2} from "lucide-react"
 import { z } from 'zod'
 
 
@@ -17,6 +17,9 @@ interface Publication {
   uploadDate: Date
 }
 
+interface AddUserModalProps {
+  onRefresh?: () => void;
+}
 const userSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   email: z.string().email("Email invalide"),
@@ -73,10 +76,11 @@ const PDFPreview = ({ publication, onRemove, onTitleChange }: {
 )
 
 
-export function AddUserModal() {
+export function AddUserModal({ onRefresh }: AddUserModalProps) {
   const fileInputRef = useRef<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [open, setOpen] = useState(false)
   const [roleStateChange, setRoleStateChange] = useState(true)
   const [formData, setFormData] = useState<UserFormData>({
     name: '',
@@ -204,6 +208,8 @@ const handleFileChange = (e: any) => {
     institution: '',
     phone: ''
   })
+  setOpen(false)
+  onRefresh?.()
 
   } catch (error) {
   console.error('Error creating user:', error)
@@ -218,7 +224,7 @@ const handleFileChange = (e: any) => {
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
@@ -364,12 +370,19 @@ const handleFileChange = (e: any) => {
             </div>
           </div>
         )}
-        <div className="flex justify-end space-x-2">
-          <DialogTrigger asChild>
-            <Button variant="outline">Annuler</Button>
-          </DialogTrigger>
+          <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Annuler
+          </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Création..." : "Créer"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Création...
+              </>
+            ) : (
+              'Créer'
+            )}
           </Button>
         </div>
       </form>

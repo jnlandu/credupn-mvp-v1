@@ -74,171 +74,7 @@ export default function UsersAdmin() {
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const institutions = Array.from(new Set(users.map(user => user.institution)))
-
   const { toast } = useToast()
-//   const users: User[] = [
-//     {
-//       id: 'user-1',
-//       name: 'Dr. Marie Kabongo',
-//       email: 'marie.k@upn.ac.cd',
-//       role: 'author',
-//       institution: 'UPN',
-//       phone: '+243 123456789',
-//       publications: [
-//         {
-//           id: 'pub-1',
-//           title: "L'impact des Technologies Educatives",
-//           status: 'published',
-//           date: '2024-03-15'
-//         }
-//       ]
-//     },
-//     // Add more users...
-// {
-//   id: 'user-2',
-//   name: 'Dr. John Doe',
-//   email: 'john.doe@example.com',
-//   role: 'reviewer',
-//   institution: 'Example University',
-//   phone: '+123 456789012',
-//   publications: [
-//     {
-//       id: 'pub-2',
-//       title: 'Research on AI',
-//       status: 'pending',
-//       date: '2023-11-20'
-//     }
-//   ]
-// },
-// {
-//   id: 'user-3',
-//   name: 'Dr. Jane Smith',
-//   email: 'jane.smith@example.com',
-//   role: 'admin',
-//   institution: 'Tech Institute',
-//   phone: '+123 987654321',
-//   publications: [
-//     {
-//       id: 'pub-3',
-//       title: 'Quantum Computing Advances',
-//       status: 'published',
-//       date: '2023-10-05'
-//     }
-//   ]
-// },
-// {
-//   id: 'user-4',
-//   name: 'Dr. Alice Johnson',
-//   email: 'alice.johnson@example.com',
-//   role: 'author',
-//   institution: 'Science Academy',
-//   phone: '+123 123456789',
-//   publications: [
-//     {
-//       id: 'pub-4',
-//       title: 'Nanotechnology in Medicine',
-//       status: 'rejected',
-//       date: '2023-09-15'
-//     }
-//   ]
-// },
-// {
-//   id: 'user-5',
-//   name: 'Dr. Bob Brown',
-//   email: 'bob.brown@example.com',
-//   role: 'reviewer',
-//   institution: 'Research Center',
-//   phone: '+123 456123789',
-//   publications: [
-//     {
-//       id: 'pub-5',
-//       title: 'Climate Change Effects',
-//       status: 'published',
-//       date: '2023-08-25'
-//     }
-//   ]
-// },
-// {
-//   id: 'user-6',
-//   name: 'Dr. Charlie Davis',
-//   email: 'charlie.davis@example.com',
-//   role: 'admin',
-//   institution: 'Innovation Hub',
-//   phone: '+123 789456123',
-//   publications: [
-//     {
-//       id: 'pub-6',
-//       title: 'Blockchain Technology',
-//       status: 'pending',
-//       date: '2023-07-30'
-//     }
-//   ]
-// },
-// {
-//   id: 'user-7',
-//   name: 'Dr. Emily Evans',
-//   email: 'emily.evans@example.com',
-//   role: 'author',
-//   institution: 'Tech University',
-//   phone: '+123 321654987',
-//   publications: [
-//     {
-//       id: 'pub-7',
-//       title: 'Cybersecurity Trends',
-//       status: 'published',
-//       date: '2023-06-10'
-//     }
-//   ]
-// },
-// {
-//   id: 'user-8',
-//   name: 'Dr. Frank Green',
-//   email: 'frank.green@example.com',
-//   role: 'reviewer',
-//   institution: 'Global Institute',
-//   phone: '+123 654789321',
-//   publications: [
-//     {
-//       id: 'pub-8',
-//       title: 'Renewable Energy Sources',
-//       status: 'rejected',
-//       date: '2023-05-20'
-//     }
-//   ]
-// },
-// {
-//   id: 'user-9',
-//   name: 'Dr. Grace Harris',
-//   email: 'grace.harris@example.com',
-//   role: 'admin',
-//   institution: 'Future Labs',
-//   phone: '+123 987321654',
-//   publications: [
-//     {
-//       id: 'pub-9',
-//       title: 'Artificial Intelligence Ethics',
-//       status: 'published',
-//       date: '2023-04-15'
-//     }
-//   ]
-// },
-// {
-//   id: 'user-10',
-//   name: 'Dr. Henry King',
-//   email: 'henry.king@example.com',
-//   role: 'author',
-//   institution: 'Tech Research Center',
-//   phone: '+123 456987123',
-//   publications: [
-//     {
-//       id: 'pub-10',
-//       title: 'Machine Learning Algorithms',
-//       status: 'pending',
-//       date: '2023-03-25'
-//     }
-//   ]
-// }
-//   ]
 
 
 // Fetch users from Supabase
@@ -282,7 +118,6 @@ const fetchUsers = async () => {
 useEffect(() => {
   fetchUsers()
 }, [])
-
 // Update filtered users
 const filteredUsers = users.filter(user => {
   const matchesSearch = 
@@ -397,7 +232,7 @@ const refreshUsers = async () => {
             />
           </div>
           </div>
-           <AddUserModal />
+           <AddUserModal onRefresh={fetchUsers} />
         </div>
       </div>
 
