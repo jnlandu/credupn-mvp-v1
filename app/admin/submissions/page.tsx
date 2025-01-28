@@ -42,7 +42,7 @@ import { createClient } from '@/lib/supabase/client'
 import { 
    PendingPublication,
    PublicationStatus, 
-   Reviewer, 
+  //  Reviewer, 
    statusStyles,
    statusLabels,
    Submission,
@@ -64,6 +64,15 @@ import {
 //   reviewer?: string
 //   pdfUrl: string
 // }
+
+interface Reviewer {
+  id: string
+  name: string
+  email: string
+  institution: string
+  role: string,
+  specialization?: string
+}
 
 export default function SubmissionsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -99,7 +108,7 @@ export default function SubmissionsAdmin() {
   // ]
 
 
-  const filteredSubmissions = submissions.filter(sub => 
+const filteredSubmissions = submissions.filter(sub => 
     sub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (Array.isArray(sub.author) 
       ? sub.author.some((auth: string | Author) => 
@@ -112,13 +121,18 @@ export default function SubmissionsAdmin() {
         : (sub.author as Author).name.toLowerCase().includes(searchTerm.toLowerCase())
     )
   )
+  
   const totalItems = filteredSubmissions.length
   const totalPages = Math.ceil(totalItems / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
   const currentSubmissions = filteredSubmissions.slice(startIndex, endIndex)
 
-  const fetchReviewers = async () => {
+
+
+
+// Fetch reviewers
+const fetchReviewers = async () => {
     const supabase = createClient()
     setIsLoadingReviewers(true)
     
@@ -130,8 +144,16 @@ export default function SubmissionsAdmin() {
         .order('name', { ascending: true })
   
       if (error) throw error
+      // Map the data to match Reviewer interface
+      const mappedReviewers: Reviewer[] = (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        email: item.email,
+        institution: item.institution,
+        role: 'REVIEWER'
+      }))
   
-      setReviewers(data || [])
+      setReviewers(mappedReviewers)
     } catch (error) {
       console.error('Error fetching reviewers:', error)
       toast({
@@ -149,7 +171,10 @@ export default function SubmissionsAdmin() {
     fetchReviewers()
   }, [])
 
-  const fetchSubmissions = async () => {
+
+
+// Fetch submissions
+const fetchSubmissions = async () => {
     const supabase = createClient()
     try {
       console.log('Fetching submissions...')
