@@ -36,6 +36,7 @@ import {
   Send,
   AlertCircle,
   ExternalLink,
+  RefreshCw,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabase/client'
@@ -50,20 +51,6 @@ import {
 
   } from '@/data/publications'
 
-// interface Submission {
-//   id: string
-//   title: string
-//   author: {
-//     name: string
-//     email: string
-//     institution: string
-//   }
-//   status: 'PENDING' | 'REVI' | 'approved' | 'rejected'
-//   submittedDate: string
-//   category: string
-//   reviewer?: string
-//   pdfUrl: string
-// }
 
 interface Reviewer {
   id: string
@@ -89,23 +76,13 @@ export default function SubmissionsAdmin() {
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(false)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [pdfError, setPdfError] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const categories = Array.from(new Set(submissions.map(sub => sub.category)))
 
   
   const { toast } = useToast()
 
-  // const reviewers = [
-  //   { id: 'rev-1', name: 'Prof. Mayala Francis', specialization: 'Informatique', institution: 'UPN' },
-  //   { id: 'rev-2', name: 'Prof. Musesa', specialization: 'Mathematiques', institution: 'UNIKIN' },
-  //   { id: 'rev-3', name: 'Prof. Kabambi', specialization: 'Sciences Politiques', institution: 'UNIKIN' },
-  //   { id: 'rev-4', name: 'Dr. Nguyen', specialization: 'Economie', institution: 'UPN' },
-  //   { id: 'rev-5', name: 'Prof. Santos', specialization: 'Sciences Sociales', institution: 'UNIKIN' },
-  //   { id: 'rev-6', name: 'Dr. Mukendi', specialization: 'Droit', institution: 'UPN' },
-  //   { id: 'rev-7', name: 'Prof. Ibrahim', specialization: 'Histoire', institution: 'UNIKIN' },
-  //   { id: 'rev-8', name: 'Dr. Kalala', specialization: 'Philosophie', institution: 'UPN' },
-  //   { id: 'rev-9', name: 'Prof. Martinez', specialization: 'Littérature', institution: 'UNIKIN' },
-  //   { id: 'rev-10', name: 'Dr. Lukusa', specialization: 'Psychologie', institution: 'UPN' },
-  //   // Add more reviewers
-  // ]
 
 
 const filteredSubmissions = submissions.filter(sub => 
@@ -222,12 +199,27 @@ const fetchSubmissions = async () => {
   useEffect(() => {
     fetchSubmissions()
   }, [])
-// Add refresh function
-    const refreshSubmissions = async () => {
-      setIsRefreshing(true)
-      await fetchSubmissions()
-      setIsRefreshing(false)
-    }
+
+
+// Refresh submissions
+const refreshSubmissions = async () => {
+  setIsRefreshing(true)
+  try {
+    await fetchSubmissions()
+    toast({
+      title: "Actualisé",
+      description: "Liste des soumissions mise à jour"
+    })
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible d'actualiser les soumissions"
+    })
+  } finally {
+    setIsRefreshing(false)
+  }
+}
    
   // Add send to reviewer function
 const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => {
@@ -264,15 +256,35 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Soumissions</h1>
-        <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Rechercher..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e: any) => setSearchTerm(e.target.value)}
-          />
+        <h1 className="text-2xl font-bold">Nouvelles Soumissions</h1>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={refreshSubmissions}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Actualisation...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Actualiser
+              </>
+            )}
+          </Button>
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Rechercher..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e: any) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
