@@ -32,14 +32,6 @@ const userSchema = z.object({
 })
 
 type UserFormData = z.infer<typeof userSchema>
-// interface UserFormData {
-//   name: string
-//   email: string
-//   role: 'author' | 'reviewer' | 'other'
-//   password: string
-//   publications: Publication[]
-//   institution: string
-// }
 interface PDFPreviewProps {
   file: File
   onRemove: () => void
@@ -81,18 +73,19 @@ const PDFPreview = ({ publication, onRemove, onTitleChange }: {
 )
 
 
-  
 export function AddUserModal() {
   const fileInputRef = useRef<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [roleStateChange, setRoleStateChange] = useState(true)
   const [formData, setFormData] = useState<UserFormData>({
     name: '',
     email: '',
     role: 'author',
     password: '',
     publications: [],
-    institution: ''
+    institution: '',
+    phone: ''
   })
 
   const { toast } = useToast()
@@ -179,7 +172,8 @@ const handleFileChange = (e: any) => {
         email: formData.email,
         role: formData.role,
         institution: formData.institution,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        phone: formData.phone
       }])
 
     if (profileError) throw profileError
@@ -207,7 +201,8 @@ const handleFileChange = (e: any) => {
     role: 'author',
     password: '',
     publications: [],
-    institution: ''
+    institution: '',
+    phone: ''
   })
 
   } catch (error) {
@@ -286,11 +281,21 @@ const handleFileChange = (e: any) => {
               id="role"
               className="w-full border rounded-md p-2"
               value={formData.role}
-              onChange={(e: any) => setFormData({ ...formData, role: e.target.value as 'author' | 'reviewer' | 'other' })}
+              onChange={(e: any) => {
+                const newRole = e.target.value as 'author' | 'reviewer' | 'other';
+                // Set roleStateChange based on if author is selected
+                setRoleStateChange(newRole === 'author');
+                // Clear publications if switching away from author
+                setFormData(prev => ({
+                  ...prev,
+                  role: newRole,
+                  publications: newRole === 'author' ? prev.publications : []
+                }));
+              }}
             >
-              <option value="user" className='text-sm'>Auteur</option>
-              <option value="reviewer" className='text-sm'>Reviewer</option>
-              <option value="othher" className='text-sm'>Autre</option>
+              <option value="author" className='text-sm'>Auteur</option>
+              <option value="reviewer" className='text-sm'>Évaluateur</option>
+              <option value="other" className='text-sm'>Autre</option>
             </select>
         </div>
 
@@ -305,52 +310,60 @@ const handleFileChange = (e: any) => {
           />
         </div>
         <div className="space-y-2">
-            <Label htmlFor="phone">Téléphone (Optionnel)</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e: any) => setFormData({ ...formData, phone: e.target.value })}
-              disabled={isLoading}
-            />
+          <Label htmlFor="phone">Téléphone (Optionnel)</Label>
+          <Input
+            id="phone"
+            type="tel"
+            value={formData.phone || ''} // Ensure value is never undefined
+            onChange={(e: any) => setFormData(prev => ({ 
+              ...prev, 
+              phone: e.target.value 
+            }))}
+            disabled={isLoading}
+            placeholder="Entrez votre numéro de téléphone"
+          />
         </div>
-        <div className="space-y-2">
-        <Label>Publications (PDF)</Label>
-        <div className="space-y-2">
-          {formData.publications.map((file, index) => (
-              <PDFPreview
-                key={index}
-                publication={file}
-                onRemove={() => {
-                  const newPublications = formData.publications.filter((_, i) => i !== index)
-                  setFormData(prev => ({ ...prev, publications: newPublications }))
-                }}
-                onTitleChange={(title) => {
-                  const newPublications = [...formData.publications]
-                  newPublications[index] = { ...newPublications[index], title }
-                  setFormData(prev => ({ ...prev, publications: newPublications }))
-                }}
-              />
-            ))}
-          <div className="flex justify-center p-4 border-2 border-dashed rounded-md">
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              multiple
-              accept=".pdf"
-              onChange={handleFileChange}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Ajouter des PDFs
-            </Button>
+        {/* Pdf preview */}
+        {roleStateChange && (
+          <div className="space-y-2">
+            <Label>Publications (PDF)</Label>
+            <div className="space-y-2">
+              {formData.publications.map((file, index) => (
+                <PDFPreview
+                  key={index}
+                  publication={file}
+                  onRemove={() => {
+                    const newPublications = formData.publications.filter((_, i) => i !== index)
+                    setFormData(prev => ({ ...prev, publications: newPublications }))
+                  }}
+                  onTitleChange={(title) => {
+                    const newPublications = [...formData.publications]
+                    newPublications[index] = { ...newPublications[index], title }
+                    setFormData(prev => ({ ...prev, publications: newPublications }))
+                  }}
+                />
+              ))}
+              <div className="flex justify-center p-4 border-2 border-dashed rounded-md">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  multiple
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Ajouter des PDFs
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
         <div className="flex justify-end space-x-2">
           <DialogTrigger asChild>
             <Button variant="outline">Annuler</Button>
