@@ -21,24 +21,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { number, string } from 'zod';
-import { Payment } from '@/data/publications'
-import { createClient } from '@/utils/supabase/client'
 
 type PaymentMethod = 'card' | 'mpesa' | 'orange' | 'airtel'
 
 export default function PaymentPage() {
-  const [paymentMethod, setPaymentMethod] = useState<string>('card')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [step, setStep] = useState(1)
-  const [formData, setFormData] = useState<Partial<Payment>>({
-    amount: 50, // Default amount
-    payment_method: 'card',
-    status: 'Pending',
-    customer_name: '',
-    customer_email: '',
-    details: '',
-    reason: ''
+  const [formData, setFormData] = useState({
+    orderNumber: '',
+    phone: ''
   })
 
   const { toast } = useToast()
@@ -78,42 +71,48 @@ export default function PaymentPage() {
   }
 
   const handlePayement = async () => {
-    setIsProcessing(true)
-    const supabase = createClient()
-    try {
-      const paymentData: Partial<Payment> = {
-        ...formData,
-        created_at: new Date().toISOString(),
-        payment_method: paymentMethod,
-        status: 'Pending',
-        amount: Number(formData.amount),
-        user_id: '', // Add user_id if available
-        publication_id: '' // Add publication_id if available
-      }
-
-      const response = await axios.post('/api/payments', paymentData)
-      
-      if (response.data.success) {
-        setIsSuccess(true)
-        toast({
-          title: "Succès",
-          description: "Votre paiement a été effectué avec succès!"
-        })
-      }
-    } catch (error: any) {
-      setFormData(prev => ({
-        ...prev,
-        status: 'Failed',
-        reason: error.message
-      }))
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Le paiement a échoué"
-      })
-    } finally {
-      setIsProcessing(false)
+    const data = {
+      Numero: formData.phone,
+      Montant: 1000, // Example amount
+      currency: 'CDF',
+      description: 'Payment description'
     }
+
+    console.log("Debugg", data)
+
+    // URL of the gateway
+    const gateway = "http://localhost:8000/payment"
+    // Headers
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzc5OTcwMTc1LCJzdWIiOiJlNzFiM2I4ZDMyNGFmYTMwOWU0NzY4MGI1ZjE0NDhhNCJ9.cLawA7kXCwBNYADRdwy9BJKwxQJOjUf0nTQ1i2Wipnw",
+    }
+
+    setIsProcessing(true)
+
+   try{ 
+    console.log('Debugging data number:',data.Numero)
+    const response = await axios.post(gateway, data, { headers, timeout: 300000 })
+    const responseData = response.data
+    const code = responseData.code
+    if (code !== "0") {
+          console.log("Impossible de traiter la demande, veuillez réessayer")
+          console.log('Debug 2', data)
+      } else {
+        const message = responseData.message
+        console.log('Debug 3', data)
+        const orderNumber = responseData.orderNumber
+        console.log(`Message: ${message}, Order Number: ${orderNumber}`)
+        toast({
+          title: "Statut du paiement",
+          description: "Votre paiement a été effectué avec succès!"
+        });
+      }
+      }catch(error: any){
+        console.log(`Votre paiement a été effectué avec succès! ${error.message}`)
+      }finally{
+        setIsProcessing(false)
+      }
   }
 
   return (
@@ -185,83 +184,56 @@ export default function PaymentPage() {
 
             {step === 2 && (
               <div className="max-w-md mx-auto space-y-8">
-              <div className="text-center">
-                <h2 className="text-2xl font-semibold mb-2">Détails du paiement</h2>
-                <p className="text-gray-600">Via {paymentMethods.find((m: any) => m.id === paymentMethod)?.name}</p>
-              </div>
-        
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="customer_name">Nom du client</Label>
-                  <Input
-                    id="customer_name"
-                    name="customer_name"
-                    value={formData.customer_name}
-                    onChange={handleChange}
-                    required
-                  />
+                <div className="text-center">
+                  <h2 className="text-2xl font-semibold mb-2">Détails du paiement</h2>
+                  <p className="text-gray-600">Via {paymentMethods.find(m => m.id === paymentMethod)?.name}</p>
                 </div>
-        
-                <div>
-                  <Label htmlFor="customer_email">Email</Label>
-                  <Input
-                    id="customer_email"
-                    name="customer_email"
-                    type="email"
-                    value={formData.customer_email}
-                    onChange={handleChange}
-                  />
-                </div>
-        
+
                 {paymentMethod === 'card' ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div>
                       <Label htmlFor="cardNumber">Numéro de carte</Label>
-                      <Input id="cardNumber" placeholder="4242 4242 4242 4242" />
+                      <Input id="cardNumber" placeholder="4242 4242 4242 4242" className="mt-1" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="expiry">Expiration</Label>
-                        <Input id="expiry" placeholder="MM/YY" />
+                        <Input id="expiry" placeholder="MM/YY" className="mt-1" />
                       </div>
                       <div>
                         <Label htmlFor="cvc">CVC</Label>
-                        <Input id="cvc" placeholder="123" />
+                        <Input id="cvc" placeholder="123" className="mt-1" />
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div>
                     <Label htmlFor="phone">Numéro de téléphone</Label>
-                    <Input
-                      id="phone"
-                      name="details" // Store phone in details field
-                      value={formData.details}
-                      onChange={handleChange}
+                    <Input 
+                      id="phone" 
+                      name="phone"
+                      className="mt-1"
                       placeholder={`+243${
                         paymentMethod === 'mpesa' ? '81' : 
                         paymentMethod === 'orange' ? '89' : 
-                        '99'}XXXXXXX`}
+                        '99'} XXXXXXX`}
+                      value={formData.phone}
+                      onChange={handleChange}
                     />
                   </div>
                 )}
+
+                <div className="flex gap-4 pt-4">
+                  <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                    Retour
+                  </Button>
+                  <Button onClick={() => setStep(3)} className="flex-1">
+                    Continuer
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-        
-              <div className="flex gap-4 pt-4">
-                <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
-                  Retour
-                </Button>
-                <Button 
-                  onClick={() => setStep(3)} 
-                  className="flex-1"
-                  disabled={!formData.customer_name}
-                >
-                  Continuer
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
 
             {step === 3 && (
               <div className="max-w-md mx-auto text-center space-y-6">

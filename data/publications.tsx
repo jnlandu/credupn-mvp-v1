@@ -87,7 +87,7 @@ export interface Payment {
     status: 'Pending' | 'Completed' | 'Failed'; // Payment status
     created_at: string; // Timestamp when payment was made
     details?: string; // Additional payment details (optional)
-    customer_email: string; // Email of the customer making the payment
+    customer_email?: string; // Email of the customer making the payment
     customer_name: string; // Name of the customer making the payment
     reason?: string; // Reason for payment failure (optional)
   }
@@ -125,3 +125,67 @@ export const statusLabels: Record<PublicationStatus, string> = {
     'PUBLISHED': 'Publié'
   };
 
+export const cardTypes = [
+    {
+      id: 'visa',
+      name: 'Visa',
+      logoPath: '/images/payments/visa.svg'
+    },
+    {
+      id: 'mastercard',
+      name: 'Mastercard',
+      logoPath: '/images/payments/mastercard.svg'
+    },
+    {
+      id: 'amex',
+      name: 'American Express',
+      logoPath: '/images/payments/amex.svg'
+    }
+  ]
+
+export const requirements = [
+  {
+    title: "Résumé",
+    items: ["Français et version anglaise"],
+  },
+  {
+    title: "Mots Clés",
+    items: ["Français et version anglaise"],
+  },
+  {
+    title: "Introduction",
+    items: [
+      "Problème : Théories, Situation désirée, Situation vécue",
+      "Problématique (Questions de recherche) = Réponse provisoire",
+      "Hypothèse",
+      "Objectif",
+    ],
+  },
+  {
+    title: "II. Méthodologie",
+    items: [
+      "Méthodes et techniques de collecte, d’analyse et d’interprétation des données",
+      "Population",
+      "Échantillon",
+    ],
+  },
+  {
+    title: "III. Résultats",
+    items: ["Présentation des résultats"],
+  },
+  {
+    title: "IV. Discussion",
+    items: [
+      "Analyse et interprétation des résultats",
+      "Vérification (confrontation de l’écart entre théories et résultats existants et actuels)",
+    ],
+  },
+  {
+    title: "Conclusion",
+    items: [],
+  },
+  {
+    title: "Références",
+    items: ["Normes APA"],
+  },
+];
