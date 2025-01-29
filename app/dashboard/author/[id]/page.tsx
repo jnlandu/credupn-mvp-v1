@@ -31,29 +31,13 @@ const COLLAPSED_WIDTH = 64
 
 
 interface PageProps {
-  params: {
-    id: string
-  }
+  params: Promise<{ id: string }>
 }
 
-export default function AuthorDashboard({ params }: {params: PageProps}) {
+export default function AuthorDashboard({ params }: PageProps) {
+  const { id } = use(params)
 
-
-  const [activeTab, setActiveTab] = useState('overview')
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-
-//  try{
-//   const { id } =  params
-
-//  }catch{
-
-//  }
-
-
-
-
-
-  // Mock data - replace with actual data fetch
+// Mock data - replace with actual data fetch
   const authorStats = {
     totalPublications: 5,
     pendingSubmissions: 2,
@@ -80,26 +64,16 @@ export default function AuthorDashboard({ params }: {params: PageProps}) {
   return (
     <div className="min-h-screen ">
       <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-between items-center gap-4 mb-8">
-          <div>
-          <h1 className="text-3xl font-bold">Tableau de bord</h1>
-            
-          </div>
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <UserCheck className="h-8 w-8 text-primary" />
-          </div>
-        </div>
-
+      <h1 className="text-3xl font-bold">Tableau de bord</h1>
         <div className="flex justify-between items-center mb-8">
         <p className="text-gray-500">Gérez vos soumissions et suivez leurs statuts</p>
             <Button asChild>
-              <Link href="/publications/soumettre" className="flex items-center">
+              <Link href={`../author/${id}/soumettre`} className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Nouvelle soumission
               </Link>
             </Button>
         </div>
-
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>

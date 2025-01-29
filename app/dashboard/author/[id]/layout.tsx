@@ -1,7 +1,7 @@
 // app/dashboard/author/[id]/layout.tsx
 "use client"
 
-import { use, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { 
   BookOpen, 
@@ -14,9 +14,26 @@ import {
   Layout,
   Clock,
   CheckCircle2,
-  PlusCircle
+  PlusCircle,
+  Bell,
+  UserCheck
 } from "lucide-react"
+import { createClient } from '@/utils/supabase/client'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { useRouter } from 'next/navigation'
 
+
+// Add interfaces
+interface Notification {
+  id: string
+  user_id: string
+  message: string
+  type: 'info' | 'success' | 'warning' | 'error'
+  read: boolean
+  created_at: string
+}
 
 interface LayoutProps {
   children: React.ReactNode
@@ -28,6 +45,66 @@ export default function AuthorLayout({
 }: LayoutProps) {
   const { id } = use(params) // Unwrap params using React.use()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const router = useRouter()  
+
+useEffect(() => {
+    const fetchNotifications = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (data) {
+        setNotifications(data)
+        setUnreadCount(data.filter(n => !n.read).length)
+      }
+    }
+
+  fetchNotifications()
+
+    // Subscribe to new notifications
+    const supabase = createClient()
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${id}`
+        },
+        (payload) => {
+          setNotifications(prev => [payload.new as Notification, ...prev])
+          setUnreadCount(prev => prev + 1)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [id])
+  const markAsRead = async (notificationId: string) => {
+    const supabase = createClient()
+    await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notificationId)
+
+    setNotifications(prev =>
+      prev.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      )
+    )
+    setUnreadCount(prev => prev - 1)
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -107,6 +184,52 @@ export default function AuthorLayout({
 
       {/* Main Content */}
       <main className="flex-1">
+      <div className="border-b px-8 py-4 flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge 
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center"
+                    variant="destructive"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              {notifications.length === 0 ? (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  Aucune notification
+                </div>
+              ) : (
+                notifications.map(notification => (
+                  <DropdownMenuItem
+                    key={notification.id}
+                    className={`p-3 ${!notification.read ? 'bg-primary/5' : ''}`}
+                    onClick={() => markAsRead(notification.id)}
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm">{notification.message}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(notification.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <button 
+            className='p-3 bg-primary/10 rounded-lg'
+            onClick={() => router.push(`/dashboard/author/${id}/settings`)}
+            >
+            <UserCheck className="h-4 w-8 text-primary" />
+          </button>
+
+        </div>
         <div className="p-8">
           {children}
         </div>

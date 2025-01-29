@@ -22,23 +22,7 @@ export interface Publication {
   downloadUrl: string;
 }
 
-export type PublicationStatus = 'PUBLISHED' | 'PENDING' | 'REJECTED' | 'REVIEW';
 
-// Update statusStyles object
-export const statusStyles: Record<PublicationStatus, string> = {
-  'PUBLISHED': 'bg-green-100 text-green-800',
-  'PENDING': 'bg-yellow-100 text-yellow-800',
-  'REJECTED': 'bg-red-100 text-red-800',
-  'REVIEW': 'bg-blue-100 text-blue-800'
-}
-
-// Update status labels
-export const statusLabels: Record<PublicationStatus, string> = {
-  'PUBLISHED': 'Publié',
-  'PENDING': 'En attente',
-  'REJECTED': 'Rejeté',
-  'REVIEW': 'En évaluation'
-}
 
 export const categories = ["Tous", "Recherche", "Méthodologie", "Guide Pratique", "Politique Éducative"]
 export const types = ["Tous", "Article", "Thèse", "Livre", "Rapport"]
