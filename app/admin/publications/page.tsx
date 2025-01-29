@@ -51,6 +51,8 @@ export default function PublicationsAdmin() {
   const [previewPub, setPreviewPub] = useState<Publication | null>(null)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [pdfError, setPdfError] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [publicationToDelete, setPublicationToDelete] = useState<Publication | null>(null)
 
   const [publications, setPublications] = useState<Publication[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -349,6 +351,46 @@ useEffect(() => {
       }
     }
   
+  //  Handle Delete 
+  const handleDelete = async (publication: Publication) => {
+    const supabase = createClient()
+    try {
+      // Delete PDF from storage first
+      const fileName = publication.pdf_url.split('/').pop()
+      if (fileName) {
+        const { error: storageError } = await supabase.storage
+          .from('publications')
+          .remove([fileName])
+  
+        if (storageError) throw storageError
+      }
+  
+      // Then delete from database
+      const { error: dbError } = await supabase
+        .from('publications')
+        .delete()
+        .eq('id', publication.id)
+  
+      if (dbError) throw dbError
+      // Update UI
+      setPublications(prev => prev.filter(p => p.id !== publication.id))
+      setIsDeleteDialogOpen(false)
+      setPublicationToDelete(null)
+  
+      toast({
+        title: "Succès",
+        description: "Publication supprimée avec succès"
+      })
+    } catch (error) {
+      console.error('Delete error:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer la publication"
+      })
+    }
+  }
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -458,7 +500,14 @@ useEffect(() => {
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setPublicationToDelete(pub)
+                            setIsDeleteDialogOpen(true)
+                          }}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -962,6 +1011,30 @@ useEffect(() => {
     </div>
   </DialogContent>
 </Dialog>
+
+{/*  Delete Dialog  */}
+  <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Confirmer la suppression</DialogTitle>
+      </DialogHeader>
+      <div className="py-4">
+        <p>Êtes-vous sûr de vouloir supprimer cette publication ?</p>
+        <p className="font-medium mt-2">{publicationToDelete?.title}</p>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+          Annuler
+        </Button>
+        <Button 
+          variant="destructive" 
+          onClick={() => publicationToDelete && handleDelete(publicationToDelete)}
+        >
+          Supprimer
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
 
  </div>
   )
