@@ -70,54 +70,66 @@ const fetchUsers = async () => {
   const supabase = createClient()
   setIsLoading(true)
   try {
-    console.log('Fetching Users ...')
-    const { data, error } = await supabase
-    .from('users')
-    .select(`
-      *,
-      publications (
-        id,
-        title,
-        status,
-        date,
-        category,
-        pdf_url,
-        abstract,
-        keywords
-      )
-    `)
-    .returns<Array<User & { publications: Publication[] }>>()
-    if (error) {
-      console.error('Supabase error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
+    console.log('Starting users fetch...')
+    
+    // First fetch users
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (usersError) throw usersError
+
+    // Then fetch publications for each user
+    const usersWithPublications = await Promise.all(
+      users.map(async (user) => {
+        const { data: pubs, error: pubError } = await supabase
+          .from('publications')
+          .select(`
+            id,
+            title,
+            status,
+            date,
+            category,
+            pdf_url,
+            abstract,
+            keywords
+          `)
+          .eq('author_id', user.id)
+
+        if (pubError) {
+          console.error(`Error fetching publications for user ${user.id}:`, pubError)
+          return { ...user, publications: [] }
+        }
+
+        return {
+          ...user,
+          publications: pubs || []
+        }
       })
-      throw error
-    }
-    if (!data) {
-      throw new Error('No data returned from Supabase')
-    }
-    console.log('Users fetch successful:', {
-      totalUsers: data.length,
-      sampleUser: data[0],
-      totalPublications: data.reduce((acc, user) => acc + (user.publications?.length || 0), 0)
+    )
+
+    console.log('Fetch completed:', {
+      totalUsers: usersWithPublications.length,
+      sampleUser: usersWithPublications[0],
+      totalPublications: usersWithPublications.reduce(
+        (acc, user) => acc + (user.publications?.length || 0), 
+        0
+      )
     })
 
-    const mappedUsers = data.map(user => ({
-      ...user,
-      publications: user.publications || []
-    }))
-    setUsers(mappedUsers)
-
-    setUsers(mappedUsers);
+    setUsers(usersWithPublications)
   } catch (error) {
-    console.error('Error fetching users:', error)
+    console.error('Error details:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    })
+    
     toast({
       variant: "destructive",
       title: "Erreur",
-      description: "Impossible de charger les utilisateurs"
+      description: "Impossible de charger les utilisateurs et leurs publications"
     })
   } finally {
     setIsLoading(false)
