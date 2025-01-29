@@ -32,7 +32,7 @@ import {
 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDropzone } from 'react-dropzone'
-import { Publication,statusLabels,statusStyles  } from "@/data/publications"
+import { Publication,Reviewer,statusLabels,statusStyles  } from "@/data/publications"
 import { useToast } from '@/hooks/use-toast'
 import { Tooltip } from '@radix-ui/react-tooltip'
 
@@ -56,12 +56,14 @@ export default function PublicationsAdmin() {
 
   const [publications, setPublications] = useState<Publication[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [reviewers, setReviewers] = useState<Reviewer[]>([])
+  const [isLoadingReviewers, setIsLoadingReviewers] = useState(false)
   const [showReviewerModal, setShowReviewerModal] = useState(false)
   const [selectedReviewers, setSelectedReviewers] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  
   // Add state for filtering reviewers
   const [filterTerm, setFilterTerm] = useState('')
-  // const [selectedPub, setSelectedPub] = useState(null)
   const { toast } = useToast()
   const countWords = (text: string) => {
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
@@ -83,25 +85,6 @@ export default function PublicationsAdmin() {
       )
     )
     .slice(startIndex, endIndex)
-
-  // Mock data for reviewers
-  const reviewers = [
-    { id: 'rev-1', name: 'Prof. Dr Jean Paul Yawidi', specialization: 'Psychologie Analytique', institution: 'UPN' },
-    { id: 'rev-2', name: 'Prof. Dr Mayala Francis', specialization: 'Informatique, Cybersécurité, Cryptographie', institution: 'UPN' },
-    { id: 'rev-3', name: 'Prof. Dr Musesa', specialization: 'Mathematiques, Géométrie Différentielle', institution: 'UNIKIN' },
-    { id: 'rev-4', name: 'Prof. Dr Makiese Sarah', specialization: 'Sciences Politiques, Relations Internationales', institution: 'UPN' },
-    { id: 'rev-5', name: 'Prof. Dr Ngoma Pierre', specialization: 'Économie, Finance', institution: 'UNIKIN' },
-    { id: 'rev-6', name: 'Prof. Dr Kabamba John', specialization: 'Sociologie, Anthropologie', institution: 'UPN' },
-    { id: 'rev-7', name: 'Prof. Dr Tshienda Marie', specialization: 'Droit International', institution: 'UNIKIN' },
-    { id: 'rev-8', name: 'Prof. Dr Mutombo Eric', specialization: 'Physique Quantique', institution: 'UPN' },
-    { id: 'rev-9', name: 'Prof. Dr Lukusa Anne', specialization: 'Biologie Moléculaire', institution: 'UNIKIN' },
-    { id: 'rev-10', name: 'Prof. Dr Mbala David', specialization: 'Chimie Organique', institution: 'UPN' },
-    { id: 'rev-11', name: 'Prof. Dr Kasongo Rebecca', specialization: 'Sciences de l\'Éducation', institution: 'UPN' },
-    { id: 'rev-12', name: 'Prof. Dr Mwamba Joseph', specialization: 'Linguistique, Langues Africaines', institution: 'UNIKIN' },
-    { id: 'rev-13', name: 'Prof. Dr Nkulu Claire', specialization: 'Histoire, Archéologie', institution: 'UPN' },
-    { id: 'rev-14', name: 'Prof. Dr Kalala Michel', specialization: 'Études Environnementales', institution: 'UNIKIN' },
-    { id: 'rev-15', name: 'Prof. Dr Bokoko Alice', specialization: 'Philosophie, Éthique', institution: 'UPN' },
-  ]
   
   // Handle PDF File Selection
   const handlePdfChange = (e: any) => {
@@ -356,7 +339,7 @@ useEffect(() => {
     const supabase = createClient()
     try {
       // Delete PDF from storage first
-      const fileName = publication.pdf_url.split('/').pop()
+      const fileName = publication.pdfUrl.split('/').pop()
       if (fileName) {
         const { error: storageError } = await supabase.storage
           .from('publications')
@@ -381,12 +364,75 @@ useEffect(() => {
         title: "Succès",
         description: "Publication supprimée avec succès"
       })
+
     } catch (error) {
       console.error('Delete error:', error)
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de supprimer la publication"
+      })
+    }
+  }
+
+  // Fetching reviwers
+  const fetchReviewers = async () => {
+    const supabase = createClient()
+    setIsLoadingReviewers(true)
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email, institution')
+        .eq('role', 'REVIEWER')
+        .order('name', { ascending: true })
+  
+      if (error) throw error
+  
+      setReviewers(data || [])
+
+    } catch (error) {
+      console.error('Error fetching reviewers:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger la liste des évaluateurs"
+      })
+    } finally {
+      setIsLoadingReviewers(false)
+    }
+  }
+  useEffect(() => {
+    fetchReviewers()
+  }, [])
+
+  const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => {
+    const supabase = createClient()
+    try {
+      // Update publication status
+      const { error: statusError } = await supabase
+        .from('publications')
+        .update({ 
+          status: 'UNDER_REVIEW',
+          reviewers: reviewerIds 
+        })
+        .eq('id', publicationId)
+  
+      if (statusError) throw statusError
+  
+      // Notify reviewers (implement notification system)
+      toast({
+        title: "Succès",
+        description: "Publication envoyée aux évaluateurs"
+      })
+      
+      setShowReviewerModal(false)
+      refreshPublications()
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'envoyer aux évaluateurs"
       })
     }
   }
@@ -513,7 +559,10 @@ useEffect(() => {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => setShowReviewerModal(true)}
+                          onClick={async () => {
+                            setShowReviewerModal(true)
+                            await fetchReviewers() // Fetch fresh list when modal opens
+                          }}
                         >
                           <Send className="h-4 w-4" />
                         </Button>
@@ -866,7 +915,7 @@ useEffect(() => {
       <div className="max-h-60 overflow-y-auto">
         {reviewers
           .filter(reviewer => 
-            reviewer.specialization.toLowerCase().includes(filterTerm.toLowerCase()) ||
+            reviewer?.specialization.toLowerCase().includes(filterTerm.toLowerCase()) ||
             reviewer.institution.toLowerCase().includes(filterTerm.toLowerCase())
           )
           .map((reviewer) => (
@@ -1013,28 +1062,55 @@ useEffect(() => {
 </Dialog>
 
 {/*  Delete Dialog  */}
-  <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Confirmer la suppression</DialogTitle>
-      </DialogHeader>
-      <div className="py-4">
-        <p>Êtes-vous sûr de vouloir supprimer cette publication ?</p>
-        <p className="font-medium mt-2">{publicationToDelete?.title}</p>
-      </div>
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-          Annuler
-        </Button>
-        <Button 
-          variant="destructive" 
-          onClick={() => publicationToDelete && handleDelete(publicationToDelete)}
-        >
-          Supprimer
-        </Button>
-      </div>
-    </DialogContent>
-  </Dialog>
+{/* // Update reviewer selection modal */}
+<Dialog open={showReviewerModal} onOpenChange={setShowReviewerModal}>
+  <DialogContent className="max-w-lg">
+    <DialogHeader>
+      <DialogTitle>Sélectionner des évaluateurs</DialogTitle>
+    </DialogHeader>
+    <div className="max-h-[400px] overflow-y-auto p-4">
+      {isLoadingReviewers ? (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      ) : (
+        reviewers.map((reviewer) => (
+          <div key={reviewer.id} className="flex items-center space-x-3 py-2 border-b">
+            <input
+              type="checkbox"
+              id={reviewer.id}
+              className="h-4 w-4 rounded border-gray-300"
+              checked={selectedReviewers.includes(reviewer.id)}
+              onChange={(e: any) => {
+                if (e.target.checked) {
+                  setSelectedReviewers([...selectedReviewers, reviewer.id])
+                } else {
+                  setSelectedReviewers(selectedReviewers.filter(id => id !== reviewer.id))
+                }
+              }}
+            />
+            <label htmlFor={reviewer.id} className="flex-1">
+              <p className="font-medium">{reviewer.name}</p>
+              <p className="text-sm text-gray-500">{reviewer.email}</p>
+              <p className="text-xs text-gray-400">{reviewer.institution}</p>
+            </label>
+          </div>
+        ))
+      )}
+    </div>
+    <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+      <Button variant="outline" onClick={() => setShowReviewerModal(false)}>
+        Annuler
+      </Button>
+      <Button
+        disabled={selectedReviewers.length === 0}
+        onClick={() => sendToReviewers(selectedPub?.id!, selectedReviewers)}
+      >
+        Envoyer
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
 
  </div>
   )

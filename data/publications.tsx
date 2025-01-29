@@ -65,7 +65,7 @@ export interface Reviewer {
     name: string
     email: string
     institution: string
-    role: string,
+    role?: string,
     specialization?: string
   }
 
