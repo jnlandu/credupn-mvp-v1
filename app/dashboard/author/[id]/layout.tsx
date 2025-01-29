@@ -23,16 +23,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
+import { Notification } from '@/data/publications'
 
 
 // Add interfaces
-interface Notification {
+interface User {
   id: string
-  user_id: string
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  read: boolean
-  created_at: string
+  name: string
+  email: string
 }
 
 interface LayoutProps {
@@ -47,6 +45,7 @@ export default function AuthorLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [user, setUser] = useState<User | null>(null)
 
   const router = useRouter()  
 
@@ -91,6 +90,7 @@ useEffect(() => {
       supabase.removeChannel(channel)
     }
   }, [id])
+
   const markAsRead = async (notificationId: string) => {
     const supabase = createClient()
     await supabase
@@ -104,6 +104,32 @@ useEffect(() => {
       )
     )
     setUnreadCount(prev => prev - 1)
+  }
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .eq('id', id)
+        .single()
+  
+      if (data) {
+        setUser(data)
+      }
+    }
+  
+    fetchUser()
+  }, [id])
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
   }
 
   return (
@@ -223,10 +249,10 @@ useEffect(() => {
             </DropdownMenuContent>
           </DropdownMenu>
           <button 
-            className='p-3 bg-primary/10 rounded-lg'
+            className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-sm font-medium"
             onClick={() => router.push(`/dashboard/author/${id}/settings`)}
-            >
-            <UserCheck className="h-4 w-8 text-primary" />
+          >
+            {user?.name ? getInitials(user.name) : getInitials('Mayala Lemba')}
           </button>
 
         </div>

@@ -289,6 +289,7 @@ useEffect(() => {
               ? newPublication.author 
               : newPublication.author.split(',').map(a => a.trim()),
             date: newPublication.date,
+            type: newPublication.type,
             category: newPublication.category,
             status: newPublication.status,
             pdf_url: publicUrl,
@@ -395,6 +396,7 @@ useEffect(() => {
               <TableHead className="text-gray-900 font-semibold">Titre</TableHead>
               <TableHead className="text-gray-900 font-semibold">Auteur.e(s)</TableHead>
               <TableHead className="text-gray-900 font-semibold">Date</TableHead>
+              <TableHead className="text-gray-900 font-semibold">Type</TableHead>
               <TableHead className="text-gray-900 font-semibold">Catégorie</TableHead>
               <TableHead className="text-gray-900 font-semibold">Status</TableHead>
               <TableHead className="text-gray-900 font-semibold">Actions</TableHead>
@@ -431,6 +433,7 @@ useEffect(() => {
                     <TableCell className="font-medium">{pub.title}</TableCell>
                     <TableCell>{Array.isArray(pub.author) ? pub.author.join(', ') : pub.author}</TableCell>
                     <TableCell>{new Date(pub.date).toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell>{pub.type || 'N/D'}</TableCell>
                     <TableCell>{pub.category}</TableCell>
                     <TableCell>
                       <Badge className={statusStyles[pub.status]}>
@@ -657,6 +660,25 @@ useEffect(() => {
                 required 
               />
             </div>
+            <div className="grid gap-2">
+                <label className="font-medium" htmlFor="type">Type</label>
+                <Select
+                  value={newPublication.type || ''}
+                  onValueChange={(value) => setNewPublication({ ...newPublication, type: value })}
+                  required
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner un type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Article">Article</SelectItem>
+                    <SelectItem value="These">Thèse</SelectItem>
+                    <SelectItem value="Rapport">Rapport</SelectItem>
+                    <SelectItem value="Livre">Livre</SelectItem>
+                    <SelectItem value="Tous">Tous</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             <div className="grid gap-2">
               <label className="font-medium" htmlFor="category">Catégorie</label>
               <Select

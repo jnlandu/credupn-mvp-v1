@@ -5,7 +5,8 @@ export interface Publication {
     id: string
     title: string
     author: string[] | string  // author: string[] for multiple authors
-    date: string
+    date: string,
+    type: string,
     status: 'PUBLISHED' | 'PENDING' | 'REJECTED' | 'REVIEW' 
     category: string
     pdfUrl: string,
@@ -142,6 +143,14 @@ export const cardTypes = [
       logoPath: '/images/payments/amex.svg'
     }
   ]
+export interface Notification {
+  id: string
+  user_id: string
+  message: string
+  type: 'info' | 'success' | 'warning' | 'error'
+  read: boolean
+  created_at: string
+}
 
 export const requirements = [
   {
