@@ -51,8 +51,10 @@ export default function PublicationsAdmin() {
   const [previewPub, setPreviewPub] = useState<Publication | null>(null)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [pdfError, setPdfError] = useState(false)
+  // const [isLoading, setIsLoading] = useState(true)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [publicationToDelete, setPublicationToDelete] = useState<Publication | null>(null)
+
 
   const [publications, setPublications] = useState<Publication[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -61,6 +63,8 @@ export default function PublicationsAdmin() {
   const [showReviewerModal, setShowReviewerModal] = useState(false)
   const [selectedReviewers, setSelectedReviewers] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [publicationToEdit, setPublicationToEdit] = useState<Publication | null>(null)
   
   // Add state for filtering reviewers
   const [filterTerm, setFilterTerm] = useState('')
@@ -139,6 +143,7 @@ const refreshPublications = async () => {
 }
 //   Fetch publications
 const fetchPublications = async () => {
+  setIsLoading(true) // Set loading state at start
   const supabase = createClient()
   
   try {
@@ -193,6 +198,7 @@ useEffect(() => {
   // Handle Add Publication Form Submission
   const handleAddPublication = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     const supabase = createClient()
   
     if (
@@ -339,13 +345,15 @@ useEffect(() => {
     const supabase = createClient()
     try {
       // Delete PDF from storage first
-      const fileName = publication.pdfUrl.split('/').pop()
-      if (fileName) {
-        const { error: storageError } = await supabase.storage
-          .from('publications')
-          .remove([fileName])
+      if (publication.pdfUrl) {
+        const fileName = publication.pdfUrl.split('/').pop()
+        if (fileName) {
+          const { error: storageError } = await supabase.storage
+            .from('publications')
+            .remove([fileName])
   
-        if (storageError) throw storageError
+          if (storageError) throw storageError
+        }
       }
   
       // Then delete from database
@@ -375,6 +383,7 @@ useEffect(() => {
     }
   }
 
+ 
   // Fetching reviwers
   const fetchReviewers = async () => {
     const supabase = createClient()
@@ -437,6 +446,82 @@ useEffect(() => {
     }
   }
 
+// Add edit handler function
+const handleEdit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!publicationToEdit) return
+
+  const supabase = createClient()
+  setIsLoading(true)
+
+  try {
+    console.log('Updating publication:', publicationToEdit) // Debug log
+    const { data: existingPub, error: checkError } = await supabase
+    .from('publications')
+    .select('*')
+    .eq('id', publicationToEdit.id)
+    .single()
+
+  if (checkError || !existingPub) {
+    throw new Error('Publication not found')
+  }
+
+  const updateData = {
+    title: publicationToEdit.title,
+    author: Array.isArray(publicationToEdit.author) 
+      ? publicationToEdit.author 
+      : publicationToEdit.author.split(',').map(a => a.trim()),
+    date: publicationToEdit.date,
+    type: publicationToEdit.type,
+    category: publicationToEdit.category,
+    status: publicationToEdit.status,
+    abstract: publicationToEdit.abstract,
+    keywords: publicationToEdit.keywords,
+    updated_at: new Date().toISOString()
+  }
+
+  console.log('Update error:', updateData) // Debug log
+    // First update in Supabase
+    const { data: updateResult, error: updateError } = await supabase
+      .from('publications')
+      .update(updateData)
+      .eq('id', publicationToEdit.id)
+      .select()
+      .single()
+
+      if (updateError) {
+        console.error('Update error:', updateError) // Debug log
+        throw updateError
+      }
+
+    // Update local state
+    setPublications(prev => 
+      prev.map(p => p.id === publicationToEdit.id ? updateResult : p)
+    )
+
+    // Close dialog and clear edit state
+    setIsEditDialogOpen(false)
+    setPublicationToEdit(null)
+
+    // Refresh publications list
+    await fetchPublications()
+
+    toast({
+      title: "Succès",
+      description: "Publication mise à jour avec succès"
+    })
+  } catch (error) {
+    console.error('Update error:', error)
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de mettre à jour la publication"
+    })
+  } finally {
+    setIsLoading(false)
+  }
+}
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -493,20 +578,16 @@ useEffect(() => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2">Chargement des publications...</span>
+                <TableCell colSpan={7} className="text-center">
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-gray-500">
+                      Chargement des publications depuis la base de données...
+                    </p>
                   </div>
                 </TableCell>
               </TableRow>
-            ) : publications.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-4">
-                  Aucune publication trouvée
-                </TableCell>
-              </TableRow>
-            ) : (
+            ): (
               publications
                 .filter(pub => 
                   pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -543,7 +624,14 @@ useEffect(() => {
                         <Button variant="ghost" size="sm">
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setPublicationToEdit(pub)
+                            setIsEditDialogOpen(true)
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -900,81 +988,6 @@ useEffect(() => {
           )}
         </DialogContent>
       </Dialog>
-  {/*  Send to the reviewers */}
-  <Dialog open={showReviewerModal} onOpenChange={setShowReviewerModal}>
-  <DialogContent className="max-w-lg">
-    <DialogHeader>
-      <DialogTitle>Sélectionner des évaluateurs</DialogTitle>
-    </DialogHeader>
-    <div className="space-y-4">
-      <Input
-        placeholder="Filtrer par spécialisation ou institution..."
-        value={filterTerm}
-        onChange={(e: any) => setFilterTerm(e.target.value)}
-      />
-      <div className="max-h-60 overflow-y-auto">
-        {reviewers
-          .filter(reviewer => 
-            reviewer?.specialization.toLowerCase().includes(filterTerm.toLowerCase()) ||
-            reviewer.institution.toLowerCase().includes(filterTerm.toLowerCase())
-          )
-          .map((reviewer) => (
-            <div key={reviewer.id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id={reviewer.id}
-                value={reviewer.id}
-                checked={selectedReviewers.includes(reviewer.id)}
-                onChange={(e) => {
-                  const { checked, value } :  any= e.target
-                  setSelectedReviewers((prev) =>
-                    checked ? [...prev, value] : prev.filter((id) => id !== value)
-                  )
-                }}
-              />
-              <label htmlFor={reviewer.id}>
-                <div>
-                  <p className="font-medium">{reviewer.name}</p>
-                  <p className="text-sm text-gray-500">{reviewer.specialization} - {reviewer.institution}</p>
-                </div>
-              </label>
-            </div>
-          ))}
-      </div>
-    </div>
-    <div className="flex justify-end gap-2 mt-4">
-      <Button variant="outline" onClick={() => setShowReviewerModal(false)}>
-        Annuler
-      </Button>
-      <Button
-        onClick={async () => {
-          try {
-            const res = await fetch(`/api/publications/${selectedPub?.id}/forward`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ reviewers: selectedReviewers })
-            })
-            if (!res.ok) throw new Error('Failed to forward publication')
-            toast({
-              title: "Succès",
-              description: "Publication envoyée aux évaluateurs sélectionnés.",
-            })
-            setShowReviewerModal(false)
-          } catch (error) {
-            toast({
-              variant: "destructive",
-              title: "Erreur",
-              description: "Impossible d'envoyer la publication. Veuillez réessayer.",
-            })
-          }
-        }}
-      >
-        Envoyer
-      </Button>
-    </div>
-  </DialogContent>
-</Dialog>
-
 {/* Publication preview  */}
 <Dialog open={!!previewPub} onOpenChange={() => setPreviewPub(null)}>
   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1061,8 +1074,7 @@ useEffect(() => {
   </DialogContent>
 </Dialog>
 
-{/*  Delete Dialog  */}
-{/* // Update reviewer selection modal */}
+{/* // Send to Reviewers Update reviewer selection modal */}
 <Dialog open={showReviewerModal} onOpenChange={setShowReviewerModal}>
   <DialogContent className="max-w-lg">
     <DialogHeader>
@@ -1112,6 +1124,119 @@ useEffect(() => {
   </DialogContent>
 </Dialog>
 
+{/*  Delete Article  */}
+<Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Confirmer la suppression</DialogTitle>
+    </DialogHeader>
+    <div className="py-4">
+      <p>Êtes-vous sûr de vouloir supprimer cette publication ?</p>
+      <p className="font-medium mt-2">{publicationToDelete?.title}</p>
+    </div>
+    <div className="flex justify-end gap-2">
+      <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+        Annuler
+      </Button>
+      <Button 
+        variant="destructive" 
+        onClick={() => publicationToDelete && handleDelete(publicationToDelete)}
+      >
+        Supprimer
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+
+{/* Edit Action dialog */}
+<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+  <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+    <DialogHeader>
+      <DialogTitle>Modifier la Publication</DialogTitle>
+    </DialogHeader>
+    <div className="flex-1 overflow-y-auto pr-2">
+      <form onSubmit={handleEdit} className="space-y-4 px-2">
+        <div className="grid gap-2">
+          <label className="font-medium" htmlFor="edit-title">Titre</label>
+          <Input 
+            id="edit-title" 
+            value={publicationToEdit?.title || ''} 
+            onChange={(e: any) => setPublicationToEdit(prev => 
+              prev ? { ...prev, title: e.target.value } : null
+            )}
+            required 
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="font-medium" htmlFor="edit-author">Auteurs</label>
+          <Input 
+            id="edit-author" 
+            value={Array.isArray(publicationToEdit?.author) 
+              ? publicationToEdit.author.join(', ') 
+              : publicationToEdit?.author || ''
+            }
+            onChange={(e: any) => setPublicationToEdit(prev => 
+              prev ? { ...prev, author: e.target.value } : null
+            )}
+            placeholder="Séparez les auteurs par des virgules"
+            required 
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="font-medium" htmlFor="edit-abstract">Résumé</label>
+          <textarea
+            id="edit-abstract"
+            rows={4}
+            className="w-full p-2 border rounded-md resize-none"
+            value={publicationToEdit?.abstract || ''}
+            onChange={(e: any) => setPublicationToEdit(prev => 
+              prev ? { ...prev, abstract: e.target.value } : null
+            )}
+            required
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="font-medium" htmlFor="edit-type">Type</label>
+          <Select
+            value={publicationToEdit?.type || ''}
+            onValueChange={(value) => setPublicationToEdit(prev => 
+              prev ? { ...prev, type: value } : null
+            )}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Article">Article</SelectItem>
+              <SelectItem value="These">Thèse</SelectItem>
+              <SelectItem value="Rapport">Rapport</SelectItem>
+              <SelectItem value="Livre">Livre</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            Annuler
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Mise à jour...
+              </>
+            ) : (
+              'Mettre à jour'
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
+  </DialogContent>
+</Dialog>
  </div>
   )
 }
