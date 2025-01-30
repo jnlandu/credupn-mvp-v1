@@ -43,7 +43,7 @@ import {
 import { AddUserModal } from '@/components/users/AddUserModal'
 import { createClient } from '@/utils/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { Publication, User } from '@/data/publications'
+import { Publication, User, usersWithPubs } from '@/data/publications'
 
 
 
@@ -55,7 +55,7 @@ export default function UsersAdmin() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [selectedUserPubs, setSelectedUserPubs] = useState<User | null>(null)
-  const [users, setUsers] = useState<User[]>([])
+  const [users, setUsers] = useState<usersWithPubs[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [institutionFilter, setInstitutionFilter] = useState<string>('all')
@@ -72,53 +72,61 @@ const fetchUsers = async () => {
   try {
     console.log('Starting users fetch...')
     
-    // First fetch users
+    // First try to fetch just users to verify access
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('*')
+
+    if (usersError) {
+      console.error('Users fetch error:', {
+        code: usersError.code,
+        message: usersError.message,
+        details: usersError.details,
+        hint: usersError.hint
+      })
+      throw usersError
+    }
+
+    // Then fetch publications separately with author join
+    const { data: usersWithPubs, error: pubsError } = await supabase
+      .from('users')
+      .select(`
+        id,
+        name,
+        email,
+        role,
+        institution,
+        phone,
+        created_at,
+        publications!publications_author_id_fkey (
+          id,
+          title,
+          status,
+          date,
+          category,
+          pdf_url,
+          abstract,
+          keywords
+        )
+      `)
       .order('created_at', { ascending: false })
 
-    if (usersError) throw usersError
-
-    // Then fetch publications for each user
-    const usersWithPublications = await Promise.all(
-      users.map(async (user) => {
-        const { data: pubs, error: pubError } = await supabase
-          .from('publications')
-          .select(`
-            id,
-            title,
-            status,
-            date,
-            category,
-            pdf_url,
-            abstract,
-            keywords
-          `)
-          .eq('author_id', user.id)
-
-        if (pubError) {
-          console.error(`Error fetching publications for user ${user.id}:`, pubError)
-          return { ...user, publications: [] }
-        }
-
-        return {
-          ...user,
-          publications: pubs || []
-        }
+    if (pubsError) {
+      console.error('Publications join error:', {
+        code: pubsError.code,
+        message: pubsError.message,
+        details: pubsError.details,
+        hint: pubsError.hint
       })
-    )
+      throw pubsError
+    }
 
     console.log('Fetch completed:', {
-      totalUsers: usersWithPublications.length,
-      sampleUser: usersWithPublications[0],
-      totalPublications: usersWithPublications.reduce(
-        (acc, user) => acc + (user.publications?.length || 0), 
-        0
-      )
+      totalUsers: usersWithPubs?.length || 0,
+      sampleUser: usersWithPubs?.[0]
     })
 
-    setUsers(usersWithPublications)
+    setUsers(usersWithPubs || [])
   } catch (error) {
     console.error('Error details:', {
       error,
@@ -285,7 +293,6 @@ const refreshUsers = async () => {
                 .map((user, key) => (
                   <TableRow 
                     key={user.id}
-                    // className="border-b hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="font-medium text-gray-950">{key+1}</TableCell>
                     <TableCell className="font-medium text-gray-950">{user.name}</TableCell>

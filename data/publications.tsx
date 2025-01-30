@@ -79,6 +79,36 @@ export interface User {
     publications?: PublicationWithRelationsUser[]
   }
 
+export interface usersWithPubls {
+    id: string
+    name: string
+    email: string
+    role: 'author' | 'reviewer' | 'admin'
+    institution: string
+    phone?: string
+    publications?:Publication
+  }
+
+  export interface usersWithPubs {
+    id: any;
+    name: any;
+    email: any;
+    role: any;
+    institution: any;
+    phone?: any;
+    created_at: any;
+    publications?: {
+        id: any;
+        title: any;
+        status: any;
+        date: any;
+        category: any;
+        pdf_url: any;
+        abstract: any;
+        keywords: any;
+    }[];
+}
+
 export interface Payment {
     id: number; // Primary key
     user_id: string; // Foreign key to users table
