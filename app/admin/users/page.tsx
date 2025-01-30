@@ -285,7 +285,18 @@ const refreshUsers = async () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-            {currentUsers
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center">
+                    <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-gray-500">
+                        Chargement des utilisateurs depuis la base de données...
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : currentUsers
                 .filter(user => 
                   user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                   user.email.toLowerCase().includes(searchTerm.toLowerCase())
