@@ -12,11 +12,12 @@ import { Payment } from '@/data/publications'
 
 export function AddPaymentModal({ onSuccess }: { onSuccess?: () => void }) {
   const [isLoading, setIsLoading] = useState(false)
+  const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState<Payment>({
     id: 0,
     user_id: '',
     publication_id: '',
-    amount: 0,
+    amount: 200,
     payment_method: '',
     status: 'Pending',
     created_at: '',
@@ -32,7 +33,7 @@ export function AddPaymentModal({ onSuccess }: { onSuccess?: () => void }) {
     e.preventDefault()
     setIsLoading(true)
     const supabase = createClient()
-
+  
     try {
       const { data, error } = await supabase
         .from('payments')
@@ -50,17 +51,45 @@ export function AddPaymentModal({ onSuccess }: { onSuccess?: () => void }) {
         }])
         .select()
         .single()
-
-      if (error) throw error
-
+  
+      if (error) {
+        console.error('Supabase insert error:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
+        throw error
+      }
+  
+      // Reset form
+      setFormData({
+        id: 0,
+        user_id: '',
+        publication_id: '',
+        amount: 0,
+        payment_method: '',
+        status: 'Pending',
+        created_at: '',
+        details: '',
+        customer_email: '',
+        customer_name: '',
+        reason: ''
+      })
+  
       toast({
         title: "Succès",
         description: "Paiement ajouté avec succès"
       })
-
+  
       onSuccess?.()
+      setOpen(false)
     } catch (error) {
-      console.error('Error adding payment:', error)
+      console.error('Error adding payment:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      })
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -72,7 +101,7 @@ export function AddPaymentModal({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
@@ -171,9 +200,7 @@ export function AddPaymentModal({ onSuccess }: { onSuccess?: () => void }) {
               </SelectContent>
             </Select>
           </div>
-        </form>
-        </div>
-        <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2">
             <DialogTrigger asChild>
               <Button variant="outline">Annuler</Button>
             </DialogTrigger>
@@ -188,6 +215,8 @@ export function AddPaymentModal({ onSuccess }: { onSuccess?: () => void }) {
               )}
             </Button>
           </div>
+        </form>
+        </div>
       </DialogContent>
     </Dialog>
   )

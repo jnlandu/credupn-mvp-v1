@@ -54,53 +54,78 @@ export default function PaymentsAdmin() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const { toast } = useToast()
 
-  const stats = [
-    {
-      title: "Paiements Totaux",
-      value: "€12,450",
-      icon: Euro,
-      trend: "+12%",
-    },
-    {
-      title: "Taux de Réussite",
-      value: "98%",
-      icon: CheckCircle,
-      trend: "+5%",
-    },
-    {
-      title: "En Attente",
-      value: "23",
-      icon: Clock,
-      trend: "-2%",
-    },
-  ]
+// Add fetch function
+const fetchPayments = async () => {
+  const supabase = createClient()
+  setIsLoading(true)
+  
+  try {
+    console.log('Fetching payments...')
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        user:user_id (
+          name,
+          email
+        ),
+        publication:publication_id (
+          title
+        )
+      `)
+      .order('created_at', { ascending: false })
 
-  const fetchPayments = async () => {
-    const supabase = createClient()
-    try {
-      const { data, error } = await supabase
-        .from('payments')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setPayments(data || [])
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les paiements"
+    if (error) {
+      console.error('Fetch error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details
       })
-    } finally {
-      setIsLoading(false)
+      throw error
     }
+
+    console.log('Fetched payments:', data)
+    setPayments(data || [])
+  } catch (error) {
+    console.error('Error fetching payments:', error)
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger les paiements"
+    })
+  } finally {
+    setIsLoading(false)
   }
+}
 
-  useEffect(() => {
-    fetchPayments()
-  }, [])
+// Add real-time subscription
+useEffect(() => {
+  const supabase = createClient()
+  
+  fetchPayments()
 
-  const refreshPayments = async () => {
+  const channel = supabase
+    .channel('payments_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'payments'
+      },
+      () => {
+        fetchPayments()
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
+
+
+const refreshPayments = async () => {
     setIsRefreshing(true)
     await fetchPayments()
     setIsRefreshing(false)
