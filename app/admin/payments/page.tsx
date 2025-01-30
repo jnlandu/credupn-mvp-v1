@@ -31,14 +31,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AddPaymentModal } from '@/components/payments/AddPaymentModal'
 import { Payment } from '@/data/publications'
 
-// interface Payment {
-//   id: string
-//   amount: number
-//   status: 'pending' | 'completed' | 'failed'
-//   customer: string
-//   date: string
-//   method: string
-// }
 
 const statusStyles: Record<string, string> = {
     completed: "bg-green-100 text-green-800 border-green-200",
