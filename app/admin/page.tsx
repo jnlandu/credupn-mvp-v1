@@ -166,8 +166,10 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="flex-1 p-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Tableau de bord</h1>
-          {/* <Button variant="outline" size="icon"> */}
+            <div className='flex flex-col gap-1'>
+            <h1 className="text-2xl font-bold">Tableau de bord</h1>
+            <p className='text-sm text-muted-foreground'>Gerer les publications, les utilisateurs et les paiements</p>
+            </div>
             <NotificationsMenu />
           {/* </Button> */}
         </div>
