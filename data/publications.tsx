@@ -22,7 +22,8 @@ export interface Publication {
     date: string
     status: 'PUBLISHED' | 'PENDING' | 'REJECTED' | 'REVIEW' 
     category: string
-    pdfUrl: string,
+    pdfUrl?: string,
+    pdf_url?: string,
     image?: string
     abstract?: string;
     keywords?: string[];
@@ -102,11 +103,21 @@ export interface usersWithPubls {
         title: any;
         status: any;
         date: any;
-        category: any;
-        pdf_url: any;
-        abstract: any;
-        keywords: any;
+        category?: any;
+        pdf_url?: any;
+        abstract?: any;
+        keywords?: any;
     }[];
+}
+
+export interface editedUser {
+        id: string,
+        name: string,
+        email: string,
+        role: 'author' | 'reviewer' | 'admin' | string,
+        institution: string,
+        phone: string,
+        updated_at: string,
 }
 
 export interface Payment {

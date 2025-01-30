@@ -43,23 +43,31 @@ import {
 import { AddUserModal } from '@/components/users/AddUserModal'
 import { createClient } from '@/utils/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { Publication, User, usersWithPubs } from '@/data/publications'
+import { editedUser, Publication, User, usersWithPubs } from '@/data/publications'
+import { Label } from '@/components/ui/label'
 
 
-
-
+type UserRole = 'author' | 'reviewer' | 'admin'
+const roleStyles: Record<UserRole, string> = {
+  'author': 'bg-blue-100 text-blue-800',
+  'reviewer': 'bg-purple-100 text-purple-800',
+  'admin': 'bg-red-100 text-red-800'
+}
 
 export default function UsersAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedUser, setSelectedUser] = useState<usersWithPubs| null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [selectedUserPubs, setSelectedUserPubs] = useState<User | null>(null)
+  const [selectedUserPubs, setSelectedUserPubs] = useState<usersWithPubs | null>(null)
   const [users, setUsers] = useState<usersWithPubs[]>([])
+  // const [user, setUser] = useState<User| null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [institutionFilter, setInstitutionFilter] = useState<string>('all')
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [userToEdit, setUserToEdit] = useState<usersWithPubs | null>(null)
 
   const institutions = Array.from(new Set(users.map(user => user.institution)))
   const { toast } = useToast()
@@ -188,8 +196,97 @@ const refreshUsers = async () => {
   }
 }
 
+// Edit action handler
+const handleEditUser = async (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!userToEdit) return
 
-  const roleStyles = {
+  const supabase = createClient()
+  setIsLoading(true)
+
+  try {
+    // First verify user exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userToEdit.id)
+      .single()
+
+    if (checkError) {
+      console.error('Check error:', {
+        code: checkError.code,
+        message: checkError.message,
+        details: checkError.details
+      })
+      throw new Error('Failed to find user')
+    }
+
+    // Prepare update data
+    const updateData = {
+      name: userToEdit.name,
+      email: userToEdit.email,
+      role: userToEdit.role,
+      institution: userToEdit.institution,
+      phone: userToEdit.phone,
+      updated_at: new Date().toISOString()
+    }
+
+    console.log('Updating user:', {
+      id: userToEdit.id,
+      data: updateData
+    })
+
+    // Perform update
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', userToEdit.id)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error('Update failed:', {
+        code: updateError.code,
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint
+      })
+      throw updateError
+    }
+
+    // Update local state
+    setUsers(prev => 
+      prev.map(u => u.id === userToEdit.id ? updatedUser : u)
+    )
+
+    setIsEditModalOpen(false)
+    setUserToEdit(null)
+    await fetchUsers() // Refresh data
+
+    toast({
+      title: "Succès",
+      description: "Utilisateur mis à jour avec succès"
+    })
+  } catch (error) {
+    console.error('Update operation failed:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      userId: userToEdit.id
+    })
+    
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: error instanceof Error 
+        ? error.message 
+        : "Impossible de mettre à jour l'utilisateur"
+    })
+  } finally {
+    setIsLoading(false)
+  }
+}
+
+const roleStyles = {
     author: 'bg-blue-100 text-blue-800',
     reviewer: 'bg-purple-100 text-purple-800',
     admin: 'bg-red-100 text-red-800'
@@ -309,16 +406,18 @@ const refreshUsers = async () => {
                     <TableCell className="font-medium text-gray-950">{user.name}</TableCell>
                     <TableCell className="">{user.email}</TableCell>
                     <TableCell>
-                      <Badge className={roleStyles[user.role]}>
-                        {user.role}
-                      </Badge>
+                    <Badge className={roleStyles[user.role as UserRole]}>
+                      {user.role}
+                    </Badge>
                     </TableCell>
                     <TableCell className="">{user.institution}</TableCell>
                     <TableCell className="font-medium text-gray-950">{user.phone || "Non enregistré"}</TableCell>
                     <TableCell className="text-gray-700">
                     <div className="flex items-center gap-2">
-                      <span>{user.publications?.length ?? 0}</span>
-                        {user.publications?.length > 0 && (
+                      <span>
+                      {Array.isArray(user.publications) ? user.publications.length : 0}
+                      </span>
+                      {Array.isArray(user.publications) && user.publications.length > 0 && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -341,12 +440,16 @@ const refreshUsers = async () => {
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="sm"
-                          className=" hover:text-gray-900 hover:bg-gray-100"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                            variant="ghost"
+                            size="sm"
+                            className="hover:text-gray-900 hover:bg-gray-100"
+                            onClick={() => {
+                              setUserToEdit(user)
+                              setIsEditModalOpen(true)
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -362,7 +465,8 @@ const refreshUsers = async () => {
           </Table>
         </div>
       </div>
-      {/* // Add pagination controls after the table */}
+
+    {/* // Add pagination controls after the table */}
     <div className="mt-4 flex items-center justify-between">
     <div className="flex items-center gap-2">
         <span className="text-sm text-gray-600">Lignes par page:</span>
@@ -410,57 +514,6 @@ const refreshUsers = async () => {
     </div>
     </div>
 
-      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Détails de l'utilisateur</DialogTitle>
-          </DialogHeader>
-          
-          {selectedUser && (
-            <div className="grid gap-6">
-              <div className="grid gap-4">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <span>{selectedUser.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  <span>{selectedUser.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4 text-gray-500" />
-                  <span>{selectedUser.institution}</span>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-3">Publications</h3>
-                <div className="space-y-2">
-                  {selectedUser.publications?.map(pub => (
-                    <Card key={pub.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium">{pub.title}</h4>
-                            <p className="text-sm text-gray-500">{pub.date}</p>
-                          </div>
-                          <Badge className={
-                            pub.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' :
-                            pub.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }>
-                            {pub.status}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
       {/* Publications Dialog */}
     <Dialog open={!!selectedUserPubs} onOpenChange={() => setSelectedUserPubs(null)}>
     <DialogContent className="max-w-3xl">
@@ -470,7 +523,7 @@ const refreshUsers = async () => {
         
         <ScrollArea className="h-[500px] pr-4">
         <div className="space-y-4">
-            {selectedUserPubs?.publications.map((pub) => (
+            {selectedUserPubs?.publications?.map((pub) => (
             <Card key={pub.id} className="p-4">
                 <div className="flex justify-between items-start gap-4">
                 <div className="flex-1">
@@ -508,6 +561,94 @@ const refreshUsers = async () => {
     </ScrollArea>
     </DialogContent>
     </Dialog>
+
+  {/*  Edit Users dialog */}
+  <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+  <DialogContent className="max-w-2xl">
+    <DialogHeader>
+      <DialogTitle>Modifier l'utilisateur</DialogTitle>
+    </DialogHeader>
+    {userToEdit && (
+      <form onSubmit={handleEditUser} className="space-y-4">
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="edit-name">Nom</Label>
+            <Input
+              id="edit-name"
+              value={userToEdit.name}
+              onChange={(e: any) => setUserToEdit({ ...userToEdit, name: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="edit-email">Email</Label>
+            <Input
+              id="edit-email"
+              type="email"
+              value={userToEdit.email}
+              onChange={(e: any) => setUserToEdit({ ...userToEdit, email: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="edit-role">Rôle</Label>
+            <Select
+              value={userToEdit.role}
+              onValueChange={(value: any) => setUserToEdit({ ...userToEdit, role: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner un rôle" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="author">Auteur</SelectItem>
+                <SelectItem value="reviewer">Évaluateur</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="edit-institution">Institution</Label>
+            <Input
+              id="edit-institution"
+              value={userToEdit.institution}
+              onChange={(e: any) => setUserToEdit({ ...userToEdit, institution: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="edit-phone">Téléphone</Label>
+            <Input
+              id="edit-phone"
+              value={userToEdit.phone || ''}
+              onChange={(e: any) => setUserToEdit({ ...userToEdit, phone: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
+            Annuler
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Mise à jour...
+              </>
+            ) : (
+              'Mettre à jour'
+            )}
+          </Button>
+        </div>
+      </form>
+    )}
+  </DialogContent>
+</Dialog>
+
     </div>
   )
 }
