@@ -323,7 +323,7 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
                         ? submission.author.map(auth => 
                             typeof auth === 'string' 
                               ? auth 
-                              : auth.name
+                              : auth?.name
                           ).join(', ')
                         : typeof submission.author === 'string'
                           ? submission.author
@@ -352,9 +352,9 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
                               title: submission.title,
                               author: Array.isArray(submission.author)
                                 ? submission.author.map(element => ({
-                                    name: element.name,
-                                    email: element.email,
-                                    institution: element.institution
+                                    name: element?.name,
+                                    email: element?.email,
+                                    institution: element?.institution
                                   }))
                                 : {
                                     name: submission.author.name,

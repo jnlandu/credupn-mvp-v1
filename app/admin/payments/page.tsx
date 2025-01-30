@@ -158,10 +158,10 @@ const refreshPayments = async () => {
           <AddPaymentModal onSuccess={refreshPayments} />
         </div>
       </div>
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="rounded-lg  overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className='bg-gray-50'>
               <TableHead>ID</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Email</TableHead>
@@ -173,7 +173,7 @@ const refreshPayments = async () => {
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="bg-slate-400">
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-4">

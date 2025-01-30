@@ -12,25 +12,46 @@ import { useToast } from '@/hooks/use-toast'
 import { CheckCircle2, AlertCircle, List, HelpCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { requirements } from '@/data/publications'
+import { createClient } from '@/lib/supabase'
 
 
+interface FormData {
+  title: string;
+  authors: string;
+  abstract: string;
+  keywords: string;
+  file: File | null;
+}
 
+interface SubmissionData {
+  title: string;
+  authors: string[];
+  abstract: string;
+  keywords: string[];
+  file: File;
+}
+
+interface SubmissionResponse {
+  publicationId: string;
+  paymentId: string;
+}
 
 interface SubmissionProps {
     params: Promise<{ id: string }>
 }
 
-export default function SoumissionPage( {params }: SubmissionProps) {
-    
+// Update component with proper types
+export default function SoumissionPage({ params }: SubmissionProps) {
   const router = useRouter()
   const [showSchema, setShowSchema] = useState(false)
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
   const { toast } = useToast()
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     authors: '',
     abstract: '',
     keywords: '',
-    file: null as File | null
+    file: null
   })
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const ABSTRACT_WORD_LIMIT = 250;
@@ -85,13 +106,84 @@ useEffect(() => {
     }
     
   }
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
 
-  // Redirect to payment page
-    router.push(`/dashboard/author/${id}/payment`)
-    // TODO: Implement submission logic
-    console.log('Form submitted:', formData)
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const supabase = createClient()
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        
+        if (error) throw error
+        
+        if (user) {
+          // Get user profile with full name
+          const { data: profile } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', user.id)
+            .single()
+            
+          if (profile?.name) {
+            setFormData(prev => ({
+              ...prev,
+              authors: profile.name
+            }))
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de récupérer vos informations"
+        })
+      } finally {
+        setIsLoadingUser(false)
+      }
+    }
+
+    getCurrentUser()
+  }, [])
+
+  //  Handle publication submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.file) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez sélectionner un fichier PDF"
+      })
+      return
+    }
+    
+    try {
+      const submissionData = new FormData()
+      submissionData.append('file', formData.file)
+      submissionData.append('title', formData.title)
+      submissionData.append('abstract', formData.abstract)
+      submissionData.append('keywords', formData.keywords)
+      submissionData.append('authors', formData.authors)
+  
+      const response = await fetch(`/api/author/${id}/submissions`, {
+        method: 'POST',
+        body: submissionData
+      })
+  
+      if (!response.ok) throw new Error('Submission failed')
+      
+      const data = await response.json() as SubmissionResponse
+      const { publicationId, paymentId } = data
+      router.push(`/payment?pub=${publicationId}&pay=${paymentId}`)
+  
+    } catch (error) {
+      toast({
+        variant: "destructive", 
+        title: "Erreur",
+        description: "La soumission a échoué"
+      })
+    }
   }
 
   return (
@@ -115,15 +207,21 @@ useEffect(() => {
               </div>
 
               <div>
-                <Label htmlFor="authors">Auteurs</Label>
-                <Input
-                  id="authors"
-                  value={formData.authors}
-                  onChange={(e: any) => setFormData({ ...formData, authors: e.target.value })}
-                  placeholder="Noms des auteurs (séparés par des virgules)"
-                  required
-                />
-              </div>
+                    <Label htmlFor="authors">Auteurs</Label>
+                    <Input
+                      id="authors"
+                      value={formData.authors}
+                      onChange={(e: any) => setFormData({ ...formData, authors: e.target.value })}
+                      placeholder="Noms des auteurs (séparés par des virgules)"
+                      required
+                      disabled={isLoadingUser}
+                    />
+                    {isLoadingUser && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Chargement de vos informations...
+                      </p>
+                    )}
+                  </div>
 
               <div>
                 <Label htmlFor="abstract">Résumé</Label>

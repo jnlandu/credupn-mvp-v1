@@ -1,6 +1,6 @@
 "use client"
 
-import { useState} from 'react'
+import { useEffect, useState} from 'react'
 import axios from "axios";
 
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { number, string } from 'zod';
 import { Payment } from '@/data/publications'
 import { createClient } from '@/utils/supabase/client'
@@ -27,6 +27,11 @@ import { createClient } from '@/utils/supabase/client'
 type PaymentMethod = 'card' | 'mpesa' | 'orange' | 'airtel'
 
 export default function PaymentPage() {
+
+  const searchParams = useSearchParams()
+  const publicationId = searchParams.get('pub')
+  const paymentId = searchParams.get('pay')
+
   const [paymentMethod, setPaymentMethod] = useState<string>('card')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -113,6 +118,60 @@ export default function PaymentPage() {
       })
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!publicationId || !paymentId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Informations de paiement manquantes"
+      })
+      router.push('/dashboard')
+    }
+  }, [publicationId, paymentId])
+
+
+  const handlePaymentSuccess = async () => {
+    if (!publicationId || !paymentId) return
+    const supabase = createClient()
+    try {
+      // Update payment status
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .update({ status: 'COMPLETED' })
+        .eq('id', paymentId)
+  
+      if (paymentError) throw paymentError
+  
+      // Update publication status
+      const { error: pubError } = await supabase
+        .from('publications')
+        .update({ status: 'PENDING_REVIEW' })
+        .eq('id', publicationId)
+  
+      if (pubError) throw pubError
+  
+      // Send notifications
+      await fetch('/api/notify', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'PAYMENT_COMPLETED',
+          publicationId,
+          paymentId
+        })
+      })
+  
+      setIsSuccess(true)
+      router.push('/dashboard/author/publications')
+  
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Le paiement n'a pas pu être finalisé"
+      })
     }
   }
 
