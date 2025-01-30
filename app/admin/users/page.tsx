@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
+
 import {
     Select,
     SelectContent,
@@ -38,7 +39,8 @@ import {
   Calendar, // Add this
   Download,  // Add this if you're using the Download icon 
   Loader2,
-  RefreshCw
+  RefreshCw,
+  User2
 } from 'lucide-react'
 import { AddUserModal } from '@/components/users/AddUserModal'
 import { createClient } from '@/utils/supabase/client'
@@ -197,6 +199,13 @@ const refreshUsers = async () => {
 }
 
 // Edit action handler
+const getCurrentUser = async () => {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+}
+
+// Update handleEditUser function
 const handleEditUser = async (e: React.FormEvent) => {
   e.preventDefault()
   if (!userToEdit) return
@@ -205,81 +214,81 @@ const handleEditUser = async (e: React.FormEvent) => {
   setIsLoading(true)
 
   try {
-    // First verify user exists
-    const { data: existingUser, error: checkError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userToEdit.id)
-      .single()
+    // Check if current user has admin rights
+    const currentUser = await getCurrentUser()
+    console.log('Current user:', currentUser)
 
-    if (checkError) {
-      console.error('Check error:', {
-        code: checkError.code,
-        message: checkError.message,
-        details: checkError.details
-      })
-      throw new Error('Failed to find user')
+    if (!currentUser) {
+      throw new Error('Not authenticated')
     }
 
-    // Prepare update data
-    const updateData = {
-      name: userToEdit.name,
-      email: userToEdit.email,
-      role: userToEdit.role,
-      institution: userToEdit.institution,
-      phone: userToEdit.phone,
-      updated_at: new Date().toISOString()
-    }
-
-    console.log('Updating user:', {
-      id: userToEdit.id,
-      data: updateData
+    // Log the update attempt
+    console.log('Attempting update with:', {
+      userId: userToEdit.id,
+      updateData: {
+        name: userToEdit.name,
+        email: userToEdit.email,
+        role: userToEdit.role,
+        institution: userToEdit.institution,
+        phone: userToEdit.phone
+      },
+      currentUserRole: currentUser.role
     })
 
-    // Perform update
+    // Perform update with error catching
     const { data: updatedUser, error: updateError } = await supabase
       .from('users')
-      .update(updateData)
+      .update({
+        name: userToEdit.name,
+        email: userToEdit.email,
+        role: userToEdit.role,
+        institution: userToEdit.institution,
+        phone: userToEdit.phone,
+        // updated_at: new Date().toISOString()
+      })
       .eq('id', userToEdit.id)
-      .select()
+      .select('*')
       .single()
 
     if (updateError) {
-      console.error('Update failed:', {
+      console.error('Update error details:', {
         code: updateError.code,
         message: updateError.message,
         details: updateError.details,
-        hint: updateError.hint
+        hint: updateError.hint,
       })
-      throw updateError
+      throw new Error(updateError.message || 'Failed to update user')
     }
 
-    // Update local state
+    if (!updatedUser) {
+      throw new Error('No data returned after update')
+    }
+
+    console.log('Update successful:', updatedUser)
+
     setUsers(prev => 
       prev.map(u => u.id === userToEdit.id ? updatedUser : u)
     )
-
     setIsEditModalOpen(false)
     setUserToEdit(null)
-    await fetchUsers() // Refresh data
+    await fetchUsers()
 
     toast({
       title: "Succès",
       description: "Utilisateur mis à jour avec succès"
     })
   } catch (error) {
-    console.error('Update operation failed:', {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Update failed:', {
       error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      userId: userToEdit.id
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
     })
     
     toast({
       variant: "destructive",
       title: "Erreur",
-      description: error instanceof Error 
-        ? error.message 
-        : "Impossible de mettre à jour l'utilisateur"
+      description: `Impossible de mettre à jour l'utilisateur: ${errorMessage}`
     })
   } finally {
     setIsLoading(false)
@@ -649,6 +658,84 @@ const roleStyles = {
   </DialogContent>
 </Dialog>
 
-    </div>
+{/* View all the details for the users */}
+<Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+  <DialogContent className="max-w-3xl max-h-[90vh]">
+    <DialogHeader>
+      <DialogTitle>Détails de l'Utilisateur</DialogTitle>
+    </DialogHeader>
+    
+    {selectedUser && (
+      <ScrollArea className="h-[600px] pr-4">
+        <div className="space-y-6">
+          {/* Basic Info */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <User2 className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">{selectedUser.name}</h3>
+                <p className="text-sm text-gray-500">{selectedUser.email}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Rôle</p>
+                <Badge className={roleStyles[selectedUser.role as UserRole]}>
+                  {selectedUser.role}
+                </Badge>
+              </div>
+              
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Téléphone</p>
+                <p>{selectedUser.phone || "Non renseigné"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Institution</p>
+                <p>{selectedUser.institution}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Date d'inscription</p>
+                <p>{new Date(selectedUser.created_at).toLocaleDateString('fr-FR')}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Publications */}
+          {Array.isArray(selectedUser.publications) && selectedUser.publications.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold">Publications ({selectedUser.publications.length})</h4>
+              <div className="space-y-4">
+                {selectedUser.publications.map((pub) => (
+                  <div key={pub.id} className="p-4 rounded-lg border">
+                    <div className="space-y-2">
+                      <h5 className="font-medium">{pub.title}</h5>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <p>{new Date(pub.date).toLocaleDateString('fr-FR')}</p>
+                        <Badge variant="outline">{pub.status}</Badge>
+                        <Badge variant="secondary">{pub.category}</Badge>
+                      </div>
+                      {pub.abstract && (
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {pub.abstract}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    )}
+  </DialogContent>
+</Dialog>
+
+</div>
   )
 }
