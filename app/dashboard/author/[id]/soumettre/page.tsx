@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { FileText, Info } from 'lucide-react'
+import { FileText, Info, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { CheckCircle2, AlertCircle, List, HelpCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -23,13 +23,6 @@ interface FormData {
   file: File | null;
 }
 
-interface SubmissionData {
-  title: string;
-  authors: string[];
-  abstract: string;
-  keywords: string[];
-  file: File;
-}
 
 interface SubmissionResponse {
   publicationId: string;
@@ -45,6 +38,7 @@ export default function SoumissionPage({ params }: SubmissionProps) {
   const router = useRouter()
   const [showSchema, setShowSchema] = useState(false)
   const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -148,7 +142,8 @@ useEffect(() => {
   //  Handle publication submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+    setIsSubmitting(true)
+
     if (!formData.file) {
       toast({
         variant: "destructive",
@@ -175,7 +170,19 @@ useEffect(() => {
       
       const data = await response.json() as SubmissionResponse
       const { publicationId, paymentId } = data
-      router.push(`/payment?pub=${publicationId}&pay=${paymentId}`)
+
+      // Success toast before redirect
+      toast({
+        title: "Soumission réussie",
+        description: "Vous allez être redirigé vers la page de paiement pour confirmer votre soumission...",
+        duration: 3000
+      })
+      // Redirect to payment page with publication and payment
+      // router.push(`/payment?pub=${publicationId}&pay=${paymentId}`)
+         // Add small delay before redirect to show toast
+      setTimeout(() => {
+        router.push(`/dashboard/author/${id}/paiement?pub=${publicationId}&pay=${paymentId}`)
+      }, 1500)
   
     } catch (error) {
       toast({
@@ -183,6 +190,8 @@ useEffect(() => {
         title: "Erreur",
         description: "La soumission a échoué"
       })
+    }finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -290,8 +299,15 @@ useEffect(() => {
                 <Button type="button" variant="outline" onClick={() => router.back()}>
                   Annuler
                 </Button>
-                <Button type="submit">
-                  Soumettre l'article
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Soumission en cours...
+                    </>
+                  ) : (
+                    "Soumettre l'article"
+                  )}
                 </Button>
               </div>
             </form>

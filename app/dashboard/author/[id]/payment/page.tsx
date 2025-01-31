@@ -26,11 +26,15 @@ import { createClient } from '@/utils/supabase/client'
 
 type PaymentMethod = 'card' | 'mpesa' | 'orange' | 'airtel'
 
+
+
+
 export default function PaymentPage() {
 
   const searchParams = useSearchParams()
   const publicationId = searchParams.get('pub')
   const paymentId = searchParams.get('pay')
+  
 
   const [paymentMethod, setPaymentMethod] = useState<string>('card')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -164,7 +168,7 @@ export default function PaymentPage() {
       })
   
       setIsSuccess(true)
-      router.push('/dashboard/author/publications')
+      router.push(`/dashboard/author/publications`)
   
     } catch (error) {
       toast({
