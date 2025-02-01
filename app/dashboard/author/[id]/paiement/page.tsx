@@ -203,6 +203,30 @@ const notifyAdmin = async (publicationId: string, paymentId: string, reference: 
     return response.json()
   }
   
+  const notifyAuthor = async (publicationId: string, paymentId: string, reference: string) => {
+    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : 'http://localhost:3000'
+
+    const response = await fetch(`${baseUrl}/api/author/notify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: 'PAYMENT_COMPLETED',
+        publicationId,
+        paymentId,
+        reference
+      })
+    })
+  
+    if (!response.ok) {
+      throw new Error('Failed to send notification')
+    }
+  
+    return response.json()
+  }
   
 const handleConfirmation = async () => {
     if (!isValidPhone(formData.phone)) {
@@ -269,6 +293,7 @@ const handleConfirmation = async () => {
       if (updateError) throw updateError
        // Then notify admin
       await notifyAdmin(publicationId!, paymentId!, reference!)
+      await notifyAuthor(publicationId!, paymentId!, reference!)
 
       toast({
         title: "Succès",

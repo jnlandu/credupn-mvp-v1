@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
-  const cookieStore =  await cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,14 +18,10 @@ export async function POST(request: Request) {
   )
   
   try {
-    // console.log("Starts notifications to the admins")
     const payload = await request.json()
     const { type, publicationId, paymentId, reference_code }: any = payload
 
-    // console.log("debugging payload:", type, publicationId, paymentId)
-
-    // console.log("debugging payload 2:",payload)
-    // Get publication details with explicit relationship
+    // Get publication details with author info
     const { data: publication, error: pubError } = await supabase
       .from('publications')
       .select(`
@@ -42,47 +38,44 @@ export async function POST(request: Request) {
     if (pubError) throw pubError
 
     // Get admin users
-    const { data: admins, error: adminError } = await supabase
+    const { data: authors, error: authError } = await supabase
       .from('users')
-      .select('id')
-      .eq('role', 'admin')
+      .select('id, role')
+      .eq('role', 'author')
 
-    console.log("Debugging admin user: ", admins)
+    if (authError) throw authError
 
-    if (adminError) throw adminError
+    // Create notifications array for both admins and author
+    const notifications = authors.map(author => ({
+        user_id: author.id,
+        type,
+        title: 'Soumission confirmée',
+        message: `Votre article "${publication.title}" a été soumis et payé avec succès. Référence de paiement: ${reference_code}`,
+        publication_id: publicationId,
+        payment_id: paymentId,
+        read: false,
+        created_at: new Date().toISOString(),
+        reference_code,
+        to: author.role
+      }))
+    
 
-    // Create notifications
-    const notifications = admins.map(admin => ({
-      user_id: admin.id,
-      type,
-      title: type === 'PAYMENT_COMPLETED' ? 'Nouveau paiement reçu' : 'Nouvelle soumission',
-      message: `L'article "${publication.title}" a été soumis et payé et soumis.`,
-      publication_id: publicationId,
-      payment_id: paymentId,
-      read: false,
-      created_at: new Date().toISOString(),
-      reference_code: reference_code
-    }))
-
-    console.log("debugging notifications:", notifications)
-
+    // Insert all notifications
     const { error: notifyError } = await supabase
       .from('notifications')
       .insert(notifications)
 
     if (notifyError) throw notifyError
 
-    // console.log("Notifications with success flag")
-    // console.log("debugging final res: ", NextResponse.json)
     return NextResponse.json({ success: true })
-
 
   } catch (error) {
     console.error('Notification error:', error)
     return NextResponse.json(
-      { error: 'Failed to create notification',
+      { 
+        error: 'Failed to create notification',
         details: error instanceof Error ? error.message : 'Unknown error' 
-       },
+      },
       { status: 500 }
     )
   }
