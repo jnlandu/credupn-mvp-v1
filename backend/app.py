@@ -60,33 +60,36 @@ async def process_payment(payment: PaymentRequest):
 }
     
     try:
-        # Here you would typically integrate with a payment processor
-        # For now, we'll just return a success response
         response = requests.post(gateway, data=json.dumps(data), headers=headers, timeout=300)
         print("Response debugging: ", response)
-        print("Response: ", response.text)
-        # print("Debugg order Number 3", order_number)
+        print("Response text: ", response.text)
+        json_res = response.json()
+        print("Debugging order Number X :", json_res)
+        print("Debugging order Number XX:", json_res.get("orderNumber", ""))
 
         if response.status_code == 200:
             json_res = response.json()
             code = json_res.get("code", "")
             print("Code details: ", code)
-            print("Debugg order Number 2", order_number)
+            # print("Debugg order Number 2", order_number)
 
             if code != "0":
                 error_message = "Impossible de traiter la demande, veuillez réessayer"
-                print("Debugg order Number 1", order_number)
+                # print("Debugg order Number 1", order_number)
                 print(error_message)
 
             else:
+                print("Debugg order Number 5 code 1")
+                # print("Debugg order Number 4", order_number)
                 message = json_res.get("message", "")
                 print("Code details with success demand: ", message)
                 order_number = json_res.get("orderNumber", "")
                 print("Debugg order Number", order_number)
-                # print(f"Message: {message}, Order Number: {order_number}")
-
+                return {"orderNumber": order_number, "message": message}
+               
         else:
          print("Une erreur lors du traitement de votre requête")
+         raise HTTPException(status_code=response.status_code, detail="Une erreur lors du traitement de votre requête")
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
