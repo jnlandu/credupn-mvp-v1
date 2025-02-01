@@ -1,5 +1,4 @@
 // app/api/send-email/route.ts
-import { log } from 'console';
 import { type NextRequest } from 'next/server'
 import { Resend } from 'resend';
 
@@ -17,8 +16,8 @@ export async function POST(request: NextRequest) {
   try {
     // Verify connection first
     const { to, subject, html } = await request.json() as EmailRequestBody
-    console.log('Email send request:', { to, subject, html })
-    console.log('Email send from :', process.env.SMTP_FROM)
+    // console.log('Email send request:', { to, subject, html })
+    // console.log('Email send from :', process.env.SMTP_FROM)
 
     const data = await resend.emails.send({
       from: 'CRIDUPN <onboarding@resend.dev>', // Use Resend's default domain
@@ -37,9 +36,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // console.log('Email send result:', data)
-    // console.log('Email send result:', Response.json(data))
-    // return Response.json(data)
     return Response.json({ 
       success: true,
     });
