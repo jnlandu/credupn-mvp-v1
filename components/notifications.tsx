@@ -113,6 +113,7 @@ export function NotificationsMenu() {
   }
 
   return (
+    <div className='me-4'>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
@@ -162,5 +163,6 @@ export function NotificationsMenu() {
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   )
 }

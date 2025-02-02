@@ -185,29 +185,12 @@ useEffect(() => {
             <PlusCircle className="h-5 w-5" />
             {isSidebarOpen && <span>Nouvelle soumission</span>}
           </Link>
-
           <Link
-             href={`/dashboard/author/${id}/pending`} 
-            className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
-          >
-            <Clock className="h-5 w-5" />
-            {isSidebarOpen && <span>En attente</span>}
-          </Link>
-
-          <Link
-            href={`/dashboard/author/${id}/published`} 
+            href={`/dashboard/author/${id}/publications`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <CheckCircle2 className="h-5 w-5" />
-            {isSidebarOpen && <span>Publications</span>}
-          </Link>
-
-          <Link
-            href="/author/statistics"
-            className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
-          >
-            <TrendingUp className="h-5 w-5" />
-            {isSidebarOpen && <span>Statistiques</span>}
+            {isSidebarOpen && <span>Mes publications</span>}
           </Link>
         </nav>
 
@@ -225,7 +208,7 @@ useEffect(() => {
 
       {/* Main Content */}
       <main className="flex-1">
-      <div className="border-b px-8 py-4 flex justify-end">
+      <div className="border-b px-8 py-4 flex justify-end gap-3">
           <AuthorNotificationsMenu/>
           <button 
             className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-sm font-medium"
