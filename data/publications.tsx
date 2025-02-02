@@ -149,8 +149,6 @@ export interface PaymentWithRelations extends Payment {
     };
   }
   
-  
-  
 export const statusStyles: Record<PublicationStatus, string> = {
     'PENDING': 'bg-yellow-100 text-yellow-800',
     'REVIEW': 'bg-blue-100 text-blue-800',
@@ -239,3 +237,25 @@ export const requirements = [
     items: ["Normes APA"],
   },
 ];
+
+
+export const userComments = [
+  {
+    name: "Dr. Jean Mukendi",
+    role: "Chercheur en Sciences de l'Éducation",
+    comment: "CREDUPN offre un processus de publication rigoureux et professionnel. L'accompagnement éditorial est excellent.",
+    image: "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?auto=format&fit=crop&q=80"
+  },
+  {
+    name: "Prof. Marie Thérèse Mabiala",
+    role: "Professeure des Universités",
+    comment: "Une revue de qualité qui contribue significativement à la recherche en éducation en RDC.",
+    image: "https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?auto=format&fit=crop&q=80"
+  },
+  {
+    name: "Dr. Jean-Paul Mbuyi",
+    role: "Auteur et Chercheur",
+    comment: "La plateforme idéale pour partager ses recherches avec la communauté académique africaine.",
+    image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80"
+  }
+]

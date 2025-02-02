@@ -1,17 +1,70 @@
+'use client'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Users, FileText, GraduationCap,ScrollText } from 'lucide-react'
+import { BookOpen, Users, FileText, GraduationCap,ScrollText, Loader2 } from 'lucide-react'
 import { 
   Upload, 
   UserCheck, 
   FileEdit, 
 } from 'lucide-react'
 import {members} from '@/lib/members'
+import { userComments } from '@/data/publications'
+import { useEffect, useState } from 'react'
+import { useToast } from '@/hooks/use-toast'
+import { createClient } from '@/utils/supabase/client'
+// import {userComments} from '@/data/publications'
 
+interface Publication {
+  id: string
+  title: string
+  author: string[] | string
+  created_at: string
+  abstract: string
+  status: 'PENDING' | 'PUBLISHED' | 'REJECTED'
+}
 
 export default function Home() {
+  const [recentPublications, setRecentPublications] = useState<Publication[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchRecentPublications = async () => {
+      const supabase = createClient()
+      
+      try {
+        const { data, error } = await supabase
+          .from('publications')
+          .select(`
+            id,
+            title,
+            author,
+            created_at,
+            abstract,
+            status
+          `)
+          // .eq('status', 'PUBLISHED')
+          .order('created_at', { ascending: false })
+          .limit(3)
+
+        if (error) throw error
+        setRecentPublications(data || [])
+      } catch (error) {
+        console.error('Error fetching publications:', error)
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les publications récentes"
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchRecentPublications()
+  }, [])
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -86,38 +139,49 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Latest Publications Preview */}
-      <section className="py-4 px-4 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-black">Publications Récentes</h2>
-            <Button asChild variant="secondary">
-              <Link href="/publications">Voir plus des publications</Link>
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((_, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
+    <section className="py-4 px-4 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold text-black">Publications Récentes</h2>
+          <Button asChild variant="secondary">
+            <Link href="/publications">Voir plus des publications</Link>
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {isLoading ? (
+            <div className="col-span-3 flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : recentPublications.length === 0 ? (
+            <div className="col-span-3 text-center py-12">
+              <p className="text-gray-500">Aucune publication récente</p>
+            </div>
+          ) : (
+            recentPublications.map((publication) => (
+              <Card key={publication.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    Titre de la publication {index + 1}
+                    {publication.title}
                   </CardTitle>
                   <CardDescription>
-                    Auteur(s) • {new Date().toLocaleDateString('fr-FR')}
+                    {Array.isArray(publication.author) 
+                      ? publication.author.join(', ') 
+                      : publication.author} • {' '}
+                    {new Date(publication.created_at).toLocaleDateString('fr-FR')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-                    Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                  <p className="text-muted-foreground line-clamp-3">
+                    {publication.abstract}
                   </p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      </section>
+      </div>
+    </section>
 
 {/* Call for Papers Section */}
 <section className="py-4 px-4 bg-white">
@@ -260,26 +324,7 @@ export default function Home() {
   <div className="max-w-7xl mx-auto">
     <h2 className="text-3xl font-bold text-center text-black mb-12">Témoignages</h2>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {[
-        {
-          name: "Dr. Jean Mukendi",
-          role: "Chercheur en Sciences de l'Éducation",
-          comment: "CREDUPN offre un processus de publication rigoureux et professionnel. L'accompagnement éditorial est excellent.",
-          image: "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?auto=format&fit=crop&q=80"
-        },
-        {
-          name: "Prof. Marie Thérèse",
-          role: "Professeure en Pédagogie",
-          comment: "Une revue de qualité qui contribue significativement à la recherche en éducation en RDC.",
-          image: "https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?auto=format&fit=crop&q=80"
-        },
-        {
-          name: "Dr. Paul Lilian",
-          role: "Auteur et Chercheur",
-          comment: "La plateforme idéale pour partager ses recherches avec la communauté académique africaine.",
-          image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80"
-        }
-      ].map((testimonial, index) => (
+      {userComments.map((testimonial, index) => (
         <Card key={index} className="p-6">
           <div className="flex items-center gap-4 mb-4">
             <div className="relative h-12 w-12 rounded-full overflow-hidden">
