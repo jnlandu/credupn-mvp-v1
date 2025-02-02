@@ -4,16 +4,12 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookOpen, Users, FileText, GraduationCap,ScrollText, Loader2 } from 'lucide-react'
-import { 
-  Upload, 
-  UserCheck, 
-  FileEdit, 
-} from 'lucide-react'
 import {members} from '@/lib/members'
-import { userComments } from '@/data/publications'
+import { publicationProcess, userComments } from '@/data/publications'
 import { useEffect, useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
+import { Badge } from '@/components/ui/badge'
 // import {userComments} from '@/data/publications'
 
 interface Publication {
@@ -23,11 +19,17 @@ interface Publication {
   created_at: string
   abstract: string
   status: 'PENDING' | 'PUBLISHED' | 'REJECTED'
+  journal?: string
+  volume?: string
+  issue?: string
+  doi?: string
+  keywords?: string[]
 }
 
 export default function Home() {
   const [recentPublications, setRecentPublications] = useState<Publication[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -43,7 +45,12 @@ export default function Home() {
             author,
             created_at,
             abstract,
-            status
+            status,
+            journal,
+            volume,
+            issue,
+            doi,
+            keywords
           `)
           // .eq('status', 'PUBLISHED')
           .order('created_at', { ascending: false })
@@ -159,24 +166,55 @@ export default function Home() {
             </div>
           ) : (
             recentPublications.map((publication) => (
-              <Card key={publication.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {publication.title}
-                  </CardTitle>
-                  <CardDescription>
-                    {Array.isArray(publication.author) 
-                      ? publication.author.join(', ') 
-                      : publication.author} • {' '}
-                    {new Date(publication.created_at).toLocaleDateString('fr-FR')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground line-clamp-3">
-                    {publication.abstract}
-                  </p>
-                </CardContent>
-              </Card>
+              <Card 
+                key={publication.id}
+               className="hover:shadow-lg transition-shadow"
+               
+               >
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      {publication.title}
+                    </CardTitle>
+                    <div className="space-y-2">
+                    <div className="text-sm text-muted-foreground">
+                      <div className="font-medium">
+                        {Array.isArray(publication.author) 
+                          ? publication.author.join(', ') 
+                          : publication.author}
+                      </div>
+                      <div>
+                        {publication.journal && (
+                          <span className="font-medium">{publication.journal}</span>
+                        )}
+                        {publication.volume && `, Volume ${publication.volume}`}
+                        {publication.issue && `, Issue ${publication.issue}`}
+                        {publication.doi && (
+                          <div className="mt-1">
+                            DOI: <a href={`https://doi.org/${publication.doi}`} className="hover:underline" target="_blank" rel="noopener noreferrer">{publication.doi}</a>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm">
+                        Publié le {new Date(publication.created_at).toLocaleDateString('fr-FR')}
+                      </div>
+                      {publication.keywords && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {publication.keywords.map((keyword, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {keyword}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  </CardHeader>
+                  <CardContent>
+                    <span className="text-muted-foreground line-clamp-3">
+                      {publication.abstract}
+                    </span>
+                  </CardContent>
+                </Card>
             ))
           )}
         </div>
@@ -228,38 +266,12 @@ export default function Home() {
   </div>
 </section>
 
-
 {/* Publication Process */}
 <section className="py-4 px-4 bg-gray-50">
   <div className="max-w-7xl mx-auto">
     <h2 className="text-3xl font-bold text-center mb-12 text-black">Processus de Publication</h2>
     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-      {[
-        {
-          step: 1,
-          icon: Upload,
-          title: "Soumission",
-          description: "Envoyez votre manuscrit via notre plateforme en ligne"
-        },
-        {
-          step: 2,
-          icon: UserCheck,
-          title: "Évaluation",
-          description: "Examen par les pairs experts du domaine"
-        },
-        {
-          step: 3,
-          icon: FileEdit,
-          title: "Révision",
-          description: "Modifications basées sur les retours des évaluateurs"
-        },
-        {
-          step: 4,
-          icon: BookOpen,
-          title: "Publication",
-          description: "Publication finale après validation"
-        }
-      ].map((step) => (
+      {publicationProcess.map((step) => (
         <div key={step.step} className="text-center">
           <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
             {/* <span className="text-black">{step.step} </span> */}
@@ -281,12 +293,13 @@ export default function Home() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {members.map((reviewer, index) => (
         <Card key={index} className="overflow-hidden bg-black">
-          <div className="relative h-64 mb-4">
+          <div className="relative aspect-[4/3] mb-4">
             <Image
               src={reviewer.image}
               alt={reviewer.name}
               fill
-              className="object-cover w-full h-full"
+              className="object-cover"
+              style={{ objectPosition: 'center 20%' }} 
               priority
             />
           </div>

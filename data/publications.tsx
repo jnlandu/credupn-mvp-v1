@@ -1,3 +1,4 @@
+import { BookOpen, FileEdit, Upload, UserCheck } from "lucide-react";
 
 
 export type PublicationStatus = 'PENDING' | 'REVIEW' | 'APPROVED' | 'REJECTED'| 'PUBLISHED'; ;
@@ -238,6 +239,32 @@ export const requirements = [
   },
 ];
 
+export const publicationProcess = [
+  {
+    step: 1,
+    icon: Upload,
+    title: "Soumission",
+    description: "Envoyez votre manuscrit via notre plateforme en ligne"
+  },
+  {
+    step: 2,
+    icon: UserCheck,
+    title: "Évaluation",
+    description: "Examen par les pairs experts du domaine"
+  },
+  {
+    step: 3,
+    icon: FileEdit,
+    title: "Révision",
+    description: "Modifications basées sur les retours des évaluateurs"
+  },
+  {
+    step: 4,
+    icon: BookOpen,
+    title: "Publication",
+    description: "Publication finale après validation"
+  }
+]
 
 export const userComments = [
   {
