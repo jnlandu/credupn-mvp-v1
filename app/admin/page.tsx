@@ -11,6 +11,7 @@ import {
   Settings,
   Bell,
   Loader2,
+  RefreshCw,
 } from "lucide-react"
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { NotificationsMenu } from "@/components/notifications"
@@ -28,7 +29,13 @@ interface Payment {
   amount: number;
   status: 'completed' | 'pending' | 'failed';
   customer_name: string;
+  created_at: string;
   payment_method: string;
+  order_number: string;
+  reference_number: string; 
+  customer_email: string;
+  publication_id: string;
+
 }
 
 interface Stats {
@@ -42,10 +49,7 @@ interface Publication {
   title: string;
   status: 'PENDING' | 'PUBLISHED' | 'REJECTED';
   created_at: string;
-  users?: {
-    name: string;
-    email: string;
-  };
+  author: string[] | string;
 }
 
 interface DatabaseError {
@@ -79,7 +83,14 @@ export default function AdminDashboard() {
   const [recentPublications, setRecentPublications] = useState<Publication[]>([])
   const [isLoadingPublications, setIsLoadingPublications] = useState(true)
   const [recentUsers, setRecentUsers] = useState<User[]>([])
-const [isLoadingUsers, setIsLoadingUsers] = useState(true)
+  const [publicationPage, setPublicationPage] = useState(1)
+  const [publicationsPerPage, setPublicationsPerPage] = useState(5)
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
+
+  const indexOfLastPublication = publicationPage * publicationsPerPage
+  const indexOfFirstPublication = indexOfLastPublication - publicationsPerPage
+  const currentPublications = recentPublications.slice(indexOfFirstPublication, indexOfLastPublication)
+  const totalPublicationPages = Math.ceil(recentPublications.length / publicationsPerPage)
   const { toast } = useToast()
 
   // Fetch statistics
@@ -122,7 +133,6 @@ const [isLoadingUsers, setIsLoadingUsers] = useState(true)
   const fetchRecentPublications = async () => {
     const supabase = createClient()
     setIsLoadingPublications(true)
-    
     try {
       const { data, error } = await supabase
         .from('publications')
@@ -131,13 +141,11 @@ const [isLoadingUsers, setIsLoadingUsers] = useState(true)
           title,
           status,
           created_at,
-          users (
-            name,
-            email
-          )
+          author
         `)
+        .eq('status', 'PENDING')
         .order('created_at', { ascending: false })
-        .limit(5)
+        // .limit(5)
   
       if (error) {
         console.error('Supabase error details:', {
@@ -224,16 +232,16 @@ const fetchPayments = async () => {
 
       if (error) throw error
 
-      const formattedPayments = data.map(payment => ({
-        id: payment.id,
-        date: payment.created_at,
-        amount: payment.amount,
-        status: payment.status,
-        customer_name: payment.users?.name || 'Unknown',
-        payment_method: payment.payment_method
-      }))
+      // const formattedPayments = data.map(payment => ({
+      //   id: payment.id,
+      //   date: payment.created_at,
+      //   amount: payment.amount,
+      //   status: payment.status,
+      //   customer_name: payment.users?.name || 'Unknown',
+      //   payment_method: payment.payment_method
+      // }))
 
-      setPayments(formattedPayments)
+      setPayments(data)
     } catch (error) {
       console.error('Error fetching payments:', error)
       toast({
@@ -283,28 +291,47 @@ const fetchPayments = async () => {
 
   const refreshPayments = async () => {
     setIsLoading(true)
+    const supabase = createClient()
+    
     try {
-      // Appeler votre API pour récupérer les paiements
-      const response = await fetch("localhost:8000/payment")
-      if (!response.ok) {
-        toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la récupération des paiements"
-      })
-        throw new Error("Erreur lors de la récupération des paiements")
-      }
-      const data: any = await response.json()
+      const { data, error } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          users (
+            name
+          )
+        `)
+        .order('created_at', { ascending: false })
+  
+      if (error) throw error
+  
+      // const formattedPayments = data.map(payment => ({
+      //   id: payment.id,
+      //   date: payment.created_at,
+      //   amount: payment.amount,
+      //   status: payment.status,
+      //   customer_name: payment.users?.name || 'Unknown',
+      //   payment_method: payment.payment_method
+      // }))
+  
       setPayments(data)
+      toast({
+        title: "Succès",
+        description: "Liste des paiements actualisée"
+      })
     } catch (error) {
       console.error("Erreur :", error)
       toast({
+        variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la récupération des paiements"
-    })
+        description: "Impossible d'actualiser les paiements"
+      })
     } finally {
       setIsLoading(false)
     }
   }
+
   return (
     <div className="flex min-h-screen">
    
@@ -355,7 +382,7 @@ const fetchPayments = async () => {
         {/* //  Publications Card component */}
           <Card className="mb-8">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Publications Récentes</CardTitle>
+              <CardTitle>Récentes Soummissions</CardTitle>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -373,8 +400,9 @@ const fetchPayments = async () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>No</TableHead>
                     <TableHead>Titre</TableHead>
-                    <TableHead>Auteur</TableHead>
+                    <TableHead>Auteur(e)s</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Statut</TableHead>
                   </TableRow>
@@ -393,10 +421,15 @@ const fetchPayments = async () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    recentPublications.map((pub: any) => (
+                    currentPublications.map((pub: any) => (
                       <TableRow key={pub.id}>
+                         <TableCell className="font-medium">{pub.id}</TableCell>
                         <TableCell className="font-medium">{pub.title}</TableCell>
-                        <TableCell>{pub.users?.name}</TableCell>
+                        <TableCell>
+                          {Array.isArray(pub.author) 
+                            ? pub.author.join(', ') 
+                            : pub.author}
+                        </TableCell>
                         <TableCell>
                           {new Date(pub.created_at).toLocaleDateString('fr-FR')}
                         </TableCell>
@@ -417,6 +450,73 @@ const fetchPayments = async () => {
                   )}
                 </TableBody>
               </Table>
+                  {/* Add pagination controls */}
+                  <div className="flex items-center justify-between px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <select
+                        className="border rounded p-1"
+                        value={publicationsPerPage}
+                        onChange={(e: any) => {
+                          setPublicationsPerPage(Number(e.target.value))
+                          setPublicationPage(1)
+                        }}
+                      >
+                        <option value={5}>5 par page</option>
+                        <option value={10}>10 par page</option>
+                        <option value={20}>20 par page</option>
+                      </select>
+                      <span className="text-sm text-gray-600">
+                        Affichage {indexOfFirstPublication + 1} à {Math.min(indexOfLastPublication, recentPublications.length)} sur {recentPublications.length}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPublicationPage(1)}
+                        disabled={publicationPage === 1}
+                      >
+                        {"<<"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPublicationPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={publicationPage === 1}
+                      >
+                        Précédent
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        {Array.from({ length: totalPublicationPages }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={publicationPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setPublicationPage(page)}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPublicationPage((prev) => Math.min(prev + 1, totalPublicationPages))}
+                        disabled={publicationPage === totalPublicationPages}
+                      >
+                        Suivant
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPublicationPage(totalPublicationPages)}
+                        disabled={publicationPage === totalPublicationPages}
+                      >
+                        {">>"}
+                      </Button>
+                    </div>
+                  </div>
             </CardContent>
           </Card>
 
@@ -500,14 +600,17 @@ const fetchPayments = async () => {
           <CardHeader>
           <div className="flex justify-between items-center mb-8 mt-6">
               <CardTitle>Historique des Paiements</CardTitle>
-              <Button onClick={fetchPayments} disabled={isLoading}>
+              <Button onClick={refreshPayments} disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Chargement...
+                    Chargement ...
                   </>
                 ) : (
-                  "Rafraîchir"
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Rafraîchir
+                  </>
                 )}
               </Button>
             </div>
@@ -517,8 +620,12 @@ const fetchPayments = async () => {
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
-            <TableHead>Date</TableHead>
             <TableHead>Client</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Code de reference</TableHead>
+            <TableHead>Numero</TableHead>
+            <TableHead>No Publication</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Montant</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Méthode</TableHead>
@@ -528,11 +635,16 @@ const fetchPayments = async () => {
             {currentPayments.map((payment) => (
               <TableRow key={payment.id}>
                 <TableCell>{payment.id}</TableCell>
-                <TableCell>
-                  {new Date(payment.date).toLocaleDateString("fr-FR")}
-                </TableCell>
                 <TableCell>{payment.customer_name}</TableCell>
-                <TableCell>€{payment.amount}</TableCell>
+                <TableCell>{payment.customer_email}</TableCell>
+                <TableCell>{payment.reference_number}</TableCell>
+                <TableCell>{payment.order_number}</TableCell>
+                <TableCell>{payment.publication_id}</TableCell>
+                <TableCell>
+                  {new Date(payment.created_at).toLocaleDateString("fr-FR")}
+                </TableCell>
+                {/* <TableCell>{payment.customer_name}</TableCell> */}
+                <TableCell>{payment.amount} USD</TableCell>
                 <TableCell>
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${

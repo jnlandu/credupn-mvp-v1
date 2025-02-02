@@ -29,9 +29,24 @@ import {
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AddPaymentModal } from '@/components/payments/AddPaymentModal'
-import { Payment } from '@/data/publications'
+// import { Payment } from '@/data/publications'
 
 
+
+interface Payment {
+  id: string;
+  date: string;
+  amount: number;
+  status: 'completed' | 'pending' | 'failed';
+  customer_name: string;
+  customer_email: string;
+  payment_method: string;
+  order_number: string;
+  reference_number: string; 
+  details?: string;
+  created_at: string;
+
+}
 const statusStyles: Record<string, string> = {
     completed: "bg-green-100 text-green-800 border-green-200",
     pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -44,6 +59,19 @@ export default function PaymentsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(5)
+
+  // Add pagination calculations
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const filteredPayments = payments.filter(payment => 
+    payment.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    payment.customer_email?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  const currentPayments = filteredPayments.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage)
   const { toast } = useToast()
 
 // Add fetch function
@@ -180,14 +208,20 @@ const refreshPayments = async () => {
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
+            ) : currentPayments.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-4">
+                  Aucun paiement trouvé
+                </TableCell>
+              </TableRow>
             ) : (
-              payments.map((payment) => (
+              currentPayments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell>{payment.id}</TableCell>
                   <TableCell>{payment.customer_name}</TableCell>
                   <TableCell>{payment.customer_email}</TableCell>
-                  <TableCell>€{payment.amount}</TableCell>
-                  <TableCell>€{payment.reason}</TableCell>
+                  <TableCell>{payment.amount} $</TableCell>
+                  <TableCell>{payment.details}</TableCell>
                   <TableCell>{new Date(payment.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>{payment.payment_method}</TableCell>
                   <TableCell>
@@ -217,6 +251,74 @@ const refreshPayments = async () => {
             )}
           </TableBody>
         </Table>
+      </div>
+      {/*  Payment pagination */}
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <select
+            className="border rounded p-1"
+            value={itemsPerPage}
+            onChange={(e: any) => {
+              setItemsPerPage(Number(e.target.value))
+              setCurrentPage(1)
+            }}
+          >
+            <option value={5}>5 par page</option>
+            <option value={10}>10 par page</option>
+            <option value={20}>20 par page</option>
+          </select>
+          <span className="text-sm text-gray-600">
+            Affichage {filteredPayments.length === 0 ? 0 : indexOfFirstItem + 1} à{' '}
+            {Math.min(indexOfLastItem, filteredPayments.length)} sur {filteredPayments.length}
+          </span>
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            {"<<"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Précédent
+          </Button>
+          <div className="flex items-center gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            Suivant
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            {">>"}
+          </Button>
+        </div>
       </div>
 
       <Dialog open={!!selectedPayment} onOpenChange={() => setSelectedPayment(null)}>

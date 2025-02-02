@@ -89,21 +89,6 @@ export default function AdminLayout({
             </Link>
               }
             </Button>
-            
-            <Button 
-              variant="ghost" 
-              className={`w-full justify-start text-white ${!isSidebarOpen && 'justify-center'}`}
-            >
-              <TrendingUp className="h-4 w-4" />
-              {isSidebarOpen && 
-              <Link  
-              href="/admin/statistics/" 
-              className="ml-2"
-              >
-              Statistiques
-            </Link>
-              }
-            </Button>
             <Button 
                   variant="ghost" 
                   className={`w-full justify-start text-white ${!isSidebarOpen && 'justify-center'}`}
