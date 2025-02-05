@@ -2,13 +2,13 @@
 "use client"
 
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
-export default function PaymentPage() {
+function PaymentContent() {
   const searchParams = useSearchParams()
   const publicationId = searchParams.get('pub')
   const paymentId = searchParams.get('pay')
@@ -87,4 +87,19 @@ export default function PaymentPage() {
       </Card>
     </div>
   )
+}
+export default function PaymentPage() {
+
+  return (
+  <Suspense fallback={
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4">Chargement...</p>
+      </div>
+    </div>
+  }>
+    <PaymentContent/>
+  </Suspense>
+)
 }

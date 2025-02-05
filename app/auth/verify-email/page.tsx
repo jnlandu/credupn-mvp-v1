@@ -9,9 +9,10 @@ import { useRouter } from "next/navigation"
 import { createClient } from '@/lib/supabase'
 import Link from "next/link"
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from "react"
 
-export default function VerifyEmailPage() {
-   const searchParams = useSearchParams()
+function VerifyEmailPageContent() {
+  const searchParams = useSearchParams()
   const email = searchParams.get('email') // Get email from URL params
   const { toast } = useToast()
   const router = useRouter()
@@ -90,4 +91,18 @@ export default function VerifyEmailPage() {
       </Card>
     </div>
   )
+}
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailPageContent />
+    </Suspense>
+  )   
 }

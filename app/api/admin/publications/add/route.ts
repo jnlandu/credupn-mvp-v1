@@ -3,14 +3,22 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import formidable, { File } from 'formidable';
+import { Fields, Files } from 'formidable'
 import { IncomingMessage } from 'http';
 
-// Disable default body parsing for Next.js API routes
+
+
+interface ParseResult {
+  fields: formidable.Fields;
+  files: formidable.Files;
+}
 export const config = {
   api: {
     bodyParser: false,
   },
 };
+
+
 
 // Helper: Convert `Request` to `IncomingMessage` for formidable
 async function toNodeReadable(req: Request): Promise<IncomingMessage> {
@@ -39,17 +47,15 @@ export async function POST(req: Request) {
 
     const nodeReq = await toNodeReadable(req);
 
-    const { fields, files } = await new Promise<{
-      fields: Record<string, string[]>;
-      files: Record<string, formidable.File[]>;
-    }>((resolve, reject) => {
-      form.parse(nodeReq, (err, fields, files) => {
+     // Update Promise with correct types
+     const { fields, files } = await new Promise<ParseResult>((resolve, reject) => {
+      form.parse(nodeReq, (err: Error | null, fields: Fields, files: Files) => {
         if (err) reject(err);
         resolve({ fields, files });
       });
     });
 
-    const pdfFile = files.pdf[0]; // Access the first file
+    const pdfFile = (files.pdf as File[])[0];
 
     if (!pdfFile || !pdfFile.filepath) {
       return NextResponse.json({ error: 'Le fichier PDF est requis.' }, { status: 400 });
@@ -57,11 +63,11 @@ export async function POST(req: Request) {
 
     const newPub = {
       id: uuidv4(),
-      title: fields.title[0],
-      author: fields.author[0],
-      date: fields.date[0],
-      status: fields.status[0],
-      category: fields.category[0],
+      title: (fields.title as string[])[0],
+      author: (fields.author as string[])[0],
+      date: (fields.date as string[])[0],
+      status: (fields.status as string[])[0],
+      category: (fields.category as string[])[0],
       pdfUrl: `/publications/${path.basename(pdfFile.filepath)}`,
     };
 

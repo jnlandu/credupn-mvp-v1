@@ -2,13 +2,20 @@
 import { NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
-import { parse, stringify } from 'csv-parse/sync'
+import { parse } from 'csv-parse/sync'
+import { stringify } from 'csv-stringify/sync'
 import bcrypt from 'bcryptjs'
+import { use } from 'react'
+
 
 const filePath = path.join(process.cwd(), 'data/users.csv')
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params
+
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+export async function POST(req: Request, { params }: PageProps) {
+  const { id } = use(params)
   const { name, email, institution, currentPassword, newPassword, confirmPassword }: any = await req.json()
 
   try {

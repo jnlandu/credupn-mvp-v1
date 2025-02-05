@@ -17,10 +17,11 @@ export async function POST(req: Request) {
   // }
   // const JWT_SECRET = process.env.JWT_SECRET
   try {
-    const { email, password }: any = await req.json()
+    // const { email, password }: any = await req.json()
+    const credentials: any = await req.json()
     
     // const admin = await validateAdmin(email, password)
-    const user = await validateCredentials(email, password)
+    const user = await validateCredentials(credentials)
 
     if (!user) {
         return NextResponse.json(
@@ -31,7 +32,8 @@ export async function POST(req: Request) {
 
     // Generate JWT token
     const token = generateToken({
-      id: user.id,
+      userId: user.id,
+      email: user.email,
       role: user.role
     })
 

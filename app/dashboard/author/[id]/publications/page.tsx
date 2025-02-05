@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 interface PageProps {
     params: Promise<{ id: string }>
   }
+  
 interface PublishedSubmission {
   id: string
   title: string

@@ -1,19 +1,97 @@
 // app/publications/[id]/PublicationView.tsx
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Download, Eye, X, Lock } from 'lucide-react'
+import { ArrowLeft, Download, Eye, X, Lock, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import type { Publication } from '@/lib/publications'
 import { Badge } from '@/components/ui/badge'
+import { createClient } from '@/utils/supabase/client'
+import { useToast } from '@/hooks/use-toast'
 
-export default function PublicationView({ publication }: { publication: Publication }) {
+
+interface DatabasePublication {
+  id: string
+  title: string
+  abstract: string
+  author: string[] | string
+  created_at: string
+  category: string
+  type: string
+  image: string
+  pdf_url: string
+  preview_url?: string
+  is_restricted: boolean
+  doi?: string
+  isbn?: string
+  keywords?: string[]
+}
+
+interface PublicationViewProps {
+  id: string
+}
+
+
+export default function PublicationView({ id }: PublicationViewProps) {
+  const [publication, setPublication] = useState<DatabasePublication | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [showPreview, setShowPreview] = useState(false)
-  const pdfToShow = publication.isRestricted ? publication.previewUrl : publication.pdfUrl
+  const { toast } = useToast()
+
+
+  useEffect(() => {
+    const fetchPublication = async () => {
+      const supabase = createClient()
+      
+      try {
+        const { data, error } = await supabase
+          .from('publications')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (error) throw error
+
+        setPublication(data)
+      } catch (error) {
+        console.error('Error fetching publication:', error)
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger la publication"
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPublication()
+  }, [id])
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (!publication) {
+    return (
+      <div className="container mx-auto py-12 px-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Publication non trouvée</h1>
+          <p className="text-gray-600">Cette publication n'existe pas ou a été supprimée.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const pdfToShow = publication.is_restricted ? publication.preview_url : publication.pdf_url
+
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -39,7 +117,9 @@ export default function PublicationView({ publication }: { publication: Publicat
             <div>
               <h1 className="text-3xl font-bold mb-4">{publication.title}</h1>
               <p className="text-gray-600 mb-4">
-                Par {publication.authors.join(", ")}
+              Par {Array.isArray(publication.author) 
+                ? publication.author.join(", ")
+                : publication.author}
               </p>
               <p className="text-gray-700 mb-6">
                 {publication.abstract}
@@ -47,7 +127,7 @@ export default function PublicationView({ publication }: { publication: Publicat
               
               <div className="space-y-4">
                 <div>
-                  <span className="font-semibold">Date:</span> {publication.date}
+                  <span className="font-semibold">Date:</span> {publication.created_at}
                 </div>
                 <div>
                   <span className="font-semibold">Catégorie:</span> {publication.category}
@@ -62,9 +142,9 @@ export default function PublicationView({ publication }: { publication: Publicat
                   Aperçu
                 </Button>
                 
-                {!publication.isRestricted ? (
+                {!publication.is_restricted ? (
                   <Button variant="outline" asChild>
-                    <a href={publication.pdfUrl} download>
+                    <a href={publication.pdf_url} download>
                       <Download className="mr-2 h-4 w-4" />
                       Télécharger le PDF
                     </a>
@@ -93,7 +173,7 @@ export default function PublicationView({ publication }: { publication: Publicat
           <DialogTitle className="text-xl font-semibold mb-4 flex items-center justify-between">
             <span>
               Aperçu de {publication.title}
-              {publication.isRestricted && (
+              {publication.is_restricted && (
                 <Badge variant="secondary" className="ml-2">
                   Aperçu limité
                 </Badge>
@@ -131,7 +211,7 @@ export default function PublicationView({ publication }: { publication: Publicat
               </div>
             </object>
             
-            {publication.isRestricted && (
+            {publication.is_restricted && (
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background to-transparent p-4 text-center">
                 <p className="text-sm text-muted-foreground mb-2">
                   Ceci est un aperçu limité. Connectez-vous pour accéder au document complet.

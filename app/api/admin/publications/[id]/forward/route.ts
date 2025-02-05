@@ -3,9 +3,15 @@ import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 import { promises as fs } from 'fs'
 import path from 'path'
+import { use } from 'react'
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params
+
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export async function POST(req: Request, { params }: PageProps) {
+  const { id } = use(params)
   const { reviewers } : any = await req.json()
 
   // Mock data - replace with actual data fetching logic

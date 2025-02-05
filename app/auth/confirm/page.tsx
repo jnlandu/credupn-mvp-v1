@@ -1,19 +1,22 @@
 // app/auth/confirm/page.tsx
 "use client"
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, CheckCircle, XCircle } from "lucide-react"
 import { createClient } from '@/utils/supabase/client'
 
-export default function ConfirmPage() {
+
+
+function ConfirmContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const router = useRouter()
-
+  
+  // ... rest of your confirmation logic
   useEffect(() => {
     const confirmEmail = async () => {
       try {
@@ -32,7 +35,6 @@ export default function ConfirmPage() {
         })
 
         if (error) throw error
-
         // Wait briefly before redirecting
         setTimeout(() => {
           router.push('/auth/login?verified=true')
@@ -48,8 +50,8 @@ export default function ConfirmPage() {
     confirmEmail()
   }, [searchParams, router])
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
+return (
+  <div className="min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>Vérification de l'email</CardTitle>
@@ -83,5 +85,20 @@ export default function ConfirmPage() {
         </CardContent>
       </Card>
     </div>
-  )
+)
+}
+
+export default function ConfirmPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <ConfirmContent />
+    </Suspense>
+  )   
 }
