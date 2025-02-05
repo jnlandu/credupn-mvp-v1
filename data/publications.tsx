@@ -1,4 +1,14 @@
-import { BookOpen, FileEdit, Upload, UserCheck } from "lucide-react";
+import { BookOpen, FileEdit, FileText, GraduationCap, Upload, UserCheck, Users } from "lucide-react";
+
+import crossrefLogo from '@/public/images/logo/crossref.jpeg'
+import scopusLogo from '@/public/images/logo/scopus.png'
+import doajLogo from '@/public/images/logo/doaj.png'
+import scholarLogo from '@/public/images/logo/scholar.jpg'
+
+
+
+
+
 
 
 export type PublicationStatus = 'PENDING' | 'REVIEW' | 'APPROVED' | 'REJECTED'| 'PUBLISHED'; ;
@@ -284,5 +294,111 @@ export const userComments = [
     role: "Auteur et Chercheur",
     comment: "La plateforme idéale pour partager ses recherches avec la communauté académique africaine.",
     image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80"
+  }
+]
+
+export const servicesFeatures = [
+  {
+    icon: BookOpen,
+    title: 'Éducation',
+    description: 'Recherche sur les méthodes pédagogiques innovantes'
+  },
+  {
+    icon: Users,
+    title: 'Développement Social',
+    description: 'Études sur l\'impact social de l\'éducation'
+  },
+  {
+    icon: FileText,
+    title: 'Publications',
+    description: 'Production scientifique et académique'
+  },
+  {
+    icon: GraduationCap,
+    title: 'Formation',
+    description: 'Développement professionnel des chercheurs'
+  }
+]
+
+// Example data for upcomingEvents
+export const upcomingEvents = [
+  {
+    title: "Conférence Internationale sur l'Éducation",
+    date: "15-17 Novembre 2023",
+    description: "Une conférence réunissant des chercheurs et des éducateurs du monde entier pour discuter des dernières avancées en matière d'éducation."
+  },
+  {
+    title: "Atelier de Recherche en Sciences Sociales",
+    date: "5 Décembre 2023",
+    description: "Un atelier interactif pour les chercheurs en sciences sociales afin de partager leurs travaux et d'obtenir des retours constructifs."
+  },
+  {
+    title: "Séminaire sur le Développement Durable",
+    date: "20 Janvier 2024",
+    description: "Un séminaire axé sur les stratégies de développement durable et leur impact sur les communautés locales."
+  }
+]
+
+// Example data for recentNews
+export const recentNews = [
+  {
+    title: "Publication d'un Nouveau Livre sur l'Éducation",
+    date: "10 Octobre 2023",
+    description: "Le professeur Jean Dupont a publié un nouveau livre intitulé 'L'Éducation en Afrique: Défis et Opportunités'."
+  },
+  {
+    title: "Lancement d'un Nouveau Programme de Recherche",
+    date: "25 Septembre 2023",
+    description: "CRIDUPN a lancé un nouveau programme de recherche visant à améliorer l'accès à l'éducation dans les zones rurales."
+  },
+  {
+    title: "Partenariat avec l'Université de Kinshasa",
+    date: "1 Septembre 2023",
+    description: "CRIDUPN a signé un partenariat avec l'Université de Kinshasa pour collaborer sur des projets de recherche communs."
+  }
+]
+
+// Example data for partnerships
+export const partnerships = [
+  {
+    name: "Université de Kinshasa",
+    description: "Collaboration sur des projets de recherche en éducation et développement durable."
+  },
+  {
+    name: "Institut de Recherche pour le Développement (IRD)",
+    description: "Partenariat pour mener des recherches sur les défis environnementaux en Afrique."
+  },
+  {
+    name: "Organisation des Nations Unies pour l'Éducation, la Science et la Culture (UNESCO)",
+    description: "Collaboration pour promouvoir l'éducation de qualité et le développement durable."
+  }
+]
+
+
+// Add indexing services data
+export const indexingServices = [
+  {
+    name: 'Crossref',
+    logo: crossrefLogo,
+    url: 'https://search.crossref.org/',
+    description: 'DOI: 10.XXXX/XXXXX'
+  },
+  {
+    name: 'Scopus',
+    logo: scopusLogo,
+    url: 'https://www.scopus.com',
+    description: 'Base de données Elsevier'
+  },
+  {
+    name: 'DOAJ',
+    logo: doajLogo,
+    url: 'https://doaj.org',
+    description: 'Directory of Open Access Journals'
+  },
+  {
+    name: 'Google Scholar',
+    logo: scholarLogo,
+    url: 'https://scholar.google.com',
+    description: 'Index académique Google'
   }
 ]

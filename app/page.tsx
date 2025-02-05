@@ -5,12 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookOpen, Users, FileText, GraduationCap,ScrollText, Loader2 } from 'lucide-react'
 import {members} from '@/lib/members'
-import { publicationProcess, userComments } from '@/data/publications'
+import { partnerships, publicationProcess, recentNews, servicesFeatures, upcomingEvents, userComments } from '@/data/publications'
 import { useEffect, useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import { Badge } from '@/components/ui/badge'
-// import {userComments} from '@/data/publications'
 
 interface Publication {
   id: string
@@ -31,6 +30,32 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null)
   const { toast } = useToast()
+
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+  
+  const itemVariants = {
+    hidden: { 
+      opacity: 0, 
+      y: 20 
+    },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  }
 
   useEffect(() => {
     const fetchRecentPublications = async () => {
@@ -86,15 +111,20 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-black/50 " />
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
-            Université Pédagogique Nationale
-          </h1>
-          <h2 className="text-4xl md:text-4xl font-bold text-white mb-2">
-            Centre de Recherche Interdisciplinaire
-          </h2>
-          <p className="text-xl text-white mb-8 max-w-xl mt-0">
-            Excellence en recherche pour le développement de l'éducation en République Démocratique du Congo
-          </p>
+            <div className="space-y-4 max-w-4xl">
+                <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
+                  Université Pédagogique Nationale
+                </h1>
+                <h2 className="text-3xl md:text-5xl font-bold text-white/90">
+                  Centre de Recherche Interdisciplinaire
+                </h2>
+                <h2 className="text-3xl md:text-5xl font-bold text-white/90">
+                  CRIDUPN
+                </h2>
+                <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
+                  Excellence en recherche pour le développement scientifiqueet sociale en Afrique et République Démocratique du Congo
+                </p>
+              </div>
           <div className="flex flex-wrap gap-4 justify-center">
             <Button asChild size="lg">
               <Link href="/publications">Nos Publications</Link>
@@ -109,30 +139,14 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-4 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-black">Nos Domaines de Recherche</h2>
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl font-bold text-gray-900">Nos Domaines de Recherche</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Découvrez nos axes de recherche principaux et notre contribution à l'avancement de l'éducation
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: BookOpen,
-                title: 'Éducation',
-                description: 'Recherche sur les méthodes pédagogiques innovantes'
-              },
-              {
-                icon: Users,
-                title: 'Développement Social',
-                description: 'Études sur l\'impact social de l\'éducation'
-              },
-              {
-                icon: FileText,
-                title: 'Publications',
-                description: 'Production scientifique et académique'
-              },
-              {
-                icon: GraduationCap,
-                title: 'Formation',
-                description: 'Développement professionnel des chercheurs'
-              }
-            ].map((feature, index) => (
+            {servicesFeatures.map((feature, index) => (
               <Card key={index} className="border-none shadow-lg">
                 <CardHeader>
                   <feature.icon className="h-12 w-12 text-white dark:text-gray-100 mb-4" />
@@ -146,7 +160,8 @@ export default function Home() {
           </div>
         </div>
       </section>
-      {/* Latest Publications Preview */}
+
+    {/* Latest Publications Preview */}
     <section className="py-4 px-4 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
@@ -165,13 +180,14 @@ export default function Home() {
               <p className="text-gray-500">Aucune publication récente</p>
             </div>
           ) : (
-            recentPublications.map((publication) => (
-              <Card 
-                key={publication.id}
-               className="hover:shadow-lg transition-shadow"
-               
-               >
-                  <CardHeader>
+            recentPublications.map((publication, index) => (
+              <div 
+              key={publication.id}
+              className="animate-fade-up"
+              style={{ animationDelay: `${index * 100}ms` }}
+              >
+               <Card className="h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+                <CardHeader>
                     <CardTitle className="text-lg">
                       {publication.title}
                     </CardTitle>
@@ -210,11 +226,19 @@ export default function Home() {
                   </div>
                   </CardHeader>
                   <CardContent>
-                    <span className="text-muted-foreground line-clamp-3">
+                    <p className="text-muted-foreground line-clamp-3">
                       {publication.abstract}
-                    </span>
+                    </p>
+                    <div className="mt-3">
+                      <Button asChild variant="link" size="sm" className="text-primary p-0 h-auto">
+                        <Link href={`/publications/${publication.id}`}>
+                          Lire plus
+                        </Link>
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
+                </div>
             ))
           )}
         </div>
@@ -231,7 +255,11 @@ export default function Home() {
         Nous publions des articles scientifiques, des livres et des rapports de recherche.
       </p>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div 
+      className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-up"
+      style={{ animationDelay: '1000ms' }}
+    >
+      
       <Card className="text-center p-6">
         <div className="mb-4">
           <FileText className="h-12 w-12 mx-auto " />
@@ -274,7 +302,6 @@ export default function Home() {
       {publicationProcess.map((step) => (
         <div key={step.step} className="text-center">
           <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
-            {/* <span className="text-black">{step.step} </span> */}
             <step.icon className="h-6 w-6 text-black  dark:text-black" />
           </div>
           <h3 className="font-bold mb-2 text-black">{step.title}</h3>
@@ -332,34 +359,150 @@ export default function Home() {
 </section>
 
 
-{/* Testimonials Section */}
+    {/* Testimonials Section */}
+    <section className="py-4 px-4 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-bold text-center text-black mb-12">Témoignages</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {userComments.map((testimonial, index) => (
+            <Card key={index} className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="relative h-12 w-12 rounded-full overflow-hidden">
+                  <Image 
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-bold">{testimonial.name}</h3>
+                  <p className="text-sm text-gray-600">{testimonial.role}</p>
+                </div>
+              </div>
+              <p className="text-gray-700 italic">{testimonial.comment}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Upcoming Events Section */}
+    <section className="py-4 px-4 bg-white">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-3xl font-bold text-center text-black mb-12">Événements à venir</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Map through upcoming events */}
+                {upcomingEvents.map((event, index) => (
+                  <Card key={index} className="p-6">
+                    <h3 className="font-bold mb-2">{event.title}</h3>
+                    <p className="text-gray-600 mb-4">{event.date}</p>
+                    <p className="text-gray-700">{event.description}</p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+      </section>
+    {/* Recent News Section */}
+    <section className="py-4 px-4 bg-gray-50">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-3xl font-bold text-center text-black mb-12">Actualités Récentes</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Map through recent news */}
+                {recentNews.map((news, index) => (
+                  <Card key={index} className="p-6">
+                    <h3 className="font-bold mb-2">{news.title}</h3>
+                    <p className="text-gray-600 mb-4">{news.date}</p>
+                    <p className="text-gray-700">{news.description}</p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+  </section>
+
+
+{/* Partnerships and Collaborations Section */}
 <section className="py-4 px-4 bg-gray-50">
   <div className="max-w-7xl mx-auto">
-    <h2 className="text-3xl font-bold text-center text-black mb-12">Témoignages</h2>
+    <h2 className="text-3xl font-bold text-center text-black mb-12">Partenariats et Collaborations</h2>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {userComments.map((testimonial, index) => (
+      {/* Map through partnerships and collaborations */}
+      {partnerships.map((partner, index) => (
         <Card key={index} className="p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="relative h-12 w-12 rounded-full overflow-hidden">
-              <Image 
-                src={testimonial.image}
-                alt={testimonial.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div>
-              <h3 className="font-bold">{testimonial.name}</h3>
-              <p className="text-sm text-gray-600">{testimonial.role}</p>
-            </div>
-          </div>
-          <p className="text-gray-700 italic">{testimonial.comment}</p>
+          <h3 className="font-bold mb-2">{partner.name}</h3>
+          <p className="text-gray-700">{partner.description}</p>
         </Card>
       ))}
     </div>
   </div>
 </section>
+{/* Replace local image paths with public URLs */}
+<section className="py-12 px-4 bg-gray-50">
+  <div className="max-w-7xl mx-auto">
+    <div className="text-center mb-12">
+      <h2 className="text-3xl font-bold mb-4 text-black">Indexation de la Revue</h2>
+      <p className="text-gray-600 max-w-2xl mx-auto">
+        La revue CRIDUPN est indexée dans les bases de données internationales suivantes:
+      </p>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <Card className="text-center p-6 hover:shadow-lg ">
+      <div className="mb-4 relative h-20">
+        <Image
+          src="https://www.crossref.org/images/Crossref_Cited_By_logo_screen.png"
+          alt="Crossref"
+          fill
+          className="object-contain"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          // onError={(e: any) => {
+          //   e.currentTarget.src = '/fallback-image.png' 
+          // }}
+        />
+      </div>
+      <h3 className="font-bold mb-2">Crossref</h3>
+      <p className="text-gray-600">DOI: 10.XXXX/XXXXX</p>
+    </Card>
+      <Card className="text-center p-6 hover:shadow-lg ">
+        <div className="mb-4 relative h-20">
+          <Image
+            src="https://upload.wikimedia.org/wikipedia/commons/2/26/Scopus_logo.svg"
+            alt="Scopus"
+            fill
+            className="object-contain"
+          />
+        </div>
+        <h3 className="font-bold mb-2">Scopus</h3>
+        <p className="text-gray-600">Base de données Elsevier</p>
+      </Card>
 
+      <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+        <div className="mb-4 relative h-20">
+          <Image
+            src="https://upload.wikimedia.org/wikipedia/commons/f/fa/DOAJ_logo.svg"
+            alt="DOAJ"
+            fill
+            className="object-contain"
+          />
+        </div>
+        <h3 className="font-bold mb-2">DOAJ</h3>
+        <p className="text-gray-600">Directory of Open Access Journals</p>
+      </Card>
+
+      <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+        <div className="mb-4 relative h-20">
+          <Image
+            src="https://upload.wikimedia.org/wikipedia/commons/2/28/Google_Scholar_logo.png"
+            alt="Google Scholar"
+            fill
+            className="object-contain"
+          />
+        </div>
+        <h3 className="font-bold mb-2">Google Scholar</h3>
+        <p className="text-gray-600">Index académique Google</p>
+      </Card>
+    </div>
+  </div>
+</section>
 
       
 </div>
