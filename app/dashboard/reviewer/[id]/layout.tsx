@@ -80,13 +80,13 @@ export default function ReviewerLayout({ children, params }: LayoutProps) {
             {isSidebarOpen && <span>Historique</span>}
           </Link>
 
-          <Link
+          {/* <Link
             href="/reviewer/statistics"
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <TrendingUp className="h-5 w-5" />
             {isSidebarOpen && <span>Statistiques</span>}
-          </Link>
+          </Link> */}
         </nav>
 
         {/* Settings at bottom */}
