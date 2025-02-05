@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"npm run next-dev\" \"npm run api-dev\"",
     "build": "next build",
+    "next-dev": "next dev",
     "start": "next start",
+    "api-dev": "cd backend && uvicorn app:app --reload --port 8000",
     "lint": "next lint"
   },
   "dependencies": {
