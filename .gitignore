@@ -4,6 +4,8 @@ logs
 npm-debug.log*
 .draft
  /.draft/*
+draft/*
+/draft/*
 # Runtime data
 pids
 *.pid
