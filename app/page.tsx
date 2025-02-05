@@ -25,6 +25,11 @@ interface Publication {
   keywords?: string[]
 }
 
+interface AnimatedCounterProps {
+  target: number
+  duration?: number
+  suffix?: string
+}
 export default function Home() {
   const [recentPublications, setRecentPublications] = useState<Publication[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -97,11 +102,34 @@ export default function Home() {
 
     fetchRecentPublications()
   }, [])
+
+
+function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCounterProps) {
+    const [count, setCount] = useState(0)
+    
+    useEffect(() => {
+      let start = 0
+      const stepTime = 50
+      const increment = target / (duration / stepTime)
+      const timer = setInterval(() => {
+        start += increment
+        if (start >= target) {
+          start = target
+          clearInterval(timer)
+        }
+        setCount(Math.floor(start))
+      }, stepTime)
+      
+      return () => clearInterval(timer)
+    }, [target, duration])
+    
+    return <span>{count}{suffix}</span>
+  }
   
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[600px]">
+       <section className="relative h-screen">
         <Image
           src="https://images.unsplash.com/photo-1606761568499-6d2451b23c66"
           alt="CRIDUPN Centre de Recherche Interdisciplinaire"
@@ -109,47 +137,66 @@ export default function Home() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/50 " />
-        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-            <div className="space-y-4 max-w-4xl">
-                <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
-                  Université Pédagogique Nationale
-                </h1>
-                <h2 className="text-3xl md:text-5xl font-bold text-white/90">
-                  Centre de Recherche Interdisciplinaire
-                </h2>
-                <h2 className="text-3xl md:text-5xl font-bold text-white/90">
-                  CRIDUPN
-                </h2>
-                <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-                  Excellence en recherche pour le développement scientifiqueet sociale en Afrique et République Démocratique du Congo
-                </p>
-              </div>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button asChild size="lg">
-              <Link href="/publications">Nos Publications</Link>
-            </Button>
-            <Button asChild variant="secondary" size="lg" className="bg-white/10 backdrop-blur-sm">
-              <Link href="/about">En savoir plus</Link>
-            </Button>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 max-w-7xl mx-auto">
+          <div className="space-y-6 max-w-4xl">
+            <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight [text-wrap:balance] animate-fade-up">
+              Université Pédagogique Nationale
+            </h1>
+            <h2 className="text-3xl md:text-5xl font-bold text-white/90 animate-fade-up [animation-delay:200ms]">
+              Centre de Recherche Interdisciplinaire
+            </h2>
+            <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed animate-fade-up [animation-delay:400ms]">
+              Excellence en recherche pour le développement scientifique et social en Afrique et République Démocratique du Congo
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center animate-fade-up [animation-delay:600ms]">
+              <Button 
+                asChild 
+                size="lg" 
+                className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 transition-colors"
+              >
+                <Link href="/publications">Nos Publications</Link>
+              </Button>
+              <Button 
+                asChild 
+                size="lg" 
+                variant="outline" 
+                className="text-lg px-8 py-6 bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors"
+              >
+                <Link href="/about">En savoir plus</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="w-1 h-16 rounded-full bg-white/20 relative overflow-hidden">
+            <div className="w-full h-1/2 bg-white absolute top-0 animate-scroll" />
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-4 px-4 bg-white">
+      <section className="py-24 px-4 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900">Nos Domaines de Recherche</h2>
+            <h2 className="text-4xl font-bold text-gray-900 [text-wrap:balance]">
+              Nos Domaines de Recherche
+            </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Découvrez nos axes de recherche principaux et notre contribution à l'avancement de l'éducation
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {servicesFeatures.map((feature, index) => (
-              <Card key={index} className="border-none shadow-lg">
+              <Card 
+                key={index} 
+                className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              >
                 <CardHeader>
-                  <feature.icon className="h-12 w-12 text-white dark:text-gray-100 mb-4" />
+                  <div className="rounded-full bg-primary/10 p-3 w-16 h-16 flex items-center justify-center mb-4">
+                    <feature.icon className="h-8 w-8 text-primary" />
+                  </div>
                   <CardTitle>{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -160,6 +207,37 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* Stats Section with Animated Counters */}
+      <section className="py-24 px-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
+            <h3 className="text-4xl font-bold text-primary mb-2">
+              <AnimatedCounter target={50} suffix="+" />
+            </h3>
+            <p className="text-gray-600">Chercheurs</p>
+          </div>
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
+            <h3 className="text-4xl font-bold text-primary mb-2">
+              <AnimatedCounter target={200} suffix="+" />
+            </h3>
+            <p className="text-gray-600">Publications</p>
+          </div>
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
+            <h3 className="text-4xl font-bold text-primary mb-2">
+              <AnimatedCounter target={15} suffix="+" />
+            </h3>
+            <p className="text-gray-600">Partenariats</p>
+          </div>
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
+            <h3 className="text-4xl font-bold text-primary mb-2">
+              <AnimatedCounter target={30} suffix="+" />
+            </h3>
+            <p className="text-gray-600">Projets Actifs</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
     {/* Latest Publications Preview */}
     <section className="py-4 px-4 bg-gray-50">
@@ -246,50 +324,60 @@ export default function Home() {
     </section>
 
 {/* Call for Papers Section */}
-<section className="py-4 px-4 bg-white">
+<section className="py-24 px-4 bg-gradient-to-b from-gray-50 to-white">
   <div className="max-w-7xl mx-auto">
-    <div className="text-center mb-12">
-      <h2 className="text-3xl font-bold mb-4 text-black">Appel à publications</h2>
-      <p className="text-gray-600 max-w-2xl mx-auto">
-        La revue CRIDUPN accepte les soumissions de recherches originales dans tous les domaines. 
-        Nous publions des articles scientifiques, des livres et des rapports de recherche.
+    <div className="text-center mb-16">
+      <h2 className="text-4xl font-bold text-gray-900 mb-4">Appel à publications</h2>
+      <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+        La revue CRIDUPN accepte les soumissions de recherches originales dans tous les domaines.
       </p>
     </div>
-    <div 
-      className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-up"
-      style={{ animationDelay: '1000ms' }}
-    >
-      
-      <Card className="text-center p-6">
-        <div className="mb-4">
-          <FileText className="h-12 w-12 mx-auto " />
-        </div>
-        <h3 className="font-bold mb-2">Articles Scientifiques</h3>
-        <p className="text-gray-600 mb-4">Soumettez vos articles de recherche pour publication</p>
-        <Button asChild variant="secondary">
-          <Link href="/publications/soumettre">Soumettre un article</Link>
-        </Button>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {/* Article Submission Card */}
+      <Card className="group hover:shadow-xl transition-all duration-300">
+        <CardContent className="p-8 text-center">
+          <div className="mb-6 relative">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+              <FileText className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-4">Articles Scientifiques</h3>
+          <p className="text-gray-600 mb-6">Soumettez vos articles de recherche pour publication</p>
+          <Button asChild className="w-full" variant="default">
+            <Link href="/publications/soumettre">Soumettre un article</Link>
+          </Button>
+        </CardContent>
       </Card>
-      <Card className="text-center p-6">
-        <div className="mb-4">
-          <BookOpen className="h-12 w-12 mx-auto" />
-        </div>
-        <h3 className="font-bold mb-2">Livres</h3>
-        <p className="text-gray-600 mb-4">Publiez vos ouvrages académiques</p>
-        <Button asChild variant="secondary">
-          <Link href="/publications/soumettre-livre">Proposer un livre</Link>
-        </Button>
+      {/* Book Submission Card */}
+      <Card className="group hover:shadow-xl transition-all duration-300">
+        <CardContent className="p-8 text-center">
+          <div className="mb-6 relative">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+            <BookOpen className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-4">Livres</h3>
+          <p className="text-gray-600 mb-6">Publiez vos ouvrages scientifiques, academiques et littéraires</p>
+          <Button asChild className="w-full" variant="default">
+            <Link href="/publications/soumettre">Soumettre un livre</Link>
+          </Button>
+        </CardContent>
       </Card>
-      <Card className="text-center p-6">
-        <div className="mb-4">
-          <ScrollText className="h-12 w-12 mx-auto" />
-        </div>
-        <h3 className="font-bold mb-2">Rapports</h3>
-        <p className="text-gray-600 mb-4">Partagez vos rapports de recherche</p>
-        <Button asChild variant="secondary">
-          <Link href="/soumission">Soumettre un rapport</Link>
-        </Button>
-      </Card>
+      {/* Reports Submission Card */}
+      <Card className="group hover:shadow-xl transition-all duration-300">
+        <CardContent className="p-8 text-center">
+          <div className="mb-6 relative">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+            <ScrollText className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-4">Rapports</h3>
+          <p className="text-gray-600 mb-6">Publiez et partagez vos rapports de recherche ou de labo</p>
+          <Button asChild className="w-full" variant="default">
+            <Link href="/publications/soumettre">Soumettre un livre</Link>
+          </Button>
+        </CardContent>
+        </Card>
     </div>
   </div>
 </section>
@@ -360,65 +448,39 @@ export default function Home() {
 
 
     {/* Testimonials Section */}
-    <section className="py-4 px-4 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold text-center text-black mb-12">Témoignages</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {userComments.map((testimonial, index) => (
-            <Card key={index} className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="relative h-12 w-12 rounded-full overflow-hidden">
-                  <Image 
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-bold">{testimonial.name}</h3>
-                  <p className="text-sm text-gray-600">{testimonial.role}</p>
-                </div>
+    <section className="py-20 px-4 bg-gray-50">
+  <div className="max-w-7xl mx-auto">
+    <h2 className="text-4xl font-bold text-center mb-16 text-black">Ce que disent nos chercheurs</h2>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {userComments.map((testimonial, index) => (
+        <Card 
+          key={index} 
+          className="group hover:shadow-xl transition-all duration-300"
+        >
+          <CardContent className="p-8">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="relative w-16 h-16 rounded-full overflow-hidden">
+                <Image
+                  src={testimonial.image}
+                  alt={testimonial.name}
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform"
+                />
               </div>
-              <p className="text-gray-700 italic">{testimonial.comment}</p>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-
-    {/* Upcoming Events Section */}
-    <section className="py-4 px-4 bg-white">
-            <div className="max-w-7xl mx-auto">
-              <h2 className="text-3xl font-bold text-center text-black mb-12">Événements à venir</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Map through upcoming events */}
-                {upcomingEvents.map((event, index) => (
-                  <Card key={index} className="p-6">
-                    <h3 className="font-bold mb-2">{event.title}</h3>
-                    <p className="text-gray-600 mb-4">{event.date}</p>
-                    <p className="text-gray-700">{event.description}</p>
-                  </Card>
-                ))}
+              <div>
+                <h3 className="font-bold text-lg">{testimonial.name}</h3>
+                <p className="text-gray-600">{testimonial.role}</p>
               </div>
             </div>
-      </section>
-    {/* Recent News Section */}
-    <section className="py-4 px-4 bg-gray-50">
-            <div className="max-w-7xl mx-auto">
-              <h2 className="text-3xl font-bold text-center text-black mb-12">Actualités Récentes</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Map through recent news */}
-                {recentNews.map((news, index) => (
-                  <Card key={index} className="p-6">
-                    <h3 className="font-bold mb-2">{news.title}</h3>
-                    <p className="text-gray-600 mb-4">{news.date}</p>
-                    <p className="text-gray-700">{news.description}</p>
-                  </Card>
-                ))}
-              </div>
-            </div>
-  </section>
+            <p className="text-gray-700 italic leading-relaxed">
+              "{testimonial.comment}"
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
 
 
 {/* Partnerships and Collaborations Section */}

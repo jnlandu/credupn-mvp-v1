@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import Header from '@/components/header';
 import FooterClient from '@/components/FooterClient'
 import { Toaster } from "@/components/ui/toaster"
+import ScrollToTop from '@/components/backTop';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,6 +19,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className}>
@@ -29,7 +31,7 @@ export default function RootLayout({
         >
           <Header />
           <main>
-            
+            < ScrollToTop/>
             {children}
             
           </main>

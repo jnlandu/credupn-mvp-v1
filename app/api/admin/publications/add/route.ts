@@ -21,14 +21,22 @@ export const config = {
 
 
 // Helper: Convert `Request` to `IncomingMessage` for formidable
+// Helper: Convert `Request` to `IncomingMessage` for formidable
 async function toNodeReadable(req: Request): Promise<IncomingMessage> {
   const { Readable } = require('stream');
   const readable = new Readable();
   readable._read = () => {}; // No-op
   readable.push(Buffer.from(await req.arrayBuffer())); // Add request body
   readable.push(null); // End of stream
+
+  // Convert Headers to plain object without using .entries()
+  const headers: Record<string, string> = {};
+  req.headers.forEach((value, key) => {
+    headers[key] = value;
+  });
+
   return Object.assign(readable, {
-    headers: Object.fromEntries(req.headers.entries()),
+    headers,
     method: req.method,
     url: req.url,
   });
