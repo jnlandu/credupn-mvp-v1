@@ -521,34 +521,34 @@ export default function PaymentPage({ params }: PageProps) {
       </Dialog>
  {/*  Traitement de paiement */}
       <Dialog 
-          open={isModalProcessing} 
-          onOpenChange={() => {}}
-        >
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Traitement du paiement</DialogTitle>
-              <DialogDescription>
-                Veuillez confirmer le paiement sur votre téléphone. Cette fenêtre se fermera automatiquement une fois le paiement confirmé.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="relative">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-medium">
-                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                  </span>
-                </div>
+        open={isModalProcessing} 
+        onOpenChange={() => {}}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Traitement du paiement</DialogTitle>
+            <DialogDescription>
+              Veuillez confirmer le paiement sur votre téléphone. Cette fenêtre se fermera automatiquement une fois le paiement confirmé.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="relative">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-medium">
+                  {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                </span>
               </div>
-              <p className="mt-6 text-sm text-gray-500">
-                En attente de confirmation...
-              </p>
-              <p className="mt-2 text-xs text-gray-400">
-                Temps restant: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-              </p>
             </div>
-          </DialogContent>
-        </Dialog>
+            <p className="mt-6 text-sm text-gray-500">
+              En attente de confirmation...
+            </p>
+            <p className="mt-2 text-xs text-gray-400">
+              Temps restant: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
