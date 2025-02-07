@@ -239,7 +239,7 @@ export default function PaymentPage({ params }: PageProps) {
         .update({ 
           status: 'pending',
           user_id: user?.id,
-          amount: 500,
+          amount: responseData?.amount,
           payment_method: selectedMethod,
           publication_id: publicationId,
           details:  data.description,
@@ -259,7 +259,7 @@ export default function PaymentPage({ params }: PageProps) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Le paiement a échoué"
+        description: "Le paiement a échoué. Verifiez votre solde ou votre connexion et  réessayez plus tard"
       })
     } finally {
       setIsModalProcessing(false)
@@ -303,15 +303,16 @@ export default function PaymentPage({ params }: PageProps) {
   
         switch (verification) {
           case '0':
-            clearInterval(timer);
+           
             await updatePaymentStatus(reference, phoneNumber, true);
             setIsModalProcessing(false);
             setTimeLeft(120);
             toast({
               title: "Succès",
-              description: "Paiement confirmé!"
+              description: message || "Paiement confirmé! Un mail vous a été envoyé avec les détails de votre paiement"
             });
             router.push(`/dashboard/author/${id}/publications`);
+            clearInterval(timer);
             break;
   
           case '1':
@@ -322,7 +323,7 @@ export default function PaymentPage({ params }: PageProps) {
             toast({
               variant: "destructive",
               title: "Échec",
-              description: message || "Le paiement a échoué"
+              description: message || "Le paiement a échoué. Verifiez votre solde ou réessayez plus tard"
             });
             break;
   
@@ -360,7 +361,8 @@ export default function PaymentPage({ params }: PageProps) {
       .from('payments')
       .update({ 
         check: isSuccessful,
-        status: isSuccessful ? 'completed' : 'failed'
+        status: isSuccessful ? 'completé' : 'échec',
+        // payment_method: selectedMethod
       })
       .eq('reference_number', reference)
       .eq('order_number', phoneNumber)
