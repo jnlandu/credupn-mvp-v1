@@ -37,31 +37,6 @@ export default function Home() {
   const { toast } = useToast()
 
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  }
-  
-  const itemVariants = {
-    hidden: { 
-      opacity: 0, 
-      y: 20 
-    },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    }
-  }
-
   useEffect(() => {
     const fetchRecentPublications = async () => {
       const supabase = createClient()
@@ -109,7 +84,7 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCount
     
     useEffect(() => {
       let start = 0
-      const stepTime = 50
+      const stepTime = 10
       const increment = target / (duration / stepTime)
       const timer = setInterval(() => {
         start += increment
