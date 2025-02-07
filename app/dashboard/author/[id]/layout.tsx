@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   PlusCircle,
   Bell,
-  UserCheck
+  UserCheck,
+  Menu, X
 } from "lucide-react"
 import { createClient } from '@/utils/supabase/client'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -61,6 +62,7 @@ export default function AuthorLayout({
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [user, setUser] = useState<User | null>(null)
+  
 
   const router = useRouter()  
 
@@ -154,7 +156,9 @@ useEffect(() => {
         <div className="mb-8 flex items-center justify-between">
           <h2 className={`text-xl font-bold ${!isSidebarOpen && 'hidden'}`}>
             
-            <Link href="#">Espace Auteur</Link>
+            <Link 
+             href={`/dashboard/author/${id}`} 
+             >Espace Auteur</Link>
           </h2>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}

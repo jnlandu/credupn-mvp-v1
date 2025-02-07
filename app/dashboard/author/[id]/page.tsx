@@ -199,7 +199,7 @@ export default function AuthorDashboard({ params }: PageProps) {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="submissions">Mes soumissions</TabsTrigger>
+            {/* <TabsTrigger value="submissions">Mes soumissions</TabsTrigger> */}
             {/* <TabsTrigger value="publications">Publications</TabsTrigger> */}
           </TabsList>
 
@@ -232,17 +232,6 @@ export default function AuthorDashboard({ params }: PageProps) {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Statistiques de publication</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[200px] flex items-center justify-center">
-                  <ChartBar className="h-8 w-8 text-gray-400" />
-                  <p className="text-gray-500 ml-2">Graphique des publications</p>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -5,6 +5,8 @@ from typing import Optional
 import uvicorn
 import requests
 import json
+from typing import Dict, Any
+import os
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -35,6 +37,12 @@ class PaymentRequest(BaseModel):
 async def root():
     return {"message": "Payment API is running"}
 
+
+
+headers = {
+"Content-Type": "application/json",
+"Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzc5OTcwMTc1LCJzdWIiOiJlNzFiM2I4ZDMyNGFmYTMwOWU0NzY4MGI1ZjE0NDhhNCJ9.cLawA7kXCwBNYADRdwy9BJKwxQJOjUf0nTQ1i2Wipnw",
+}
 # Payment endpoint
 @app.post("/payment")
 async def process_payment(payment: PaymentRequest):
@@ -54,10 +62,7 @@ async def process_payment(payment: PaymentRequest):
     print("Debugging data Num", data)
     # print("Debugging data curr", data)
     gateway = "http://backend.flexpay.cd/api/rest/v1/paymentService"
-    headers = {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzc5OTcwMTc1LCJzdWIiOiJlNzFiM2I4ZDMyNGFmYTMwOWU0NzY4MGI1ZjE0NDhhNCJ9.cLawA7kXCwBNYADRdwy9BJKwxQJOjUf0nTQ1i2Wipnw",
-}
+
     
     try:
         response = requests.post(gateway, data=json.dumps(data), headers=headers, timeout=300)
@@ -71,7 +76,6 @@ async def process_payment(payment: PaymentRequest):
             json_res = response.json()
             code = json_res.get("code", "")
             print("Code details: ", code)
-            # print("Debugg order Number 2", order_number)
 
             if code != "0":
                 error_message = "Impossible de traiter la demande, veuillez réessayer"
@@ -90,9 +94,128 @@ async def process_payment(payment: PaymentRequest):
         else:
          print("Une erreur lors du traitement de votre requête")
          raise HTTPException(status_code=response.status_code, detail="Une erreur lors du traitement de votre requête")
+    
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
 
+
+print("start transaction")
+print("Processus de payement")
+         
+
+# @app.post("/process")
+# async def process_payment(
+#      payment: PaymentRequest
+#      ):
+    
+#     gateway = "http://backend.flexpay.cd/api/rest/v1/paymentService"
+#     data = {
+#     "merchant": "BUKINEURS",
+#     "type": "1",
+#     "phone": payment.Numero,
+#     "reference": "MM40159",
+#     "amount": payment.Montant,
+#     "currency": payment.currency,
+#     "callbackUrl": "http://abcd.efgh.cd/callback"
+#     }
+    
+#     try:
+#         response = requests.post(gateway, data=json.dumps(data), headers=headers, timeout=300)
+#         print("Response debugging: ", response)
+#         print("Response text: ", response.text)
+#         json_res = response.json()
+#         print("Debugging order Number X :", json_res)
+#         print("Debugging order Number XX:", json_res.get("orderNumber", ""))
+
+#         if response.status_code == 200:
+#             json_res = response.json()
+#             code = json_res.get("code", "")
+#             print("Code details: ", code)
+#             # print("Debugg order Number 2", order_number)
+
+#             if code != "0":
+#                 error_message = "Impossible de traiter la demande, veuillez réessayer"
+#                 # print("Debugg order Number 1", order_number)
+#                 print(error_message)
+
+#             else:
+                
+#                 print("Debugg order Number 5 code 1")
+#                 # print("Debugg order Number 4", order_number)
+#                 message = json_res.get("message", "")
+#                 print("Code details with success demand: ", message)
+#                 order_number = json_res.get("orderNumber", "")
+#                 print("Debugg order Number", order_number)
+                
+#                 json_res = await confirm_payment(order_number)
+#                 transaction = json_res.get("transaction", "")
+#                 message = json_res.get("message", "")
+#                 print("Debugging transaction:", transaction )
+
+#                 verification = transaction.get("status", "")
+#                 print("Debugging verification", verification)
+
+#                 if verification == "0":
+#                     print("Returning the details")
+#                     return {"verification": verification, "message": message, "transanction": transaction}
+                
+#                 elif verification == "1":
+#                     print(" Confirmation de paiement échoué")
+#                     print("Debugging transaction status:", verification)
+#                     print("Debugging transaction:", transaction)
+#                     return {"verification": verification, "message": message, "transanction": transaction}
+                
+#                 elif verification == "2":
+#                     print(" Confirmation  en attente")
+#                     print("Debugging transaction status:", verification)
+#                     print("Debugging transaction:", transaction)
+#                     return {"orderNumber": order_number, "message": message,"verification": verification, "messageTransaction": message, "transanction": transaction}
+
+#         else:
+#                 print("Une erreur lors du traitement de votre requête")
+#                 raise HTTPException(status_code=response.status_code, detail="Une erreur lors du traitement de votre requête")
+#     finally:
+#             print("End first try")
+
+@app.get("/check-payment/{orderNumber}")
+async def check_payment_status(orderNumber: str) :
+    try:
+        gateway = f"https://backend.flexpay.cd/api/rest/v1/check/{orderNumber}"
+        response = requests.get(
+            gateway, 
+            headers=headers, 
+            timeout=300
+        )
+        
+        # Log response for debugging
+        print(f"FlexPay Response: {response.status_code}", response.text)
+        
+        response.raise_for_status()  # Raise exception for bad status codes
+        
+        json_res = response.json()
+        transaction = json_res.get("transaction", {})
+        verification = transaction.get("status", "")  # Default to pending
+        print("Debugging transaction status:", verification)
+        print("Debugging transaction:", transaction)
+        print("Debugging transaction message:", json_res.get("message", ""))
+        return {
+            "verification": verification,
+            "message": json_res.get("message", ""),
+            "transaction": transaction
+        }
+        
+    except requests.RequestException as e:
+        print(f"FlexPay Error: {str(e)}")  # Log error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error checking payment status: {str(e)}"
+        )
+    except Exception as e:
+        print(f"Unexpected Error: {str(e)}")  # Log error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(e)}"
+        )
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

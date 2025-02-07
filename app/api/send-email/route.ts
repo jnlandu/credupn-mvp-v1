@@ -16,8 +16,6 @@ export async function POST(request: NextRequest) {
   try {
     // Verify connection first
     const { to, subject, html } = await request.json() as EmailRequestBody
-    // console.log('Email send request:', { to, subject, html })
-    // console.log('Email send from :', process.env.SMTP_FROM)
 
     const data = await resend.emails.send({
       from: 'CRIDUPN <onboarding@resend.dev>', // Use Resend's default domain
