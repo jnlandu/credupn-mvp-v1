@@ -81,11 +81,13 @@ const fetchUsers = async () => {
   setIsLoading(true)
   try {
     console.log('Starting users fetch...')
-    
     // First try to fetch just users to verify access
-    const { data: users, error: usersError } = await supabase
-      .from('users')
-      .select('*')
+    const { error: usersError } = await supabase
+    .from('users')
+    .select('*')
+    .in('role', ['admin', 'author', 'reviewer']) // Filter for all 3 user types
+    .order('role', { ascending: true }) // Optional: sort by role
+    
 
     if (usersError) {
       console.error('Users fetch error:', {
@@ -130,11 +132,6 @@ const fetchUsers = async () => {
       })
       throw pubsError
     }
-
-    console.log('Fetch completed:', {
-      totalUsers: usersWithPubs?.length || 0,
-      sampleUser: usersWithPubs?.[0]
-    })
 
     setUsers(usersWithPubs || [])
   } catch (error) {

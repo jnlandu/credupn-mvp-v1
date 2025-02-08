@@ -34,7 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDropzone } from 'react-dropzone'
 import { Publication,Reviewer,statusLabels,statusStyles  } from "@/data/publications"
 import { useToast } from '@/hooks/use-toast'
-import { Tooltip } from '@radix-ui/react-tooltip'
+// import { Tooltip } from '@radix-ui/react-tooltip'
 
 
 import { createClient } from '@/utils/supabase/client'
@@ -42,7 +42,7 @@ import { createClient } from '@/utils/supabase/client'
 export default function PublicationsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(5)
   const [selectedPub, setSelectedPub] = useState<Publication | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [newPublication, setNewPublication] = useState<Partial<Publication>>({})
@@ -398,8 +398,8 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, email, institution')
-        .eq('role', 'REVIEWER')
+        .select('*')
+        .eq('role', 'reviewer')
         .order('name', { ascending: true })
   
       if (error) throw error

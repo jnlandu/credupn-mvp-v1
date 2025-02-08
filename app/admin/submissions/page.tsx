@@ -59,7 +59,7 @@ export default function SubmissionsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSubmission, setSelectedSubmission] = useState<PendingPublication | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(5)
   const [submissions, setSubmissions] = useState<PendingPublication[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -110,22 +110,64 @@ const fetchReviewers = async () => {
     setIsLoadingReviewers(true)
     
     try {
+      console.log('Fetching reviewers...')
+      const { data: allUsers, error: rolesError } = await supabase
+      .from('users')
+      .select('role')
+      console.log('Available roles:', allUsers?.map(u => u.role))
+      // Check if we can access the users table
+    const { data: testData, error: testError } = await supabase
+        .from('users')
+        .select('count')
+        .single()
+
+      if (testError) {
+        console.error('Database connection test failed:', testError)
+        throw new Error('Cannot connect to database')
+      }
       const { data, error } = await supabase
         .from('users')
         .select('id, name, email, institution')
-        .eq('role', 'REVIEWER')
+        .eq('role', 'reviewer')
         .order('name', { ascending: true })
+
+      console.log('Query result:', { data, error }) // Debug log
   
-      if (error) throw error
+      if (error) {
+      console.error('Reviewers fetch error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details
+      })
+      throw error
+    }
+    if (!data || data.length === 0) {
+      console.log('No reviewers found in database')
+      setReviewers([])
+      toast({
+        title: "Information",
+        description: "Aucun évaluateur trouvé dans la base de données"
+      })
+      return
+    }
+
       // Map the data to match Reviewer interface
-      const mappedReviewers: Reviewer[] = (data || []).map(item => ({
-        id: item.id,
-        name: item.name,
-        email: item.email,
-        institution: item.institution,
-        role: 'REVIEWER'
-      }))
+      const mappedReviewers: Reviewer[] = data.map(item => {
+        if (!item.id || !item.name) {
+          console.warn('Invalid reviewer data:', item)
+          return null
+        }
+        return {
+          id: item.id,
+          name: item.name,
+          email: item.email || '',
+          institution: item.institution || '',
+          role: 'reviewer'
+        }
+      }).filter(Boolean) as Reviewer[]
   
+  
+      console.log('Mapped reviewers:', mappedReviewers)
       setReviewers(mappedReviewers)
     } catch (error) {
       console.error('Error fetching reviewers:', error)
