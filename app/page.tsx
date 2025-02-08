@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import { Badge } from '@/components/ui/badge'
+import { useRouter } from 'next/navigation'
 
 interface Publication {
   id: string
@@ -34,6 +35,7 @@ export default function Home() {
   const [recentPublications, setRecentPublications] = useState<Publication[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null)
+  const router = useRouter()
   const { toast } = useToast()
 
 
@@ -101,12 +103,22 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCount
     return <span>{count}{suffix}</span>
   }
   
+  const handleSubmitClick = async () => {
+      toast({
+        title: "Authentification requise",
+        description: "Veuillez vous connecter ou créer un compte pour soumettre une publication",
+        variant: "default",
+        duration: 6000
+      })
+      router.push('/auth/signup')
+    }
+  
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
        <section className="relative h-screen">
         <Image
-          src="https://images.unsplash.com/photo-1606761568499-6d2451b23c66"
+          src="images/hero.jpeg"
           alt="CRIDUPN Centre de Recherche Interdisciplinaire"
           fill
           className="object-cover"
@@ -310,19 +322,23 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCount
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {/* Article Submission Card */}
       <Card className="group hover:shadow-xl transition-all duration-300">
-        <CardContent className="p-8 text-center">
-          <div className="mb-6 relative">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-              <FileText className="h-10 w-10 text-primary" />
-            </div>
+      <CardContent className="p-8 text-center">
+        <div className="mb-6 relative">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+            <FileText className="h-10 w-10 text-primary" />
           </div>
-          <h3 className="text-xl font-bold mb-4">Articles Scientifiques</h3>
-          <p className="text-gray-600 mb-6">Soumettez vos articles de recherche pour publication</p>
-          <Button asChild className="w-full" variant="default">
-            <Link href="/publications/soumettre">Soumettre un article</Link>
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
+        <h3 className="text-xl font-bold mb-4">Articles Scientifiques</h3>
+        <p className="text-gray-600 mb-6">Soumettez vos articles de recherche pour publication</p>
+        <Button 
+          className="w-full" 
+          variant="default"
+          onClick={handleSubmitClick}
+        >
+          Soumettre un article
+        </Button>
+      </CardContent>
+    </Card>
       {/* Book Submission Card */}
       <Card className="group hover:shadow-xl transition-all duration-300">
         <CardContent className="p-8 text-center">
@@ -333,9 +349,14 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCount
           </div>
           <h3 className="text-xl font-bold mb-4">Livres</h3>
           <p className="text-gray-600 mb-6">Publiez vos ouvrages scientifiques, academiques et littéraires</p>
-          <Button asChild className="w-full" variant="default">
-            <Link href="/publications/soumettre">Soumettre un livre</Link>
-          </Button>
+          <Button 
+          className="w-full" 
+          variant="default"
+          onClick={handleSubmitClick}
+        >
+          Soumettre un livre
+
+        </Button>
         </CardContent>
       </Card>
       {/* Reports Submission Card */}
@@ -348,15 +369,18 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCount
           </div>
           <h3 className="text-xl font-bold mb-4">Rapports</h3>
           <p className="text-gray-600 mb-6">Publiez et partagez vos rapports de recherche ou de labo</p>
-          <Button asChild className="w-full" variant="default">
-            <Link href="/publications/soumettre">Soumettre un livre</Link>
-          </Button>
+          <Button 
+          className="w-full" 
+          variant="default"
+          onClick={handleSubmitClick}
+          >
+          Soumettre un rapport
+        </Button>
         </CardContent>
         </Card>
     </div>
   </div>
 </section>
-
 {/* Publication Process */}
 <section className="py-4 px-4 bg-gray-50">
   <div className="max-w-7xl mx-auto">

@@ -46,6 +46,7 @@ export interface Publication {
     status: PublicationStatus; // Update to use PublicationStatus type
     date: string
     category: string
+    type?: string
     pdf_url: string
     reviewer?: string
     abstract: string

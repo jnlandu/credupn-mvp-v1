@@ -43,7 +43,7 @@ import { createClient } from '@/lib/supabase/client'
 import { 
    PendingPublication,
    PublicationStatus, 
-  //  Reviewer, 
+
    statusStyles,
    statusLabels,
    Submission,
@@ -57,7 +57,7 @@ import {
 
 export default function SubmissionsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
+  const [selectedSubmission, setSelectedSubmission] = useState<PendingPublication | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [submissions, setSubmissions] = useState<PendingPublication[]>([])
@@ -73,7 +73,11 @@ export default function SubmissionsAdmin() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const categories = Array.from(new Set(submissions.map(sub => sub.category)))
-
+  const [editingCell, setEditingCell] = useState<{
+    id: string;
+    field: string;
+    value: any;
+  } | null>(null)
   
   const { toast } = useToast()
 
@@ -167,6 +171,7 @@ const fetchSubmissions = async () => {
         status: item.status,
         date: item.created_at,
         category: item.category,
+        type: item.type,
         pdf_url: item.pdf_url,
         reviewer: item.reviewer,
         abstract: item.abstract || '',
@@ -244,6 +249,37 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
     })
   }
 }
+const saveEdit = async (id: string, field: string, value: any) => {
+  const supabase = createClient()
+  
+  try {
+    const { error } = await supabase
+      .from('publications')
+      .update({ [field]: value })
+      .eq('id', id)
+
+    if (error) throw error
+
+    // Update local state
+    setSubmissions(submissions.map(sub => 
+      sub.id === id ? { ...sub, [field]: value } : sub
+    ))
+
+    toast({
+      title: "Succès",
+      description: "Modification enregistrée"
+    })
+  } catch (error) {
+    console.error('Error saving edit:', error)
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible d'enregistrer la modification"
+    })
+  } finally {
+    setEditingCell(null)
+  }
+}
 
   return (
     <div className="p-8">
@@ -285,10 +321,12 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
           <Table>
             <TableHeader>
                 <TableRow className="bg-gray-100 hover:bg-gray-100">
+                <TableHead className="text-gray-900 font-semibold">No</TableHead>
                 <TableHead className="text-gray-900 font-semibold">Titre</TableHead>
                 <TableHead className="w-[200px] text-gray-900 font-semibold">Auteur.e(s)</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Date</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Catégorie</TableHead>
+                <TableHead className="w-[150px] text-gray-900 font-semibold">Type</TableHead>
                 <TableHead className="w-[150px] text-gray-900 font-semibold">Statut</TableHead>
                 <TableHead className="w-[200px] text-gray-900 font-semibold">Actions</TableHead>
               </TableRow>
@@ -315,27 +353,150 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
                     key={submission.id}
                     className="border-b"
                   >
-                    <TableCell className="font-medium">
-                      {submission.title}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {Array.isArray(submission.author) 
-                        ? submission.author.map(auth => 
-                            typeof auth === 'string' 
-                              ? auth 
-                              : auth?.name
-                          ).join(', ')
-                        : typeof submission.author === 'string'
-                          ? submission.author
-                          : submission.author.name
-                      }
-                    </TableCell>
+                  <TableCell className="font-medium">{submission.id}</TableCell>
+                   <TableCell 
+                        className="font-medium"
+                        onDoubleClick={() => setEditingCell({
+                          id: submission.id,
+                          field: 'title',
+                          value: submission.title
+                        })}
+                      >
+                        {editingCell?.id === submission.id && editingCell.field === 'title' ? (
+                          <Input
+                            autoFocus
+                            value={editingCell.value}
+                            onChange={(e) => setEditingCell({
+                              ...editingCell,
+                              value: e.target.value
+                            })}
+                            onBlur={() => saveEdit(submission.id, 'title', editingCell.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                saveEdit(submission.id, 'title', editingCell.value)
+                              } else if (e.key === 'Escape') {
+                                setEditingCell(null)
+                              }
+                            }}
+                            className="min-w-[200px]"
+                          />
+                        ) : (
+                          <span>{submission.title}</span>
+                        )}
+                      </TableCell>
+                      <TableCell 
+                          className="font-medium"
+                          onDoubleClick={() => setEditingCell({
+                            id: submission.id,
+                            field: 'author',
+                            value: Array.isArray(submission.author) 
+                              ? submission.author.map(auth => 
+                                  typeof auth === 'string' 
+                                    ? auth 
+                                    : auth?.name
+                                ).join(', ')
+                              : typeof submission.author === 'string'
+                                ? submission.author
+                                : submission.author.name
+                          })}
+                        >
+                          {editingCell?.id === submission.id && editingCell.field === 'author' ? (
+                            <Input
+                              autoFocus
+                              value={editingCell.value}
+                              onChange={(e) => setEditingCell({
+                                ...editingCell,
+                                value: e.target.value
+                              })}
+                              onBlur={() => saveEdit(submission.id, 'author', editingCell.value.split(', '))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveEdit(submission.id, 'author', editingCell.value.split(', '))
+                                } else if (e.key === 'Escape') {
+                                  setEditingCell(null)
+                                }
+                              }}
+                              className="min-w-[200px]"
+                            />
+                          ) : (
+                            <span>
+                              {Array.isArray(submission.author) 
+                                ? submission.author.map(auth => 
+                                    typeof auth === 'string' 
+                                      ? auth 
+                                      : auth?.name
+                                  ).join(', ')
+                                : typeof submission.author === 'string'
+                                  ? submission.author
+                                  : submission.author.name
+                              }
+                            </span>
+                          )}
+                        </TableCell>
                     <TableCell className="font-medium">
                       {new Date(submission.date).toLocaleDateString('fr-FR')}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {submission.category}
-                    </TableCell>
+                    <TableCell 
+                        className="font-medium"
+                        onDoubleClick={() => setEditingCell({
+                          id: submission.id,
+                          field: 'category',
+                          value: submission.category
+                        })}
+                      >
+                        {editingCell?.id === submission.id && editingCell.field === 'category' ? (
+                          <Select
+                            value={editingCell.value}
+                            onValueChange={(value) => {
+                              saveEdit(submission.id, 'category', value)
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue>{editingCell.value}</SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category} value={category}>
+                                  {category}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span>{submission.category}</span>
+                        )}
+                      </TableCell>
+                      {/*  Type */}
+                      <TableCell 
+                        className="font-medium"
+                        onDoubleClick={() => setEditingCell({
+                          id: submission.id,
+                          field: 'type',
+                          value: submission.type
+                        })}
+                      >
+                        {editingCell?.id === submission.id && editingCell.field === 'type' ? (
+                          <Input
+                            autoFocus
+                            value={editingCell.value}
+                            onChange={(e) => setEditingCell({
+                              ...editingCell,
+                              value: e.target.value
+                            })}
+                            onBlur={() => saveEdit(submission.id, 'type', editingCell.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                saveEdit(submission.id, 'type', editingCell.value)
+                              } else if (e.key === 'Escape') {
+                                setEditingCell(null)
+                              }
+                            }}
+                            className="min-w-[200px]"
+                          />
+                        ) : (
+                          <span>{submission.type}</span>
+                        )}
+                      </TableCell>
                     <TableCell>
                       <Badge className={statusStyles[submission.status]}>
                         {statusLabels[submission.status]}
@@ -347,7 +508,8 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            const mappedSubmission: Submission = {
+                            // First fix the type - it should not be an array
+                            const mappedSubmission: PendingPublication = {
                               id: submission.id,
                               title: submission.title,
                               author: Array.isArray(submission.author)
@@ -363,11 +525,13 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
                                   },
                               status: submission.status,
                               abstract: submission.abstract,
-                              submittedDate: submission.date,
+                              type: submission.type,
+                              date: submission.date,
                               category: submission.category,
-                              pdfUrl: submission.pdf_url,
+                              pdf_url: submission.pdf_url,
                               keywords: submission.keywords || []
                             };
+
                             setSelectedSubmission(mappedSubmission);
                           }}
                         >
@@ -375,20 +539,20 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
                         </Button>
                         {submission.status.toLowerCase() === 'pending' && (
                           <>
-                            <Button
+                            {/* <Button
                               variant="ghost"
                               size="sm"
                               className="text-green-600"
                             >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button
+                             <Check className="h-4 w-4" />
+                            </Button> */}
+                            {/* <Button
                               variant="ghost"
                               size="sm"
                               className="text-red-600"  
                             >
                               <X className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </>
                         )}
                         {/*  Send to Reviewers */}
@@ -538,7 +702,7 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
             </div>
           ) : (
             <object
-              data={selectedSubmission.pdfUrl}
+              data={selectedSubmission.pdf_url}
               type="application/pdf"
               className="w-full h-full"
               onLoad={() => {
@@ -555,7 +719,7 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
                 <Button 
                   variant="outline" 
                 >
-                  <a href={selectedSubmission.pdfUrl} target="_blank" rel="noreferrer">
+                  <a href={selectedSubmission.pdf_url} target="_blank" rel="noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Ouvrir dans un nouvel onglet
                   </a>
@@ -573,10 +737,10 @@ const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => 
           </Button>
           {selectedSubmission.status === 'PENDING' && (
             <>
-              <Button variant="destructive" onClick={() => setSelectedSubmission(null)}>
+              {/* <Button variant="destructive" onClick={() => setSelectedSubmission(null)}>
                 <X className="h-4 w-4 mr-2" />
                 Annuler
-              </Button>
+              </Button> */}
               <Button onClick={() => setShowReviewerModal(true)}>
                 <Send className="h-4 w-4 mr-2" />
                 Envoyer aux évaluateurs

@@ -54,6 +54,7 @@ export default function PublicationsAdmin() {
   // const [isLoading, setIsLoading] = useState(true)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [publicationToDelete, setPublicationToDelete] = useState<Publication | null>(null)
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
 
   const [publications, setPublications] = useState<Publication[]>([])
@@ -66,6 +67,11 @@ export default function PublicationsAdmin() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [publicationToEdit, setPublicationToEdit] = useState<Publication | null>(null)
   
+  const [editingCell, setEditingCell] = useState<{
+    id: string;
+    field: string;
+    value: any;
+  } | null>(null);
   // Add state for filtering reviewers
   const [filterTerm, setFilterTerm] = useState('')
   const { toast } = useToast()
@@ -522,6 +528,80 @@ const handleEdit = async (e: React.FormEvent) => {
   }
 }
 
+// Add save function 
+const saveEdit = async (id: string, field: string, value: any) => {
+  const supabase = createClient()
+  
+  try {
+    const { error } = await supabase
+      .from('publications')
+      .update({ [field]: value })
+      .eq('id', id)
+
+    if (error) throw error
+
+    // Update local state
+    setPublications(publications.map(pub => 
+      pub.id === id ? { ...pub, [field]: value } : pub
+    ))
+
+    toast({
+      title: "Succès",
+      description: "Modification enregistrée"
+    })
+  } catch (error) {
+    console.error('Error saving edit:', error)
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible d'enregistrer la modification"
+    })
+  } finally {
+    setEditingCell(null)
+  }
+}
+
+const handleDownload = async (publication: Publication) => {
+  if (!publication.pdfUrl) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "URL du PDF non disponible"
+    });
+    return;
+  }
+
+  setIsDownloading(publication.id);
+  
+  try {
+    // Create a temporary anchor element
+    const link = document.createElement('a');
+    link.href = publication.pdfUrl;
+    
+    // Clean filename from special characters
+    const fileName = `${publication.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+    link.download = fileName;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Succès",
+      description: "Téléchargement démarré"
+    });
+  } catch (error) {
+    console.error('Download error:', error);
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de télécharger le fichier"
+    });
+  } finally {
+    setIsDownloading(null);
+  }
+};
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -566,6 +646,7 @@ const handleEdit = async (e: React.FormEvent) => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-100 hover:bg-gray-100">
+              <TableHead className="text-gray-900 font-semibold">No</TableHead>
               <TableHead className="text-gray-900 font-semibold">Titre</TableHead>
               <TableHead className="text-gray-900 font-semibold">Auteur.e(s)</TableHead>
               <TableHead className="text-gray-900 font-semibold">Date</TableHead>
@@ -599,11 +680,133 @@ const handleEdit = async (e: React.FormEvent) => {
                 .slice(startIndex, endIndex)
                 .map((pub) => (
                   <TableRow key={pub.id}>
-                    <TableCell className="font-medium">{pub.title}</TableCell>
-                    <TableCell>{Array.isArray(pub.author) ? pub.author.join(', ') : pub.author}</TableCell>
+                    <TableCell>{pub.id}</TableCell>
+                    <TableCell 
+                        className="font-medium"
+                        onDoubleClick={() => setEditingCell({
+                          id: pub.id,
+                          field: 'title',
+                          value: pub.title
+                        })}
+                      >
+                        {editingCell?.id === pub.id && editingCell.field === 'title' ? (
+                          <Input
+                            autoFocus
+                            value={editingCell.value}
+                            onChange={(e) => setEditingCell({
+                              ...editingCell,
+                              value: e.target.value
+                            })}
+                            onBlur={() => saveEdit(pub.id, 'title', editingCell.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                saveEdit(pub.id, 'title', editingCell.value)
+                              } else if (e.key === 'Escape') {
+                                setEditingCell(null)
+                              }
+                            }}
+                            className="min-w-[200px]"
+                          />
+                        ) : (
+                          pub.title
+                        )}
+                      </TableCell>
+                      <TableCell 
+                          className="font-medium"
+                          onDoubleClick={() => setEditingCell({
+                            id: pub.id,
+                            field: 'author',
+                            value: Array.isArray(pub.author) 
+                              ? pub.author.join(', ')
+                              : pub.author
+                          })}
+                        >
+                          {editingCell?.id === pub.id && editingCell.field === 'author' ? (
+                            <Input
+                              autoFocus
+                              value={editingCell.value}
+                              onChange={(e) => setEditingCell({
+                                ...editingCell,
+                                value: e.target.value
+                              })}
+                              onBlur={() => saveEdit(pub.id, 'author', editingCell.value.split(', '))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveEdit(pub.id, 'author', editingCell.value.split(', '))
+                                } else if (e.key === 'Escape') {
+                                  setEditingCell(null)
+                                }
+                              }}
+                              className="min-w-[200px]"
+                              placeholder="Séparez les auteurs par des virgules"
+                            />
+                          ) : (
+                            <span>
+                              {Array.isArray(pub.author) 
+                                ? pub.author.join(', ')
+                                : pub.author}
+                            </span>
+                          )}
+                        </TableCell>
                     <TableCell>{new Date(pub.date).toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell>{pub.type || 'N/D'}</TableCell>
-                    <TableCell>{pub.category}</TableCell>
+                    <TableCell
+                      className="font-medium" 
+                      onDoubleClick={() => setEditingCell({
+                        id: pub.id,
+                        field: 'type',
+                        value: pub.type
+                      })}
+                    >
+                      {editingCell?.id === pub.id && editingCell.field === 'type' ? (
+                        <Select
+                          value={editingCell.value}
+                          onValueChange={(value) => {
+                            saveEdit(pub.id, 'type', value)
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue>{editingCell.value}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Article">Article</SelectItem>
+                            <SelectItem value="These">Thèse</SelectItem>
+                            <SelectItem value="Rapport">Rapport</SelectItem>
+                            <SelectItem value="Livre">Livre</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        pub.type
+                      )}
+                    </TableCell>
+                    <TableCell
+                        className="font-medium"
+                        onDoubleClick={() => setEditingCell({
+                          id: pub.id,
+                          field: 'category',
+                          value: pub.category
+                        })}
+                      >
+                        {editingCell?.id === pub.id && editingCell.field === 'category' ? (
+                          <Select
+                            value={editingCell.value}
+                            onValueChange={(value) => {
+                              saveEdit(pub.id, 'category', value)
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue>{editingCell.value}</SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Recherche">Recherche</SelectItem>
+                              <SelectItem value="Méthodologie">Méthodologie</SelectItem>
+                              <SelectItem value="Innovation">Innovation</SelectItem>
+                              <SelectItem value="Technologie">Technologie</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          pub.category
+                        )}
+                      </TableCell>
                     <TableCell>
                       <Badge className={statusStyles[pub.status]}>
                         {statusLabels[pub.status]}
@@ -621,8 +824,17 @@ const handleEdit = async (e: React.FormEvent) => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Download className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDownload(pub)}
+                          disabled={isDownloading === pub.id}
+                        >
+                          {isDownloading === pub.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -665,7 +877,7 @@ const handleEdit = async (e: React.FormEvent) => {
       </div>
       
       {/* Pagination */}
-      <div className="mt- flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Lignes par page:</span>
             <Select
@@ -1021,53 +1233,74 @@ const handleEdit = async (e: React.FormEvent) => {
       )}
 
       {/*  pdf previewing */}
-      <div className="h-[60vh] border rounded-lg overflow-hidden">
-      {isPreviewLoading ? (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    ) : pdfError ? (
-      <div className="h-full flex items-center justify-center flex-col gap-2">
-        <AlertCircle className="h-8 w-8 text-red-500" />
-        <p>Impossible de charger le PDF</p>
-      </div>
-    ) : (
-    <object
-      data={previewPub?.pdfUrl}
-      type="application/pdf"
-      className="w-full h-full"
-      onLoad={() => {
-        setIsPreviewLoading(false)
-        setPdfError(false)
-      }}
-      onError={() => {
-        setIsPreviewLoading(false)
-        setPdfError(true)
-      }}
-    >
-      <div className="h-full flex items-center justify-center flex-col gap-2">
-        <p>Le PDF ne peut pas être affiché directement. </p>
-        <a
-          href={previewPub?.pdfUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center"
-          onClick={(e) => {
-            if (!previewPub?.pdfUrl) {
-              e.preventDefault()
-              toast({
-                variant: "destructive",
-                title: "Erreur",
-                description: "PDF non disponible"
-              })
-            }
+<div className="h-[60vh] border rounded-lg overflow-hidden">
+  {isPreviewLoading ? (
+    <div className="flex flex-col items-center justify-center h-full space-y-4">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="text-sm text-gray-500">Chargement du document...</p>
+    </div>
+  ) : pdfError ? (
+    <div className="h-full flex items-center justify-center flex-col gap-4">
+      <AlertCircle className="h-12 w-12 text-red-500" />
+      <p className="text-gray-600">Impossible de charger le document</p>
+      <Button
+        variant="outline"
+        onClick={() => window.open(previewPub?.pdfUrl, '_blank')}
+      >
+        <ExternalLink className="h-4 w-4 mr-2" />
+        Ouvrir dans un nouvel onglet
+      </Button>
+    </div>
+  ) : (
+    <div className="h-full relative">
+      <object
+        data={previewPub?.pdfUrl}
+        type="application/pdf"
+        className="w-full h-full"
+        onLoad={() => {
+          setIsPreviewLoading(false)
+          setPdfError(false)
+        }}
+        onError={() => {
+          setIsPreviewLoading(false)
+          setPdfError(true)
+        }}
+      >
+        <div className="flex flex-col items-center justify-center h-full gap-4">
+          <p className="text-gray-600">Le PDF ne peut pas être affiché directement</p>
+          <Button
+            variant="outline"
+            onClick={() => window.open(previewPub?.pdfUrl, '_blank')}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Ouvrir le PDF
+          </Button>
+        </div>
+      </object>
+      <div className="absolute top-4 right-4 flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => window.open(previewPub?.pdfUrl, '_blank')}
+        >
+          <ExternalLink className="h-4 w-4 mr-2" />
+          Plein écran
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            const link = document.createElement('a')
+            link.href = previewPub?.pdfUrl || ''
+            link.download = `${previewPub?.title}.pdf`
+            link.click()
           }}
         >
-        <ExternalLink className="h-4 w-4 mr-2" />
-        Ouvrir PDF
-      </a>
+          <Download className="h-4 w-4 mr-2" />
+          Télécharger
+        </Button>
       </div>
-    </object>
+    </div>
   )}
 </div>
     </div>
