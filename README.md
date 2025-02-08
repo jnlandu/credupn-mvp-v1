@@ -2,9 +2,7 @@
 
 CREDUPN (Centre de Recherche pour le Développement de l'Université Pédagogique Nationale) is dedicated to advancing educational research in the Democratic Republic of Congo.
 
-## Project Structure
-
-
+## Structure du Projet
 
 ## Getting Started
 
