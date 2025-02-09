@@ -54,6 +54,35 @@ import {
 
 
 
+  interface ReviewerUserData {
+    id: string;
+    name: string;
+    email: string;
+    institution: string;
+  }
+
+  interface ReviewerTable {
+    id: string;
+    user_id: string;
+    specialization: string[];
+    expertise: string;
+    availability: boolean;
+    users: {
+      id: string;
+      name: string;
+      email: string;
+      institution: string;
+    }
+  }
+
+interface ReviewerResponse {
+  id: string;
+  user_id: string;
+  specialization: string[];
+  expertise: string;
+  availability: boolean;
+  users: ReviewerUserData;
+}
 
 export default function SubmissionsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -66,7 +95,7 @@ export default function SubmissionsAdmin() {
   const [showReviewerModal, setShowReviewerModal] = useState(false)
   const [selectedReviewers, setSelectedReviewers] = useState<string[]>([])
   const [reviewerSearchTerm, setReviewerSearchTerm] = useState('')
-  const [reviewers, setReviewers] = useState<Reviewer[]>([])
+  const [reviewers, setReviewers] = useState<ReviewerTable[]>([])
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(false)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [pdfError, setPdfError] = useState(false)
@@ -106,85 +135,71 @@ const filteredSubmissions = submissions.filter(sub =>
 
 // Fetch reviewers
 const fetchReviewers = async () => {
-    const supabase = createClient()
-    setIsLoadingReviewers(true)
-    
-    try {
-      console.log('Fetching reviewers...')
-      const { data: allUsers, error: rolesError } = await supabase
-      .from('users')
-      .select('role')
-      console.log('Available roles:', allUsers?.map(u => u.role))
-      // Check if we can access the users table
-    const { data: testData, error: testError } = await supabase
-        .from('users')
-        .select('count')
-        .single()
-
-      if (testError) {
-        console.error('Database connection test failed:', testError)
-        throw new Error('Cannot connect to database')
-      }
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, name, email, institution')
-        .eq('role', 'reviewer')
-        .order('name', { ascending: true })
-
-      console.log('Query result:', { data, error }) // Debug log
+  const supabase = createClient()
+  setIsLoadingReviewers(true)
   
-      if (error) {
-      console.error('Reviewers fetch error:', {
-        code: error.code,
-        message: error.message,
-        details: error.details
-      })
-      throw error
-    }
+  try {
+    const { data, error } = await supabase
+      .from('reviewers')
+      .select(`
+        id,
+        user_id,
+        specialization,
+        expertise,
+        availability,
+        users!users_id(
+          id,
+          name,
+          email,
+          institution
+        )
+      `)
+      .eq('status', true)
+      .eq('availability', true)
+
+    if (error) throw error
+
     if (!data || data.length === 0) {
-      console.log('No reviewers found in database')
-      setReviewers([])
       toast({
         title: "Information",
-        description: "Aucun évaluateur trouvé dans la base de données"
+        description: "Aucun évaluateur disponible"
       })
       return
     }
 
-      // Map the data to match Reviewer interface
-      const mappedReviewers: Reviewer[] = data.map(item => {
-        if (!item.id || !item.name) {
-          console.warn('Invalid reviewer data:', item)
-          return null
-        }
-        return {
-          id: item.id,
-          name: item.name,
-          email: item.email || '',
-          institution: item.institution || '',
-          role: 'reviewer'
-        }
-      }).filter(Boolean) as Reviewer[]
-  
-  
-      console.log('Mapped reviewers:', mappedReviewers)
-      setReviewers(mappedReviewers)
-    } catch (error) {
-      console.error('Error fetching reviewers:', error)
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger la liste des évaluateurs"
-      })
-    } finally {
-      setIsLoadingReviewers(false)
-    }
+    // Map and type the data properly
+    const mappedReviewers: ReviewerTable[] = (data as unknown as ReviewerResponse[]).map(reviewer => ({
+      id: reviewer.id || '',
+      user_id: reviewer.user_id,
+      specialization: reviewer.specialization || [],
+      expertise: reviewer.expertise || '',
+      availability: reviewer.availability,
+      users: {
+        id: reviewer.users?.id,
+        name: reviewer.users?.name,
+        email: reviewer.users?.email,
+        institution: reviewer.users?.institution
+      }
+    }));
+
+    setReviewers(mappedReviewers)
+
+  } catch (error) {
+    console.error('Error fetching reviewers:', error)
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger la liste des évaluateurs"
+    })
+  } finally {
+    setIsLoadingReviewers(false)
   }
+}
   
-  // Add useEffect to fetch reviewers
-  useEffect(() => {
+// Add useEffect to fetch reviewers
+useEffect(() => {
     fetchReviewers()
-  }, [])
+}, [])
 
 
 
@@ -235,9 +250,9 @@ const fetchSubmissions = async () => {
     }
   }
 
-  useEffect(() => {
+useEffect(() => {
     fetchSubmissions()
-  }, [])
+}, [])
 
 
 // Refresh submissions
@@ -795,67 +810,77 @@ const saveEdit = async (id: string, field: string, value: any) => {
   </DialogContent>
 </Dialog>
 
- {/* / Update reviewer modal content */}
-    <Dialog open={showReviewerModal} onOpenChange={setShowReviewerModal}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Sélectionner les Évaluateurs</DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          <Input
-            placeholder="Rechercher un évaluateur..."
-            value={reviewerSearchTerm}
-            onChange={(e: any) => setReviewerSearchTerm(e.target.value)}
-          />
-          
-          <div className="max-h-[300px] overflow-y-auto space-y-2">
-            {isLoadingReviewers ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : reviewers
-              .filter(reviewer => 
-                reviewer.name.toLowerCase().includes(reviewerSearchTerm.toLowerCase()) ||
-                reviewer.institution.toLowerCase().includes(reviewerSearchTerm.toLowerCase())
-              )
-              .map(reviewer => (
-                <div key={reviewer.id} className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded">
-                  <input
-                    type="checkbox"
-                    id={reviewer.id}
-                    checked={selectedReviewers.includes(reviewer.id)}
-                    onChange={(e: any) => {
-                      if (e.target.checked) {
-                        setSelectedReviewers([...selectedReviewers, reviewer.id])
-                      } else {
-                        setSelectedReviewers(selectedReviewers.filter(id => id !== reviewer.id))
-                      }
-                    }}
-                  />
-                  <label htmlFor={reviewer.id} className="flex-1">
-                    <p className="font-medium">{reviewer.name}</p>
-                    <p className="text-sm text-gray-500">{reviewer.institution}</p>
-                    <p className="text-xs text-gray-400">{reviewer.email}</p>
-                  </label>
-                </div>
-              ))}
+  {/* / Update reviewer modal content */}
+  <Dialog open={showReviewerModal} onOpenChange={setShowReviewerModal}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle>Sélectionner les Évaluateurs</DialogTitle>
+    </DialogHeader>
+    
+      <div className="space-y-4">
+        {isLoadingReviewers ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        </div>
+        ) : reviewers.length === 0 ? (
+          <p className="text-center text-gray-500">Aucun évaluateur disponible</p>
+        ) : (
+          <div className="max-h-[300px] overflow-y-auto space-y-2">
+            {reviewers.map((reviewer) => (
+              <div 
+                key={reviewer.id} 
+                className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded border"
+              >
+                <input
+                  type="checkbox"
+                  id={reviewer.id}
+                  checked={selectedReviewers.includes(reviewer.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedReviewers([...selectedReviewers, reviewer.id])
+                    } else {
+                      setSelectedReviewers(
+                        selectedReviewers.filter(id => id !== reviewer.id)
+                      )
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor={reviewer.id} className="flex-1 cursor-pointer">
+                  <p className="font-medium">{reviewer.users?.name || 'Sans nom'}</p>
+                  <p className="text-sm text-gray-500">
+                    {reviewer.users?.institution || 'Sans institution'}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {reviewer.users?.email || 'Sans email'}
+                  </p>
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
 
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={() => setShowReviewerModal(false)}>
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowReviewerModal(false)}
+          >
             Annuler
           </Button>
           <Button
-            disabled={selectedReviewers.length === 0 || isLoadingReviewers}
-            onClick={() => sendToReviewers(selectedSubmission?.id!, selectedReviewers)}
+            disabled={selectedReviewers.length === 0}
+            onClick={() => {
+              if (selectedSubmission) {
+                sendToReviewers(selectedSubmission.id, selectedReviewers)
+              }
+            }}
           >
-            Envoyer
+            Envoyer ({selectedReviewers.length})
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </DialogContent>
+  </Dialog>
     </div>
   )
 }
