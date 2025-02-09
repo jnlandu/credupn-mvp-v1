@@ -62,6 +62,7 @@ export default function PaymentPage({ params }: PageProps) {
   const [selectedMethod, setSelectedMethod] = useState<string>('card')
   const [isModalProcessing, setIsModalProcessing] = useState(false)
   const [showPhoneDialog, setShowPhoneDialog] = useState(false)
+  const [paymentTimer, setPaymentTimer] = useState<NodeJS.Timeout | null>(null);
   const [formData, setFormData] = useState({
     orderNumber: '',
     phone: ''
@@ -276,18 +277,25 @@ export default function PaymentPage({ params }: PageProps) {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 0) {
-          clearInterval(timer);
+          if (timer) clearInterval(timer);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
   
+    setPaymentTimer(timer); // Store timer in state for cleanup
+  
+    const cleanup = () => {
+      if (timer) clearInterval(timer);
+      setTimeLeft(120);
+      setIsModalProcessing(false);
+      setPaymentTimer(null);
+    };
+  
     const pollStatus = async () => {
       if (attempts >= maxAttempts || timeLeft <= 0) {
-        clearInterval(timer);
-        setIsModalProcessing(false);
-        setTimeLeft(120); // Reset timer
+        cleanup();
         toast({
           variant: "destructive",
           title: "Délai dépassé",
@@ -303,29 +311,27 @@ export default function PaymentPage({ params }: PageProps) {
   
         switch (verification) {
           case '0':
-           
             await updatePaymentStatus(reference, phoneNumber, true);
-            setIsModalProcessing(false);
-            setTimeLeft(120);
+            cleanup();
             toast({
               title: "Succès",
-              description: message || "Paiement confirmé! Un mail vous a été envoyé avec les détails de votre paiement"
+              description: message || "Paiement confirmé!"
             });
             router.push(`/dashboard/author/${id}/publications`);
-            clearInterval(timer);
             break;
-  
-          case '1':
-            clearInterval(timer);
-            await updatePaymentStatus(reference, phoneNumber, false);
-            setIsModalProcessing(false);
-            setTimeLeft(120);
-            toast({
-              variant: "destructive",
-              title: "Échec",
-              description: message || "Le paiement a échoué. Verifiez votre solde ou réessayez plus tard"
-            });
-            break;
+
+            case '1':
+              clearInterval(timer);
+              await updatePaymentStatus(reference, phoneNumber, false);
+              setIsModalProcessing(false);
+              setTimeLeft(120);
+              toast({
+                variant: "destructive",
+                title: "Échec",
+                description: message || "Le paiement a été annulé ou a échoué"
+              });
+              await deleteFailedPublication(reference, phoneNumber);
+              break;
   
           case '2':
             attempts++;
@@ -333,9 +339,7 @@ export default function PaymentPage({ params }: PageProps) {
             break;
   
           default:
-            clearInterval(timer);
-            setIsModalProcessing(false);
-            setTimeLeft(120);
+            cleanup();
             throw new Error('Invalid verification status');
         }
       } catch (error) {
@@ -344,15 +348,21 @@ export default function PaymentPage({ params }: PageProps) {
         if (attempts < maxAttempts) {
           setTimeout(pollStatus, 6000);
         } else {
-          clearInterval(timer);
-          setIsModalProcessing(false);
-          setTimeLeft(120);
+          cleanup();
         }
       }
     };
   
     await pollStatus();
   };
+
+  useEffect(() => {
+  return () => {
+    if (paymentTimer) {
+      clearInterval(paymentTimer);
+    }
+  };
+}, [paymentTimer]);
 
   const updatePaymentStatus = async (reference: string, phoneNumber: string, isSuccessful: boolean) => {
     const supabase = createClient()
@@ -374,6 +384,46 @@ export default function PaymentPage({ params }: PageProps) {
       await notifyAuthor(publicationId!, paymentId!, reference)
     }
   }
+
+  const deleteFailedPublication = async (reference: string, phoneNumber: string) => {
+    const supabase = createClient()
+    
+    try {
+      // First delete payment record
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .delete()
+        .eq('reference_number', reference)
+        .eq('order_number', phoneNumber)
+  
+      if (paymentError) throw paymentError
+  
+      // Then delete publication
+      const { error: publicationError } = await supabase
+        .from('publications')
+        .delete()
+        .eq('id', publicationId)
+  
+      if (publicationError) throw publicationError
+  
+      toast({
+        title: "Publication supprimée",
+        description: "La publication a été supprimée suite à l'échec du paiement"
+      })
+  
+      // Redirect to publications list
+      router.push('/dashboard/author/${id}/publications')
+  
+    } catch (error) {
+      console.error('Error deleting failed publication:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer la publication"
+      })
+    }
+  }
+  
 
   return (
     <div className="container max-w-3xl mx-auto py-8 px-4 sm:py-12">
