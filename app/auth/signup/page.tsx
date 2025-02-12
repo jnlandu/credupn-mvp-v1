@@ -42,7 +42,7 @@ const signupSchema = z.object({
     .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
     .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre"),
   confirmPassword: z.string(),
-  role: z.enum(["admin", "author", "reviewer"]),
+  role: z.enum(["admin", "author", "reviewer", ""], ),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -59,7 +59,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [roleStateChange, setRoleStateChange] = useState(true)
   const [formData, setFormData] = useState({
-    role: 'author',
+    role: '',
     publications: []
   })
   const router = useRouter()
@@ -81,7 +81,7 @@ export default function SignupPage() {
       institution: "",
       password: "",
       confirmPassword: "",
-      role: "author",
+      role: "",
     },
   })
 

@@ -13,7 +13,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[500px] flex items-center bg-gradient-to-r from-blue-900 to-blue-950">
+      <section className="relative h-[500px] flex items-center bg-gradient-to-r from-gray-100 to-gray-400">
         <div className="absolute inset-0 opacity-20 bg-[url('/images/grid-pattern.svg')]" />
         <Image
           src="/images/library-bg.jpg"
@@ -85,7 +85,7 @@ export default function AboutPage() {
               ].map((value, index) => (
                 <Card key={index} className="border-none shadow-md hover:shadow-lg transition-shadow">
                   <CardContent className="p-8 text-center">
-                    <value.icon className="h-12 w-12 mx-auto mb-4 text-blue-600" />
+                    <value.icon className="h-12 w-12 mx-auto mb-4 text-gray-500" />
                     <h3 className="text-xl font-bold mb-3">{value.title}</h3>
                     <p className="text-gray-700">{value.description}</p>
                   </CardContent>
