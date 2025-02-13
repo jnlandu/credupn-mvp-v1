@@ -375,7 +375,6 @@ export default function PaymentPage({ params }: PageProps) {
       })
       .eq('id', paymentId)
       // .eq('order_number', phoneNumber)
-
     if (error) throw error
 
     if (isSuccessful) {
