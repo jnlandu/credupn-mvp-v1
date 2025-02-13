@@ -10,6 +10,7 @@ import {
   FileText,
   Settings,
   DollarSign,
+  Loader2,
 } from "lucide-react"
 
 import {
@@ -26,6 +27,9 @@ import { Toaster } from '@/components/ui/toaster'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EuroIcon, LogOut, User  } from "lucide-react"
 import { NotificationsMenu } from '@/components/notifications'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
+import { createClient } from '@/utils/supabase/client'
 
 
 export default function AdminLayout({
@@ -34,7 +38,37 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
+
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) throw error
+      
+      router.push('/auth/login')
+      toast({
+        title: "Déconnexion réussie",
+        description: "À bientôt!"
+      })
+      
+    } catch (error) {
+      console.error('Error signing out:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de se déconnecter"
+      })
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
   return (
     <div className="flex min-h-screen">
       {/* Your sidebar code */}
@@ -169,8 +203,16 @@ export default function AdminLayout({
                     <span>Paramètres</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem 
+                    className="text-red-600 cursor-pointer"
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                  >
+                    {isSigningOut ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="mr-2 h-4 w-4" />
+                    )}
                     <span>Se déconnecter</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

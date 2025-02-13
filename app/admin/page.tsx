@@ -21,6 +21,8 @@ import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 
 interface Payment {
@@ -68,6 +70,22 @@ interface User {
   institution?: string;
 }
 
+export type PublicationStatus = 'PENDING' | 'UNDER_REVIEW' | 'PUBLISHED' | 'REJECTED';
+
+export const statusLabels: Record<PublicationStatus, string> = {
+  PENDING: 'En attente',
+  UNDER_REVIEW: 'En cours d\'évaluation',
+  PUBLISHED: 'Publié',
+  REJECTED: 'Rejeté'
+};
+
+export const statusStyles: Record<PublicationStatus, string> = {
+  PENDING: 'bg-yellow-100 text-yellow-800',
+  UNDER_REVIEW: 'bg-blue-100 text-blue-800',
+  PUBLISHED: 'bg-green-100 text-green-800',
+  REJECTED: 'bg-red-100 text-red-800'
+};
+
 
 
 export default function AdminDashboard() {
@@ -86,6 +104,19 @@ export default function AdminDashboard() {
   const [publicationPage, setPublicationPage] = useState(1)
   const [publicationsPerPage, setPublicationsPerPage] = useState(5)
   const [isLoadingUsers, setIsLoadingUsers] = useState(true)
+  const [editingCell, setEditingCell] = useState<{
+    id: string;
+    field: string;
+    value: any;
+  } | null>(null);
+
+  const [editingUserCell, setEditingUserCell] = useState<{
+    id: string;
+    field: string;
+    value: any;
+  } | null>(null);
+  
+  // Add save funct
 
   const indexOfLastPublication = publicationPage * publicationsPerPage
   const indexOfFirstPublication = indexOfLastPublication - publicationsPerPage
@@ -232,15 +263,6 @@ const fetchPayments = async () => {
 
       if (error) throw error
 
-      // const formattedPayments = data.map(payment => ({
-      //   id: payment.id,
-      //   date: payment.created_at,
-      //   amount: payment.amount,
-      //   status: payment.status,
-      //   customer_name: payment.users?.name || 'Unknown',
-      //   payment_method: payment.payment_method
-      // }))
-
       setPayments(data)
     } catch (error) {
       console.error('Error fetching payments:', error)
@@ -306,15 +328,6 @@ const fetchPayments = async () => {
   
       if (error) throw error
   
-      // const formattedPayments = data.map(payment => ({
-      //   id: payment.id,
-      //   date: payment.created_at,
-      //   amount: payment.amount,
-      //   status: payment.status,
-      //   customer_name: payment.users?.name || 'Unknown',
-      //   payment_method: payment.payment_method
-      // }))
-  
       setPayments(data)
       toast({
         title: "Succès",
@@ -332,6 +345,135 @@ const fetchPayments = async () => {
     }
   }
 
+  const saveEdit = async (id: string, field: string, value: any) => {
+    const supabase = createClient();
+    
+    try {
+      const { error } = await supabase
+        .from('publications')
+        .update({ [field]: value })
+        .eq('id', id);
+  
+      if (error) throw error;
+  
+      // Update local state
+      setRecentPublications(publications => 
+        publications.map(pub => 
+          pub.id === id ? { ...pub, [field]: value } : pub
+        )
+      );
+  
+      toast({
+        title: "Succès",
+        description: "Modification enregistrée"
+      });
+    } catch (error) {
+      console.error('Error saving edit:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'enregistrer la modification"
+      });
+    } finally {
+      setEditingCell(null);
+    }
+  };
+
+  const saveUserEdit = async (id: string, field: string, value: any) => {
+    const supabase = createClient();
+    
+    try {
+      // Log the attempt
+      console.log('Attempting to save edit:', { id, field, value });
+  
+      // If editing email, check if it already exists
+      if (field === 'email') {
+        const { data: existingUser, error: checkError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', value)
+          .neq('id', id)
+          .single();
+  
+        if (checkError) {
+          console.error('Email check error:', {
+            code: checkError.code,
+            message: checkError.message,
+            details: checkError.details
+          });
+        }
+  
+        if (existingUser) {
+          toast({
+            title: "Email déjà utilisé",
+            description: "Cet email est déjà associé à un autre compte",
+            variant: "default"
+          });
+          setEditingUserCell(null);
+          return;
+        }
+      }
+  
+      // Log update attempt
+      console.log('Updating user:', { id, field, value });
+  
+      const { data, error } = await supabase
+        .from('users')
+        .update({ [field]: value })
+        .eq('id', id)
+        .select();
+  
+      if (error) {
+        console.error('Supabase error:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
+  
+      console.log('Update successful:', data);
+  
+      // Update local state
+      setRecentUsers(users => 
+        users.map(user => 
+          user.id === id ? { ...user, [field]: value } : user
+        )
+      );
+  
+      toast({
+        title: "Succès",
+        description: "Modification enregistrée"
+      });
+    } catch (error: any) {
+      // Check for unique constraint violation
+      if (error?.code === '23505' || error?.message?.includes('duplicate key')) {
+        toast({
+          title: "Email déjà utilisé",
+          description: "Cet email est déjà associé à un autre compte. Veuillez en utiliser un autre.",
+          variant: "default" // Using default instead of destructive for better UX
+        });
+      } else {
+        console.error('Error saving user edit:', {
+          error,
+          type: typeof error,
+          message: error?.message || 'Unknown error',
+          details: error?.details || {},
+          stack: error?.stack
+        });
+    
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible d'enregistrer la modification"
+        });
+      }
+    } finally {
+      setEditingUserCell(null);
+    }
+  }
+  
   return (
     <div className="flex min-h-screen">
    
@@ -415,26 +557,102 @@ const fetchPayments = async () => {
                     currentPublications.map((pub: any) => (
                       <TableRow key={pub.id}>
                          <TableCell className="font-medium">{pub.id}</TableCell>
-                        <TableCell className="font-medium">{pub.title}</TableCell>
-                        <TableCell>
-                          {Array.isArray(pub.author) 
-                            ? pub.author.join(', ') 
-                            : pub.author}
+                         <TableCell 
+                          className="font-medium"
+                          onDoubleClick={() => setEditingCell({
+                            id: pub.id,
+                            field: 'title',
+                            value: pub.title || ''
+                          })}
+                        >
+                          {editingCell?.id === pub.id && editingCell?.field === 'title' ? (
+                            <Input
+                              autoFocus
+                              value={editingCell.value}
+                              onChange={(e) => setEditingCell({
+                                ...editingCell,
+                                value: e.target.value
+                              })}
+                              onBlur={() => saveEdit(pub.id, 'title', editingCell.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveEdit(pub.id, 'title', editingCell.value)
+                                } else if (e.key === 'Escape') {
+                                  setEditingCell(null)
+                                }
+                              }}
+                              className="min-w-[200px]"
+                            />
+                          ) : (
+                            pub.title
+                          )}
                         </TableCell>
+                        <TableCell
+                        onDoubleClick={() => setEditingCell({
+                          id: pub.id,
+                          field: 'author',
+                          value: Array.isArray(pub.author) 
+                            ? pub.author.join(', ') 
+                            : pub.author || ''
+                        })}
+                  
+                      >
+                        {editingCell?.id === pub.id && editingCell?.field === 'author' ? (
+                          <Input
+                            autoFocus
+                            value={editingCell.value || ''}
+                            onChange={(e) => setEditingCell({
+                              ...editingCell,
+                              value: e.target.value
+                            })}
+                            onBlur={() => saveEdit(pub.id, 'author', editingCell.value?.split(', ').filter(Boolean) || [])}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveEdit(pub.id, 'author', editingCell.value?.split(', ').filter(Boolean) || [])
+                                } else if (e.key === 'Escape') {
+                                  setEditingCell(null)
+                                }
+                              }}
+                            className="min-w-[200px]"
+                            placeholder="Séparez les auteurs par des virgules"
+                          />
+                        ) : (
+                          Array.isArray(pub.author) ? pub.author.join(', ') : pub.author || ''
+                        )}
+                      </TableCell>
                         <TableCell>
                           {new Date(pub.created_at).toLocaleDateString('fr-FR')}
                         </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={cn(
-                              "bg-opacity-10",
-                              pub.status === 'PENDING' && "bg-yellow-500 text-yellow-700",
-                              pub.status === 'PUBLISHED' && "bg-green-500 text-green-700",
-                              pub.status === 'REJECTED' && "bg-red-500 text-red-700"
-                            )}
-                          >
-                            {pub.status}
-                          </Badge>
+                          <TableCell>
+                          {editingCell?.id === pub.id && editingCell?.field === 'status' ? (
+                            <Select
+                              value={editingCell?.value as PublicationStatus}
+                              onValueChange={(value: PublicationStatus) => {
+                                saveEdit(pub.id, 'status', value);
+                              }}
+                            >
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue>{statusLabels[editingCell?.value as PublicationStatus]}</SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="PENDING">En attente</SelectItem>
+                                {/* <SelectItem value="UNDER_REVIEW">En cours d'évaluation</SelectItem> */}
+                                <SelectItem value="PUBLISHED">Publié</SelectItem>
+                                <SelectItem value="REJECTED">Rejeté</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge 
+                              className={`cursor-pointer ${statusStyles[pub.status as PublicationStatus]}`}
+                              onClick={() => setEditingCell({
+                                id: pub.id,
+                                field: 'status',
+                                value: pub.status as PublicationStatus
+                              })}
+                            >
+                              {statusLabels[pub.status as PublicationStatus]}
+                            </Badge>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
@@ -555,29 +773,133 @@ const fetchPayments = async () => {
                 ) : (
                   recentUsers.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.institution || 'N/A'}</TableCell>
-                      <TableCell>
-                        <Badge
-                          className={cn(
-                            "bg-opacity-10",
-                            user.role === 'admin' && "bg-red-500 text-red-700",
-                            user.role === 'author' && "bg-blue-500 text-blue-700",
-                            user.role === 'reviewer' && "bg-purple-500 text-purple-700"
-                          )}
+                        <TableCell 
+                          className="font-medium"
+                          onDoubleClick={() => setEditingUserCell({
+                            id: user.id,
+                            field: 'name',
+                            value: user.name || ''
+                          })}
                         >
-                          {user.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.created_at).toLocaleDateString('fr-FR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </TableCell>
-                    </TableRow>
+                          {editingUserCell?.id === user.id && editingUserCell.field === 'name' ? (
+                            <Input
+                              autoFocus
+                              value={editingUserCell.value}
+                              onChange={(e) => setEditingUserCell({
+                                ...editingUserCell,
+                                value: e.target.value
+                              })}
+                              onBlur={() => saveUserEdit(user.id, 'name', editingUserCell.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveUserEdit(user.id, 'name', editingUserCell.value)
+                                } else if (e.key === 'Escape') {
+                                  setEditingUserCell(null)
+                                }
+                              }}
+                            />
+                          ) : (
+                            user.name
+                          )}
+                        </TableCell>
+                        <TableCell
+                          onDoubleClick={() => setEditingUserCell({
+                            id: user.id,
+                            field: 'email',
+                            value: user.email || ''
+                          })}
+                        >
+                          {editingUserCell?.id === user.id && editingUserCell.field === 'email' ? (
+                            <Input
+                              autoFocus
+                              type="email"
+                              value={editingUserCell.value}
+                              onChange={(e) => setEditingUserCell({
+                                ...editingUserCell,
+                                value: e.target.value
+                              })}
+                              onBlur={() => saveUserEdit(user.id, 'email', editingUserCell.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveUserEdit(user.id, 'email', editingUserCell.value)
+                                } else if (e.key === 'Escape') {
+                                  setEditingUserCell(null)
+                                }
+                              }}
+                            />
+                          ) : (
+                            user.email
+                          )}
+                        </TableCell>
+                        <TableCell
+                          onDoubleClick={() => setEditingUserCell({
+                            id: user.id,
+                            field: 'institution',
+                            value: user.institution || ''
+                          })}
+                        >
+                          {editingUserCell?.id === user.id && editingUserCell.field === 'institution' ? (
+                            <Input
+                              autoFocus
+                              value={editingUserCell.value}
+                              onChange={(e) => setEditingUserCell({
+                                ...editingUserCell,
+                                value: e.target.value
+                              })}
+                              onBlur={() => saveUserEdit(user.id, 'institution', editingUserCell.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveUserEdit(user.id, 'institution', editingUserCell.value)
+                                } else if (e.key === 'Escape') {
+                                  setEditingUserCell(null)
+                                }
+                              }}
+                            />
+                          ) : (
+                            user.institution || 'N/A'
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {editingUserCell?.id === user.id && editingUserCell.field === 'role' ? (
+                            <Select
+                              value={editingUserCell.value}
+                              onValueChange={(value) => saveUserEdit(user.id, 'role', value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue>{editingUserCell.value}</SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="author">Auteur</SelectItem>
+                                <SelectItem value="reviewer">Évaluateur</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge
+                              className={cn(
+                                "bg-opacity-10 cursor-pointer",
+                                user.role === 'admin' && "bg-red-500 text-red-700",
+                                user.role === 'author' && "bg-blue-500 text-blue-700", 
+                                user.role === 'reviewer' && "bg-purple-500 text-purple-700"
+                              )}
+                              onClick={() => setEditingUserCell({
+                                id: user.id,
+                                field: 'role',
+                                value: user.role
+                              })}
+                            >
+                              {user.role}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(user.created_at).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </TableCell>
+</TableRow>
                   ))
                 )}
               </TableBody>
