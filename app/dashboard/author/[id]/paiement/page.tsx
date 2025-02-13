@@ -328,16 +328,17 @@ export default function PaymentPage({ params }: PageProps) {
             break;
 
             case '1':
-              clearInterval(timer);
-              await updatePaymentStatus(reference, phoneNumber, false);
-              setIsModalProcessing(false);
-              setTimeLeft(120);
+              cleanup();
+              await deleteFailedPublication(reference, phoneNumber);
+              // await updatePaymentStatus(reference, phoneNumber, false);
+              // setIsModalProcessing(false);
+              // setTimeLeft(120);
               toast({
                 variant: "destructive",
-                title: "Échec",
-                description: message || "Le paiement a été annulé ou a échoué"
+                title: "Échec du paiement",
+                description: "La publication a été automatiquement supprimée suite à l'échec du paiement"
               });
-              await deleteFailedPublication(reference, phoneNumber);
+              router.push(`/dashboard/author/${id}/publications`);
               break;
   
           case '2':
@@ -428,6 +429,7 @@ export default function PaymentPage({ params }: PageProps) {
         title: "Erreur",
         description: "Impossible de supprimer la publication"
       })
+      throw error; // Re-throw to handle in calling function
     }
   }
   
