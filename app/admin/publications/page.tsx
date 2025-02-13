@@ -829,34 +829,34 @@ const handleDownload = async (publication: Publication) => {
                       </TableCell>
                     <TableCell>
                     {editingCell?.id === pub.id && editingCell.field === 'status' ? (
-                        <Select
-                          value={editingCell.value as PublicationStatus}
-                          onValueChange={(value: PublicationStatus) => {
-                            saveEdit(pub.id, 'status', value);
-                          }}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue>{statusLabels[editingCell.value as PublicationStatus]}</SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="PENDING">En attente</SelectItem>
-                            {/* <SelectItem value="UNDER_REVIEW">En cours d'évaluation</SelectItem> */}
-                            <SelectItem value="PUBLISHED">Publié</SelectItem>
-                            <SelectItem value="REJECTED">Rejeté</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge 
-                          className={`cursor-pointer ${statusStyles[pub.status as PublicationStatus]}`}
-                          onClick={() => setEditingCell({
-                            id: pub.id,
-                            field: 'status',
-                            value: pub.status as PublicationStatus
-                          })}
-                        >
-                          {statusLabels[pub.status as PublicationStatus]}
-                        </Badge>
-                      )}
+                      <Select
+                        value={editingCell.value as PublicationStatus}
+                        onValueChange={(value: PublicationStatus) => {
+                          saveEdit(pub.id, 'status', value);
+                        }}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue>{statusLabels[editingCell.value as PublicationStatus]}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PENDING">En attente</SelectItem>
+                          {/* <SelectItem value="UNDER_REVIEW">En cours d'évaluation</SelectItem> */}
+                          <SelectItem value="PUBLISHED">Publié</SelectItem>
+                          <SelectItem value="REJECTED">Rejeté</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge 
+                        className={`cursor-pointer ${statusStyles[pub.status as PublicationStatus]}`}
+                        onClick={() => setEditingCell({
+                          id: pub.id,
+                          field: 'status',
+                          value: pub.status as PublicationStatus
+                        })}
+                      >
+                        {statusLabels[pub.status as PublicationStatus]}
+                      </Badge>
+                    )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
