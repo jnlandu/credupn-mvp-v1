@@ -70,16 +70,16 @@ interface User {
   institution?: string;
 }
 
-export type PublicationStatus = 'PENDING' | 'UNDER_REVIEW' | 'PUBLISHED' | 'REJECTED';
+type PublicationStatus = 'PENDING' | 'UNDER_REVIEW' | 'PUBLISHED' | 'REJECTED';
 
-export const statusLabels: Record<PublicationStatus, string> = {
+const statusLabels: Record<PublicationStatus, string> = {
   PENDING: 'En attente',
   UNDER_REVIEW: 'En cours d\'évaluation',
   PUBLISHED: 'Publié',
   REJECTED: 'Rejeté'
 };
 
-export const statusStyles: Record<PublicationStatus, string> = {
+const statusStyles: Record<PublicationStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
   UNDER_REVIEW: 'bg-blue-100 text-blue-800',
   PUBLISHED: 'bg-green-100 text-green-800',
