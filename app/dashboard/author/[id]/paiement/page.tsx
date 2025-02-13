@@ -51,6 +51,13 @@ const paymentMethods = [
   }
 ]
 
+const statusTranslations: Record<string, string> = {
+  'PENDING': 'En attente',
+  'UNDER_REVIEW': 'En cours d\'évaluation',
+  'PUBLISHED': 'Publié',
+  'REJECTED': 'Rejeté'
+};
+
 export default function PaymentPage({ params }: PageProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -412,7 +419,7 @@ export default function PaymentPage({ params }: PageProps) {
       })
   
       // Redirect to publications list
-      router.push('/dashboard/author/${id}/publications')
+      router.push(`/dashboard/author/${id}`)
   
     } catch (error) {
       console.error('Error deleting failed publication:', error)
@@ -460,7 +467,7 @@ export default function PaymentPage({ params }: PageProps) {
                 <div className="rounded-lg bg-gray-50 p-6">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Statut</h3>
                   <Badge className={getStatusBadge(paymentDetails.status)}>
-                    {paymentDetails.status.toUpperCase()}
+                    {statusTranslations[paymentDetails.status] || paymentDetails.status}
                   </Badge>
                 </div>
               </div>
