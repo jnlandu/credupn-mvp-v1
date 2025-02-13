@@ -216,12 +216,7 @@ export default function PaymentPage({ params }: PageProps) {
     }
 
     setIsModalProcessing(true)
-    try {
-      const supabase = createClient()
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-        
-      if (userError) throw userError
-  
+    try {  
       const data = {
         Numero: formData.phone,
         Montant:  1000,
@@ -233,7 +228,7 @@ export default function PaymentPage({ params }: PageProps) {
         'Content-Type': 'application/json',
         "Authorization": `Bearer ${process.env.NEXT_PUBLIC_FLEXPAIE_TOKEN}`
       }  
-      const response = await axios.post(gateway, data, { headers, timeout: 60000 })
+      const response = await axios.post(gateway, data, { headers, timeout: 30000 })
       const responseData = response.data
       const orderNumber = responseData.orderNumber
   
@@ -242,23 +237,7 @@ export default function PaymentPage({ params }: PageProps) {
       }
 
       const { reference, phoneNumber } = extractReferenceNumber(orderNumber)
-      await supabase
-        .from('payments')
-        .update({ 
-          status: 'pending',
-          user_id: user?.id,
-          amount: responseData?.amount,
-          payment_method: selectedMethod,
-          publication_id: publicationId,
-          details:  data.description,
-          created_at: new Date().toISOString(),
-          customer_name: user?.user_metadata.full_name,
-          customer_email: user?.email,
-          order_number: phoneNumber,
-          reference_number: reference
-        })
-        .eq('id', paymentId)
-
+      
       setShowPhoneDialog(false)
       await checkPaymentStatus(reference, phoneNumber, orderNumber)
 
@@ -318,7 +297,7 @@ export default function PaymentPage({ params }: PageProps) {
   
         switch (verification) {
           case '0':
-            await updatePaymentStatus(reference, phoneNumber, true);
+            await updatePaymentStatus(reference, phoneNumber, true, response);
             cleanup();
             toast({
               title: "Succès",
@@ -372,18 +351,30 @@ export default function PaymentPage({ params }: PageProps) {
   };
 }, [paymentTimer]);
 
-  const updatePaymentStatus = async (reference: string, phoneNumber: string, isSuccessful: boolean) => {
+  const updatePaymentStatus = async (reference: string, phoneNumber: string, isSuccessful: boolean, responseData: any) => {
     const supabase = createClient()
-    
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+    if (userError) throw userError
+
     const { error } = await supabase
       .from('payments')
-      .update({ 
+      .insert({ 
+        user_id: user?.id,
+        amount: responseData?.amount,
+        payment_method: selectedMethod,
+        publication_id: publicationId,
+        // details:  data.description,
+        created_at: new Date().toISOString(),
+        customer_name: user?.user_metadata.full_name,
+        customer_email: user?.email,
+        order_number: phoneNumber,
+        reference_number: reference,
         check: isSuccessful,
         status: isSuccessful ? 'completé' : 'échec',
-        // payment_method: selectedMethod
       })
-      .eq('reference_number', reference)
-      .eq('order_number', phoneNumber)
+      .eq('id', paymentId)
+      // .eq('order_number', phoneNumber)
 
     if (error) throw error
 
