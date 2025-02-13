@@ -381,7 +381,6 @@ useEffect(() => {
           if (storageError) throw storageError
         }
       }
-  
       // Then delete from database
       const { error: dbError } = await supabase
         .from('publications')
@@ -393,6 +392,8 @@ useEffect(() => {
       setPublications(prev => prev.filter(p => p.id !== publication.id))
       setIsDeleteDialogOpen(false)
       setPublicationToDelete(null)
+          // Refresh publications list
+      await fetchPublications();
   
       toast({
         title: "Succès",
