@@ -32,12 +32,32 @@ import {
 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDropzone } from 'react-dropzone'
-import { Publication,Reviewer,statusLabels,statusStyles  } from "@/data/publications"
+import { Publication,Reviewer, } from "@/data/publications"
 import { useToast } from '@/hooks/use-toast'
 // import { Tooltip } from '@radix-ui/react-tooltip'
 
 
 import { createClient } from '@/utils/supabase/client'
+
+
+
+
+export type PublicationStatus = 'PENDING' | 'UNDER_REVIEW' | 'PUBLISHED' | 'REJECTED';
+
+export const statusLabels: Record<PublicationStatus, string> = {
+  PENDING: 'En attente',
+  UNDER_REVIEW: 'En cours d\'évaluation',
+  PUBLISHED: 'Publié',
+  REJECTED: 'Rejeté'
+};
+
+export const statusStyles: Record<PublicationStatus, string> = {
+  PENDING: 'bg-yellow-100 text-yellow-800',
+  UNDER_REVIEW: 'bg-blue-100 text-blue-800',
+  PUBLISHED: 'bg-green-100 text-green-800',
+  REJECTED: 'bg-red-100 text-red-800'
+};
+
 
 export default function PublicationsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -808,9 +828,35 @@ const handleDownload = async (publication: Publication) => {
                         )}
                       </TableCell>
                     <TableCell>
-                      <Badge className={statusStyles[pub.status]}>
-                        {statusLabels[pub.status]}
-                      </Badge>
+                    {editingCell?.id === pub.id && editingCell.field === 'status' ? (
+                        <Select
+                          value={editingCell.value as PublicationStatus}
+                          onValueChange={(value: PublicationStatus) => {
+                            saveEdit(pub.id, 'status', value);
+                          }}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue>{statusLabels[editingCell.value as PublicationStatus]}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="PENDING">En attente</SelectItem>
+                            {/* <SelectItem value="UNDER_REVIEW">En cours d'évaluation</SelectItem> */}
+                            <SelectItem value="PUBLISHED">Publié</SelectItem>
+                            <SelectItem value="REJECTED">Rejeté</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge 
+                          className={`cursor-pointer ${statusStyles[pub.status as PublicationStatus]}`}
+                          onClick={() => setEditingCell({
+                            id: pub.id,
+                            field: 'status',
+                            value: pub.status as PublicationStatus
+                          })}
+                        >
+                          {statusLabels[pub.status as PublicationStatus]}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
