@@ -1,12 +1,21 @@
+
+import os
+import uvicorn
+import requests
+import json
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
-import uvicorn
-import requests
-import json
-from typing import Dict, Any
-import os
+
+from starlette.responses import JSONResponse
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+from pydantic import EmailStr, BaseModel
+from typing import List
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -14,6 +23,9 @@ app = FastAPI()
 origins = [
     # "https://mlops-project-3repcia0n-jeremies-projects-257f201c.vercel.app", 
     # "https://mlops-project-taupe.vercel.app/",# for production
+    'https://cridupn.vercel.app',
+    'https://cridupn-git-main-jeremies-projects-257f201c.vercel.app',
+    'https://cridupn-ciloc3p51-jeremies-projects-257f201c.vercel.app',
     "http://localhost:3000", # for local development
 ]
 app.add_middleware(
@@ -24,6 +36,8 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+class EmailSchema(BaseModel):
+    email: List[EmailStr]
 
 # Define payment request model
 class PaymentRequest(BaseModel):
@@ -31,6 +45,21 @@ class PaymentRequest(BaseModel):
     Montant: float
     currency: Optional[str] = "CDF"
     description: Optional[str] = None
+
+
+print("Debugging mail username", os.environ.get("MAIL_USERNAME"))
+conf = ConnectionConfig(
+    MAIL_USERNAME = "jnlandu00",
+    MAIL_PASSWORD = "nsvnyjrslzmikfvd",
+    MAIL_FROM = "jnlandu00@gmail.com",
+    MAIL_PORT = 587,
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_FROM_NAME="CRIDUPN",
+    MAIL_STARTTLS = True,
+    MAIL_SSL_TLS = False,
+    USE_CREDENTIALS = True,
+    VALIDATE_CERTS = False  # Disable SSL certificate verification
+)
 
 # Root endpoint
 @app.get("/")
@@ -141,5 +170,22 @@ async def check_payment_status(orderNumber: str) :
             status_code=500,
             detail=f"Unexpected error: {str(e)}"
         )
+    
+
+@app.post("/email")
+async def simple_send(email: EmailSchema) -> JSONResponse:
+    html = """<p>Hi this test mail, thanks for using Fastapi-mail</p> """
+
+    message = MessageSchema(
+        subject="Fastapi-Mail module",
+        recipients=email.dict().get("email"),
+        body=html,
+        subtype=MessageType.html)
+
+    fm = FastMail(conf)
+    await fm.send_message(message)
+    return JSONResponse(status_code=200,content={"message": "email has been sent"})
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
