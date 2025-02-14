@@ -374,7 +374,6 @@ export default function PaymentPage({ params }: PageProps) {
         status: isSuccessful ? 'completé' : 'échec',
       })
       .eq('id', paymentId)
-      // .eq('order_number', phoneNumber)
     if (error) throw error
 
     if (isSuccessful) {

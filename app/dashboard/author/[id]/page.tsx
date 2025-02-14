@@ -216,6 +216,7 @@ export default function AuthorDashboard({ params }: PageProps) {
                 ) : (
                   <div className="divide-y">
                     {publications.slice(0, 5).map((pub) => (
+                      
                       <div key={pub.id} className="py-4 flex items-center justify-between">
                         <div>
                           <h3 className="font-medium">{pub.title}</h3>
@@ -231,6 +232,7 @@ export default function AuthorDashboard({ params }: PageProps) {
                       </div>
                     ))}
                   </div>
+                  
                 )}
               </CardContent>
             </Card>
