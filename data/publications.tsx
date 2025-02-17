@@ -92,7 +92,7 @@ export interface User {
     publications?: PublicationWithRelationsUser[]
   }
 
-export interface usersWithPubls {
+export interface userPerPubs {
     id: string
     name: string
     email: string

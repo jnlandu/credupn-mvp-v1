@@ -41,6 +41,7 @@ export function AuthorNotificationsMenu() {
 
   const fetchNotifications = async () => {
     const supabase = createClient()
+    console.log('Fetching notifications...'); // Debug log
     
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -67,7 +68,15 @@ export function AuthorNotificationsMenu() {
   
       setNotifications(data || [])
       setUnreadCount(data?.filter(n => !n.read).length || 0)
-    } catch (error) {
+    } catch (error: any) {
+      // Detailed error logging
+      console.error('Error fetching notifications:', {
+        error,
+        type: typeof error,
+        message: error?.message || 'Unknown error',
+        details: error?.details || {},
+        stack: error?.stack
+      });
       console.error('Error fetching notifications:', error)
     } finally {
       setIsLoading(false)
