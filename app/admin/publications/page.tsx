@@ -148,6 +148,8 @@ const refreshPublications = async () => {
     const { data, error } = await supabase
       .from('publications')
       .select('*')
+      .is('deleted_at', null) // Filter out soft deleted
+      .neq('status', 'DELETED') // Also check status
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -176,9 +178,12 @@ const fetchPublications = async () => {
     const { data, error } = await supabase
       .from('publications')
       .select('*')
+      .is('deleted_at', null)
+      .neq('status', 'DELETED') // Also check status
       .order('created_at', { ascending: false })
 
     if (error) throw error
+    
     setPublications(data || [])
   } catch (error) {
     console.error('Error fetching publications:', error)
@@ -295,7 +300,6 @@ useEffect(() => {
         .from('publications')
         .getPublicUrl(filePath)
 
-
         // 3. Insert publication data into database
         const { data: publication, error: dbError } = await supabase
         .from('publications')
@@ -368,49 +372,95 @@ useEffect(() => {
   
   //  Handle Delete 
   const handleDelete = async (publication: Publication) => {
-    const supabase = createClient()
+    setIsLoading(true);
+    const supabase = createClient();
+
     try {
-      // Delete PDF from storage first
+      console.log('Starting deletion for publication:', publication.id);
+  
+      // First verify if publication exists
+      const { data: existingPub, error: checkError } = await supabase
+        .from('publications')
+        .select('*')
+        .eq('id', publication.id)
+        .single();
+  
+      if (checkError) {
+        console.error('Publication check error:', checkError);
+        throw checkError;
+      }
+  
+      if (!existingPub) {
+        throw new Error('Publication not found');
+      }
+  
+      // Delete PDF from storage
       if (publication.pdfUrl) {
-        const fileName = publication.pdfUrl.split('/').pop()
+        const fileName = publication.pdfUrl.split('/').pop();
         if (fileName) {
+          console.log('Deleting PDF file:', fileName);
           const { error: storageError } = await supabase.storage
             .from('publications')
-            .remove([fileName])
+            .remove([fileName]);
   
-          if (storageError) throw storageError
+          if (storageError) {
+            console.error('Storage deletion error:', {
+              // code: storageError.code,
+              message: storageError.message,
+              // details: storageError.details
+            });
+            throw storageError;
+          }
         }
       }
-      // Then delete from database
+  
+      // Soft delete publication
       const { error: dbError } = await supabase
         .from('publications')
-        .delete()
-        .eq('id', publication.id)
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          status: 'DELETED'
+        })
+        .eq('id', publication.id);
   
-      if (dbError) throw dbError
+      if (dbError) {
+        console.error('Database update error:', {
+          code: dbError.code,
+          message: dbError.message,
+          details: dbError.details,
+          hint: dbError.hint
+        });
+        throw dbError;
+      }
       // Update UI
-      setPublications(prev => prev.filter(p => p.id !== publication.id))
-      setIsDeleteDialogOpen(false)
-      setPublicationToDelete(null)
-          // Refresh publications list
-      await fetchPublications();
+      setPublications(prev => prev.filter(p => p.id !== publication.id));
+      setIsDeleteDialogOpen(false);
+      setPublicationToDelete(null);
   
       toast({
         title: "Succès",
         description: "Publication supprimée avec succès"
-      })
-
-    } catch (error) {
-      console.error('Delete error:', error)
+      });
+  
+    } catch (error: any) {
+      console.error('Delete error:', {
+        error,
+        type: typeof error,
+        message: error?.message || 'Unknown error',
+        details: error?.details || {},
+        stack: error?.stack
+      });
+      
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de supprimer la publication"
-      })
+        description: error?.message || "Impossible de supprimer la publication"
+      });
+    }finally {
+      setIsLoading(false);
     }
-  }
+  };
 
- 
   // Fetching reviwers
   const fetchReviewers = async () => {
     const supabase = createClient()
@@ -560,7 +610,6 @@ const saveEdit = async (id: string, field: string, value: any) => {
       .eq('id', id)
 
     if (error) throw error
-
     // Update local state
     setPublications(publications.map(pub => 
       pub.id === id ? { ...pub, [field]: value } : pub
@@ -690,16 +739,7 @@ const handleDownload = async (publication: Publication) => {
                 </TableCell>
               </TableRow>
             ): (
-              publications
-                .filter(pub => 
-                  pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  (Array.isArray(pub.author) 
-                    ? pub.author.some(author => author.toLowerCase().includes(searchTerm.toLowerCase()))
-                    : pub.author.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                )
-                .slice(startIndex, endIndex)
-                .map((pub) => (
+              currentItems.map((pub) => (
                   <TableRow key={pub.id}>
                     <TableCell>{pub.id}</TableCell>
                     <TableCell 
@@ -881,6 +921,7 @@ const handleDownload = async (publication: Publication) => {
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <Download className="h-4 w-4" />
+                         
                           )}
                         </Button>
                         <Button 
@@ -1344,7 +1385,7 @@ const handleDownload = async (publication: Publication) => {
           }}
         >
           <Download className="h-4 w-4 mr-2" />
-          Télécharger
+          Télécharger 
         </Button>
       </div>
     </div>
@@ -1421,8 +1462,16 @@ const handleDownload = async (publication: Publication) => {
       <Button 
         variant="destructive" 
         onClick={() => publicationToDelete && handleDelete(publicationToDelete)}
+        disabled={isLoading}
       >
-        Supprimer
+        {isLoading? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Suppression...
+          </>
+        ) : (
+          'Supprimer'
+        )}
       </Button>
     </div>
   </DialogContent>

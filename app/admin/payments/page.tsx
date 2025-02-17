@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AddPaymentModal } from '@/components/payments/AddPaymentModal'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 // import { Payment } from '@/data/publications'
 
 
@@ -62,6 +63,12 @@ export default function PaymentsAdmin() {
 
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
+
+  const [editingCell, setEditingCell] = useState<{
+    id: string;
+    field: string;
+    value: any;
+  } | null>(null);
 
   // Add pagination calculations
   const indexOfLastItem = currentPage * itemsPerPage
@@ -151,6 +158,37 @@ const refreshPayments = async () => {
     setIsRefreshing(false)
   }
 
+  const saveEdit = async (id: string, field: string, value: any) => {
+    const supabase = createClient();
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .update({ [field]: value })
+        .eq('id', id);
+  
+      if (error) throw error;
+  
+      // Update local state
+      setPayments(payments.map(payment => 
+        payment.id === id ? { ...payment, [field]: value } : payment
+      ));
+  
+      toast({
+        title: "Succès",
+        description: "Modification enregistrée"
+      });
+    } catch (error) {
+      console.error('Error saving edit:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'enregistrer la modification"
+      });
+    } finally {
+      setEditingCell(null);
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -218,20 +256,125 @@ const refreshPayments = async () => {
               currentPayments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell>{payment.id}</TableCell>
-                  <TableCell>{payment.customer_name}</TableCell>
+                  <TableCell 
+                      onDoubleClick={() => setEditingCell({
+                        id: payment.id,
+                        field: 'customer_name',
+                        value: payment.customer_name
+                      })}
+                    >
+                      {editingCell?.id === payment.id && editingCell.field === 'customer_name' ? (
+                        <Input
+                          autoFocus
+                          value={editingCell.value}
+                          onChange={(e) => setEditingCell({
+                            ...editingCell,
+                            value: e.target.value
+                          })}
+                          onBlur={() => saveEdit(payment.id, 'customer_name', editingCell.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              saveEdit(payment.id, 'customer_name', editingCell.value)
+                            } else if (e.key === 'Escape') {
+                              setEditingCell(null)
+                            }
+                          }}
+                          className="min-w-[200px]"
+                          placeholder="Nom du client"
+                        />
+                      ) : (
+                        payment.customer_name || 'Non renseigné'
+                      )}
+                    </TableCell>
                   <TableCell>{payment.customer_email}</TableCell>
-                  <TableCell>{payment.amount} $</TableCell>
+                  <TableCell 
+                        onDoubleClick={() => setEditingCell({
+                          id: payment.id,
+                          field: 'amount',
+                          value: payment.amount
+                        })}
+                      >
+                        {editingCell?.id === payment.id && editingCell.field === 'amount' ? (
+                          <Input
+                            autoFocus
+                            type="number"
+                            value={editingCell.value}
+                            onChange={(e) => setEditingCell({
+                              ...editingCell,
+                              value: e.target.value
+                            })}
+                            onBlur={() => saveEdit(payment.id, 'amount', editingCell.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                saveEdit(payment.id, 'amount', editingCell.value)
+                              } else if (e.key === 'Escape') {
+                                setEditingCell(null)
+                              }
+                            }}
+                          />
+                        ) : (
+                          payment.amount
+                        )}
+                      </TableCell>
                   <TableCell>{payment.details}</TableCell>
                   <TableCell>{new Date(payment.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>{payment.payment_method}</TableCell>
-                  <TableCell>
-                  <Badge
-                        variant="outline"
-                        className={statusStyles[payment.status.toLowerCase()]}
+                  <TableCell
+                      onDoubleClick={() => setEditingCell({
+                        id: payment.id,
+                        field: 'payment_method',
+                        value: payment.payment_method
+                      })}
+                    >
+                      {editingCell?.id === payment.id && editingCell.field === 'payment_method' ? (
+                        <Input
+                          autoFocus
+                          value={editingCell.value}
+                          onChange={(e) => setEditingCell({
+                            ...editingCell,
+                            value: e.target.value
+                          })}
+                          onBlur={() => saveEdit(payment.id, 'payment_method', editingCell.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              saveEdit(payment.id, 'payment_method', editingCell.value)
+                            } else if (e.key === 'Escape') {
+                              setEditingCell(null)
+                            }
+                          }}
+                          className="min-w-[200px]"
+                          placeholder="Méthode de paiement"
+                        />
+                      ) : (
+                        payment.payment_method || 'Non renseigné'
+                      )}
+                    </TableCell>
+                  <TableCell
+                      onDoubleClick={() => setEditingCell({
+                        id: payment.id,
+                        field: 'status',
+                        value: payment.status
+                      })}
+                    >
+                      {editingCell?.id === payment.id && editingCell.field === 'status' ? (
+                        <Select
+                          value={editingCell.value}
+                          onValueChange={(value) => {
+                            saveEdit(payment.id, 'status', value);
+                          }}
                         >
-                        {payment.status}
-                </Badge>
-                  </TableCell>
+                          <SelectTrigger>
+                            <SelectValue>{editingCell.value}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">En attente</SelectItem>
+                            <SelectItem value="completed">Complété</SelectItem>
+                            <SelectItem value="failed">Échoué</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge>{payment.status}</Badge>
+                      )}
+                    </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button

@@ -7,10 +7,6 @@ import scholarLogo from '@/public/images/logo/scholar.jpg'
 
 
 
-
-
-
-
 export type PublicationStatus = 'PENDING' | 'REVIEW' | 'APPROVED' | 'REJECTED'| 'PUBLISHED'; ;
 export interface Publication {
     id: string
@@ -92,7 +88,7 @@ export interface User {
     publications?: PublicationWithRelationsUser[]
   }
 
-export interface usersWithPubls {
+export interface userPerPubs {
     id: string
     name: string
     email: string

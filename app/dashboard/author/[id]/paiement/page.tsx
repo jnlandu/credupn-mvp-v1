@@ -226,9 +226,10 @@ export default function PaymentPage({ params }: PageProps) {
       const gateway = `${process.env.NEXT_PUBLIC_FASTAPI_URL}/payment`
       const headers = {
         'Content-Type': 'application/json',
-        "Authorization": `Bearer ${process.env.NEXT_PUBLIC_FLEXPAIE_TOKEN}`
+        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzc5OTcwMTc1LCJzdWIiOiJlNzFiM2I4ZDMyNGFmYTMwOWU0NzY4MGI1ZjE0NDhhNCJ9.cLawA7kXCwBNYADRdwy9BJKwxQJOjUf0nTQ1i2Wipnw",
+        'Access-Control-Allow-Origin': '*'
       }  
-      const response = await axios.post(gateway, data, { headers, timeout: 30000 })
+      const response = await axios.post(gateway, data, { headers, timeout: 60000 })
       const responseData = response.data
       const orderNumber = responseData.orderNumber
   
@@ -303,6 +304,14 @@ export default function PaymentPage({ params }: PageProps) {
               title: "Succès",
               description: message || "Paiement confirmé!"
             });
+
+            toast({
+              variant: "default",
+              title: "Paiement réussi",
+              description: "Votre paiement a été confirmé avec succès. Un email de confirmation vous sera envoyé."
+            });
+            await notifyAdmin(publicationId!, paymentId!, reference)
+            await notifyAuthor(publicationId!, paymentId!, reference)
             router.push(`/dashboard/author/${id}/publications`);
             break;
 
@@ -317,7 +326,7 @@ export default function PaymentPage({ params }: PageProps) {
                 title: "Échec du paiement",
                 description: "La publication a été automatiquement supprimée suite à l'échec du paiement"
               });
-              router.push(`/dashboard/author/${id}/publications`);
+              // router.push(`/dashboard/author/${id}/publications`);
               break;
   
           case '2':
@@ -376,10 +385,9 @@ export default function PaymentPage({ params }: PageProps) {
       .eq('id', paymentId)
     if (error) throw error
 
-    if (isSuccessful) {
-      await notifyAdmin(publicationId!, paymentId!, reference)
-      await notifyAuthor(publicationId!, paymentId!, reference)
-    }
+    // if (isSuccessful) {
+      
+    // }
   }
 
   const deleteFailedPublication = async (reference: string, phoneNumber: string) => {

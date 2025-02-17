@@ -11,7 +11,7 @@ import { date } from 'zod'
 
 const getBaseUrl = async  () => {
   const headersList =  await headers()
-  const host = headersList.get('host') || process.env.VERCEL_URL || 'localhost:3000'
+  const host = headersList.get('host') || process.env.NEXT_PUBLIC_VERCEL_URL|| 'localhost:3000'
   const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https'
   return `${protocol}://${host}`
 }
