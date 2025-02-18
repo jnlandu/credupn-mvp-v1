@@ -13,9 +13,16 @@ from starlette.responses import JSONResponse
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr, BaseModel
 from typing import List
+
+from twilio.rest import Client
+from pydantic import BaseModel
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
+#  Test the environment variables
+print("Debugging mail username", os.environ.get("MAIL_USERNAME"))
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -38,6 +45,8 @@ app.add_middleware(
 
 class EmailSchema(BaseModel):
     email: List[EmailStr]
+    subject: str
+    body: str
 
 # Define payment request model
 class PaymentRequest(BaseModel):
@@ -46,6 +55,9 @@ class PaymentRequest(BaseModel):
     currency: Optional[str] = "CDF"
     description: Optional[str] = None
 
+class SMSNotification(BaseModel):
+    phone: str
+    message: str
 
 print("Debugging mail username", os.environ.get("MAIL_USERNAME"))
 conf = ConnectionConfig(
@@ -174,12 +186,11 @@ async def check_payment_status(orderNumber: str) :
 
 @app.post("/email")
 async def simple_send(email: EmailSchema) -> JSONResponse:
-    html = """<p>Hi this test mail, thanks for using Fastapi-mail</p> """
-
+    # html = """<p>Hi this test mail, thanks for using Fastapi-mail</p> """
     message = MessageSchema(
-        subject="Fastapi-Mail module",
+        subject=email.dict().get("subject"),
         recipients=email.dict().get("email"),
-        body=html,
+        body=email.dict().get("body"),
         subtype=MessageType.html)
 
     fm = FastMail(conf)
@@ -187,5 +198,25 @@ async def simple_send(email: EmailSchema) -> JSONResponse:
     return JSONResponse(status_code=200,content={"message": "email has been sent"})
 
 
+
+
+# Initialize Twilio client
+account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+auth_token =  os.environ.get('TWILIO_AUTH_TOKEN')
+twilio_phone = os.environ.get('TWILIO_PHONE_NUMBER')
+client = Client(account_sid, auth_token)
+
+@app.post("/sms")
+async def send_sms(sms: SMSNotification):
+    try:
+        message = client.messages.create(
+            body=sms.message,
+            from_=twilio_phone,
+            to=sms.phone
+        )
+        return {"success": True, "message_sid": message.sid}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

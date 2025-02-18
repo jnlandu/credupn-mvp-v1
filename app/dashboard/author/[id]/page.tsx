@@ -28,6 +28,9 @@ interface Publication {
   created_at: string;
   author: string[] | string;
   user_id: string;
+  category?: string;
+  abstract?: string;
+  keywords?: string[];
 }
 
 interface AuthorStats {
@@ -72,12 +75,13 @@ export default function AuthorDashboard({ params }: PageProps) {
     setIsLoading(true)
 
     try {
-      // Fetch user's publications
+      // Get current user's publications
       const { data: pubs, error } = await supabase
-        .from('publications')
-        .select('*')
-        .eq('user_id', id)
-        .order('created_at', { ascending: false })
+      .from('publications')
+      .select('*')
+      .is('deleted_at', null) // Filter out soft deleted
+      .neq('status', 'DELETED') // Also check status
+      .order('created_at', { ascending: false })
 
       if (error) throw error
 
@@ -197,11 +201,11 @@ export default function AuthorDashboard({ params }: PageProps) {
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+          {/* <TabsList> */}
+            {/* <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger> */}
             {/* <TabsTrigger value="submissions">Mes soumissions</TabsTrigger> */}
             {/* <TabsTrigger value="publications">Publications</TabsTrigger> */}
-          </TabsList>
+          {/* </TabsList> */}
 
           <TabsContent value="overview" className="space-y-6">
           <Card>
@@ -216,19 +220,55 @@ export default function AuthorDashboard({ params }: PageProps) {
                 ) : (
                   <div className="divide-y">
                     {publications.slice(0, 5).map((pub) => (
-                      
                       <div key={pub.id} className="py-4 flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium">{pub.title}</h3>
-                          <p className="text-sm text-gray-500">
-                            Soumis le {new Date(pub.created_at).toLocaleDateString('fr-FR')}
-                          </p>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium">{pub.title}</h3>
+                            <span className={`text-sm font-medium ${statusColors[pub.status.toLowerCase() as keyof typeof statusColors]}`}>
+                              {pub.status === 'PUBLISHED' && 'Publié'}
+                              {pub.status === 'PENDING' && 'En attente'}
+                              {pub.status === 'REJECTED' && 'Rejeté'}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-4 text-sm text-gray-500">
+                            <div>
+                              <span className="font-medium">Soumis le:</span>{' '}
+                              {new Date(pub.created_at).toLocaleDateString('fr-FR')}
+                            </div>
+                            
+                            <div>
+                              <span className="font-medium">Catégorie:</span>{' '}
+                              {pub.category || 'Non spécifié'}
+                            </div>
+                            
+                            <div>
+                              <span className="font-medium">Auteur(s):</span>{' '}
+                              {Array.isArray(pub.author) ? pub.author.join(', ') : pub.author}
+                            </div>
+                          </div>
+                          
+                          {pub.abstract && (
+                            <div className="mt-2">
+                              <p className="text-sm text-gray-600 line-clamp-2">
+                                {pub.abstract}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {pub.keywords && (
+                            <div className="flex gap-2 mt-2">
+                              {pub.keywords.map((keyword: string, index: number) => (
+                                <span 
+                                  key={index}
+                                  className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full"
+                                >
+                                  {keyword}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <span className={`text-sm font-medium ${statusColors[pub.status.toLowerCase() as keyof typeof statusColors]}`}>
-                          {pub.status === 'PUBLISHED' && 'Publié'}
-                          {pub.status === 'PENDING' && 'En attente'}
-                          {pub.status === 'REJECTED' && 'Rejeté'}
-                        </span>
                       </div>
                     ))}
                   </div>

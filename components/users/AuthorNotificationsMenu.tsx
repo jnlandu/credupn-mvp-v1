@@ -12,6 +12,7 @@ import { Bell, Loader2, FileText, Info } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { createClient } from '@/utils/supabase/client'
 import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/hooks/use-toast'
 
 interface AuthorNotification {
   id: string
@@ -39,49 +40,52 @@ export function AuthorNotificationsMenu() {
   const [isLoading, setIsLoading] = useState(true)
   const [unreadCount, setUnreadCount] = useState(0)
 
+  const  {toast }= useToast()
+
   const fetchNotifications = async () => {
-    const supabase = createClient()
-    console.log('Fetching notifications...'); // Debug log
+    setIsLoading(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const supabase = createClient();
+      
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) throw authError;
+      if (!user) throw new Error('No authenticated user');
   
+      // Use the correct constraint name
       const { data, error } = await supabase
         .from('notifications')
         .select(`
           *,
-          publications (
+          publications!notifications_publication_id_fkey (
             title,
             status
           ),
-          payments (
+          payments!notifications_payment_id_fkey (
             reference_number,
             amount
           )
         `)
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20)
+        .order('created_at', { ascending: false });
   
-      if (error) throw error
+      if (error) throw error;
   
-      setNotifications(data || [])
-      setUnreadCount(data?.filter(n => !n.read).length || 0)
+      setNotifications(data || []);
+      setUnreadCount(data?.filter(n => !n.read).length || 0);
+  
     } catch (error: any) {
-      // Detailed error logging
-      console.error('Error fetching notifications:', {
-        error,
-        type: typeof error,
-        message: error?.message || 'Unknown error',
-        details: error?.details || {},
-        stack: error?.stack
+      console.error('Error fetching notifications:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les notifications"
       });
-      console.error('Error fetching notifications:', error)
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     fetchNotifications()
