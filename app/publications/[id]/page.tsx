@@ -65,72 +65,98 @@ export default function PublicationPage({ params }: PageProps) {
   const { toast } = useToast()
   const router = useRouter()
 
-  useEffect(() => {
-    const fetchPublication = async () => {
-      const supabase = createClient()
-      setIsLoading(true)
 
+
+  
+  useEffect(() => {
+    const fetchPublicationData = async () => {
+      const supabase = createClient();
+      
       try {
-        const { data, error } = await supabase
+        // Get current publication and its adjacent ones in a single query
+        const { data: currentPub, error: currentError } = await supabase
           .from('publications')
           .select('*')
           .eq('id', id)
-          .single()
-
-        if (error) throw error
-
-        setPublication(data)
+          .single();
+  
+        if (currentError) throw currentError;
+  
+        // Get adjacent publications in parallel
+        const [prevPub, nextPub] = await Promise.all([
+          supabase
+            .from('publications')
+            .select('id')
+            .lt('created_at', currentPub.created_at)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single(),
+          supabase
+            .from('publications')
+            .select('id')
+            .gt('created_at', currentPub.created_at)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .single()
+        ]);
+  
+        setPublication(currentPub);
+        setAdjacentPubs({
+          prev: prevPub.data?.id || null,
+          next: nextPub.data?.id || null
+        });
+  
       } catch (error) {
-        console.error('Error fetching publication:', error)
+        console.error('Error fetching publication:', error);
         toast({
           variant: "destructive",
           title: "Erreur",
           description: "Impossible de charger la publication"
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
+  
+    fetchPublicationData();
+  }, [id]);
 
-    fetchPublication()
-  }, [id])
-
-  const fetchAdjacentPublications = async () => {
-    const supabase = createClient()
+  // const fetchAdjacentPublications = async () => {
+  //   const supabase = createClient()
     
-    try {
-      // Get previous publication
-      const { data: prevData } = await supabase
-        .from('publications')
-        .select('id, title')
-        .lt('created_at', publication?.created_at)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
+  //   try {
+  //     // Get previous publication
+  //     const { data: prevData } = await supabase
+  //       .from('publications')
+  //       .select('id, title')
+  //       .lt('created_at', publication?.created_at)
+  //       .order('created_at', { ascending: false })
+  //       .limit(1)
+  //       .single()
   
-      // Get next publication
-      const { data: nextData } = await supabase
-        .from('publications')
-        .select('id, title')
-        .gt('created_at', publication?.created_at)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .single()
+  //     // Get next publication
+  //     const { data: nextData } = await supabase
+  //       .from('publications')
+  //       .select('id, title')
+  //       .gt('created_at', publication?.created_at)
+  //       .order('created_at', { ascending: true })
+  //       .limit(1)
+  //       .single()
   
-      setAdjacentPubs({
-        prev: prevData?.id || null,
-        next: nextData?.id || null
-      })
-    } catch (error) {
-      console.error('Error fetching adjacent publications:', error)
-    }
-  }
+  //     setAdjacentPubs({
+  //       prev: prevData?.id || null,
+  //       next: nextData?.id || null
+  //     })
+  //   } catch (error) {
+  //     console.error('Error fetching adjacent publications:', error)
+  //   }
+  // }
 
-  useEffect(() => {
-    if (publication) {
-      fetchAdjacentPublications()
-    }
-  }, [publication])
+  // useEffect(() => {
+  //   if (publication) {
+  //     fetchAdjacentPublications()
+  //   }
+  // }, [publication])
 
 
   // useEffect(() => {
@@ -287,14 +313,14 @@ export default function PublicationPage({ params }: PageProps) {
             <Button
               variant="outline"
               disabled={!adjacentPubs.prev}
-              onClick={() => adjacentPubs.prev && router.push(`/publications/${adjacentPubs.prev}`)}
+              onClick={() => adjacentPubs.prev && router.replace(`/publications/${adjacentPubs.prev}`)}
             >
               ← Publication précédente
             </Button>
             <Button
               variant="outline"
               disabled={!adjacentPubs.next}
-              onClick={() => adjacentPubs.next && router.push(`/publications/${adjacentPubs.next}`)}
+              onClick={() => adjacentPubs.next && router.replace(`/publications/${adjacentPubs.next}`)}
             >
               Publication suivante →
             </Button>

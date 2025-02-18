@@ -72,7 +72,6 @@ conf = ConnectionConfig(
     USE_CREDENTIALS = True,
     VALIDATE_CERTS = False  # Disable SSL certificate verification
 )
-
 # Root endpoint
 @app.get("/")
 async def root():
