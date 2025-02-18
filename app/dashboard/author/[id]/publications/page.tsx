@@ -34,6 +34,14 @@ interface Publication {
   user_id: string;
 }
 
+const statusTranslations: Record<string, string> = {
+  'PENDING': 'En attente',
+  'PUBLISHED': 'Publié',
+  'REJECTED': 'Rejeté',
+  'UNDER_REVIEW': 'En cours d\'évaluation',
+  'DELETED': 'Supprimé'
+};
+
 export default function PublishedSubmissions({ params }: PageProps) {
   const [publications, setPublications] = useState<Publication[]>([])
   const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null)
@@ -56,10 +64,11 @@ export default function PublishedSubmissions({ params }: PageProps) {
       try {
         // Get current user's publications
         const { data, error } = await supabase
-          .from('publications')
-          .select('*')
-          .eq('user_id', id)
-          .order('created_at', { ascending: false })
+        .from('publications')
+        .select('*')
+        .is('deleted_at', null) // Filter out soft deleted
+        .neq('status', 'DELETED') // Also check status
+        .order('created_at', { ascending: false })
 
         if (error) throw error
 
@@ -138,7 +147,7 @@ export default function PublishedSubmissions({ params }: PageProps) {
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }>
-                        {publication.status}
+                        {statusTranslations[publication.status] || publication.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

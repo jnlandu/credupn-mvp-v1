@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import axios from 'axios'
+import { sendNotification } from '@/utils/notifications'
 
 interface PaymentDetails {
   id: string
@@ -180,31 +181,26 @@ export default function PaymentPage({ params }: PageProps) {
     return response.json()
   }
   
-  const notifyAuthor = async (publicationId: string, paymentId: string, reference: string) => {
-    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : 'http://localhost:3000'
-
-    const response = await fetch(`${baseUrl}/api/author/notify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        type: 'PAYMENT_COMPLETED',
+  const notifyAuthor = async (publicationId: string, paymentId: string, reference: string, status: 'success' | 'failed') => {
+    try {
+      await sendNotification({
+        type: 'PAYMENT_FAILED',
         publicationId,
         paymentId,
-        reference
-      })
-    })
-  
-    if (!response.ok) {
-      throw new Error('Failed to send notification')
+        reference_code: reference,
+        status
+      });
+    } catch (error) {
+      console.error('Author notification failed:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'envoyer la notification à l'auteur"
+      });
+      throw error;
     }
-  
-    return response.json()
-  }
-  
+  };
+
   const handleConfirmation = async () => {
     if (!isValidPhone(formData.phone)) {
       toast({
@@ -214,31 +210,51 @@ export default function PaymentPage({ params }: PageProps) {
       })
       return
     }
-
     setIsModalProcessing(true)
     try {  
+      const supabase = createClient()
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+      if (userError) throw userError
+
       const data = {
         Numero: formData.phone,
         Montant:  1000,
         currency: 'CDF',
         description: 'Paiement de publication',
       }
+
       const gateway = `${process.env.NEXT_PUBLIC_FASTAPI_URL}/payment`
       const headers = {
-        'Content-Type': 'application/json',
-        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzc5OTcwMTc1LCJzdWIiOiJlNzFiM2I4ZDMyNGFmYTMwOWU0NzY4MGI1ZjE0NDhhNCJ9.cLawA7kXCwBNYADRdwy9BJKwxQJOjUf0nTQ1i2Wipnw",
-        'Access-Control-Allow-Origin': '*'
-      }  
+          'Content-Type': 'application/json',
+          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzc5OTcwMTc1LCJzdWIiOiJlNzFiM2I4ZDMyNGFmYTMwOWU0NzY4MGI1ZjE0NDhhNCJ9.cLawA7kXCwBNYADRdwy9BJKwxQJOjUf0nTQ1i2Wipnw",
+          'Access-Control-Allow-Origin': '*'
+        } 
       const response = await axios.post(gateway, data, { headers, timeout: 60000 })
       const responseData = response.data
       const orderNumber = responseData.orderNumber
-  
+
       if (!orderNumber) {
         throw new Error('Payment processing failed')
       }
 
       const { reference, phoneNumber } = extractReferenceNumber(orderNumber)
-      
+      await supabase
+      .from('payments')
+      .update({ 
+        status: 'pending',
+        user_id: user?.id,
+        amount: data.Montant,
+        payment_method: selectedMethod,
+        publication_id: publicationId,
+        details:  data.description,
+        created_at: new Date().toISOString(),
+        customer_name: user?.user_metadata.full_name,
+        customer_email: user?.email,
+        order_number: phoneNumber,
+        reference_number: reference
+      })
+      .eq('id', paymentId)
       setShowPhoneDialog(false)
       await checkPaymentStatus(reference, phoneNumber, orderNumber)
 
@@ -273,12 +289,12 @@ export default function PaymentPage({ params }: PageProps) {
   
     setPaymentTimer(timer); // Store timer in state for cleanup
   
-    const cleanup = () => {
-      if (timer) clearInterval(timer);
-      setTimeLeft(120);
-      setIsModalProcessing(false);
-      setPaymentTimer(null);
-    };
+      const cleanup = () => {
+        if (timer) clearInterval(timer);
+        setTimeLeft(120);
+        setIsModalProcessing(false);
+        setPaymentTimer(null);
+      };
   
     const pollStatus = async () => {
       if (attempts >= maxAttempts || timeLeft <= 0) {
@@ -298,7 +314,7 @@ export default function PaymentPage({ params }: PageProps) {
   
         switch (verification) {
           case '0':
-            await updatePaymentStatus(reference, phoneNumber, true, response);
+            await updatePaymentStatus(reference, phoneNumber, true);
             cleanup();
             toast({
               title: "Succès",
@@ -310,23 +326,16 @@ export default function PaymentPage({ params }: PageProps) {
               title: "Paiement réussi",
               description: "Votre paiement a été confirmé avec succès. Un email de confirmation vous sera envoyé."
             });
-            await notifyAdmin(publicationId!, paymentId!, reference)
-            await notifyAuthor(publicationId!, paymentId!, reference)
             router.push(`/dashboard/author/${id}/publications`);
             break;
 
             case '1':
               cleanup();
-              await deleteFailedPublication(reference, phoneNumber);
-              // await updatePaymentStatus(reference, phoneNumber, false);
+              // await deleteFailedPublication(reference, phoneNumber);
+              updatePaymentStatus(reference, phoneNumber, false);
+              // await notifyAuthor(publicationId!, paymentId!, reference)
               // setIsModalProcessing(false);
               // setTimeLeft(120);
-              toast({
-                variant: "destructive",
-                title: "Échec du paiement",
-                description: "La publication a été automatiquement supprimée suite à l'échec du paiement"
-              });
-              // router.push(`/dashboard/author/${id}/publications`);
               break;
   
           case '2':
@@ -360,76 +369,115 @@ export default function PaymentPage({ params }: PageProps) {
   };
 }, [paymentTimer]);
 
-  const updatePaymentStatus = async (reference: string, phoneNumber: string, isSuccessful: boolean, responseData: any) => {
-    const supabase = createClient()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-      
-    if (userError) throw userError
 
+const deleteFailedPublication = async (reference: string, phoneNumber: string) => {
+  const supabase = createClient();
+  
+  try {
+    // First get the publication details to get PDF URL
+    const { data: publication, error: fetchError } = await supabase
+      .from('publications')
+      .select('pdf_url')
+      .eq('id', publicationId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Delete PDF from storage if it exists
+    if (publication?.pdf_url) {
+      const fileName = publication.pdf_url.split('/').pop();
+      if (fileName) {
+        const { error: storageError } = await supabase.storage
+          .from('publications')
+          .remove([fileName]);
+
+        if (storageError) {
+          console.error('Storage deletion error:', storageError);
+          throw storageError;
+        }
+      }
+    }
+
+    // Delete payment record
+    const { error: paymentError } = await supabase
+      .from('payments')
+      .delete()
+      .eq('reference_number', reference)
+      .eq('order_number', phoneNumber);
+    
+    
+
+    if (paymentError) throw paymentError;
+
+    // Soft delete publication
+    const { error: publicationError } = await supabase
+    .from('publications')
+    .update({ 
+      deleted_at: new Date().toISOString(),
+      status: 'DELETED'
+    })
+    .eq('id', publicationId);
+
+
+    if (publicationError) throw publicationError;
+
+    toast({
+      variant: "destructive",
+      title: "Publication supprimée",
+      description: "Paiement échoué. La publication a été supprimée suite à l'échec du paiement"
+    });
+
+  } catch (error) {
+    console.error('Error deleting failed publication:', {
+      error,
+      context: {
+        publicationId,
+        reference,
+        phoneNumber
+      }
+    });
+    
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de supprimer la publication"
+    });
+    
+    throw error;
+  }
+};
+
+const updatePaymentStatus = async (reference: string, phoneNumber: string, isSuccessful: boolean) => {
+    const supabase = createClient()
     const { error } = await supabase
       .from('payments')
-      .insert({ 
-        user_id: user?.id,
-        amount: responseData?.amount,
-        payment_method: selectedMethod,
-        publication_id: publicationId,
-        // details:  data.description,
-        created_at: new Date().toISOString(),
-        customer_name: user?.user_metadata.full_name,
-        customer_email: user?.email,
-        order_number: phoneNumber,
-        reference_number: reference,
+      .update({ 
         check: isSuccessful,
-        status: isSuccessful ? 'completé' : 'échec',
+        status: isSuccessful ? 'Complété' : 'echec'
       })
-      .eq('id', paymentId)
+      .eq('reference_number', reference)
+      .eq('order_number', phoneNumber)
+
     if (error) throw error
 
-    // if (isSuccessful) {
-      
-    // }
-  }
-
-  const deleteFailedPublication = async (reference: string, phoneNumber: string) => {
-    const supabase = createClient()
-    
-    try {
-      // First delete payment record
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .delete()
-        .eq('reference_number', reference)
-        .eq('order_number', phoneNumber)
-  
-      if (paymentError) throw paymentError
-  
-      // Then delete publication
-      const { error: publicationError } = await supabase
-        .from('publications')
-        .delete()
-        .eq('id', publicationId)
-  
-      if (publicationError) throw publicationError
-  
-      toast({
-        title: "Publication supprimée",
-        description: "La publication a été supprimée suite à l'échec du paiement"
-      })
-  
-      // Redirect to publications list
-      router.push(`/dashboard/author/${id}`)
-  
-    } catch (error) {
-      console.error('Error deleting failed publication:', error)
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de supprimer la publication"
-      })
-      throw error; // Re-throw to handle in calling function
+    if (isSuccessful) {
+      await notifyAdmin(publicationId!, paymentId!, reference)
+      await notifyAuthor(publicationId!, paymentId!, reference, isSuccessful ? 'success' : 'failed');
+    }else{
+        console.log('Payment failed');
+        try {
+          await notifyAuthor(publicationId!, paymentId!, reference, isSuccessful ? 'success' : 'failed');
+          await deleteFailedPublication(reference, phoneNumber);
+        } catch (error) {
+          console.error('Error handling payment failure:', error);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de traiter l'échec du paiement"
+          });
+        }
     }
   }
-  
 
   return (
     <div className="container max-w-3xl mx-auto py-8 px-4 sm:py-12">
@@ -466,7 +514,8 @@ export default function PaymentPage({ params }: PageProps) {
                 <div className="rounded-lg bg-gray-50 p-6">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Statut</h3>
                   <Badge className={getStatusBadge(paymentDetails.status)}>
-                    {statusTranslations[paymentDetails.status] || paymentDetails.status}
+                    {/* {statusTranslations[paymentDetails.status] || paymentDetails.status} */}
+                      {paymentDetails.status}
                   </Badge>
                 </div>
               </div>

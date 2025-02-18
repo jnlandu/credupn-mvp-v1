@@ -1,7 +1,24 @@
 // app/api/notify/route.ts
 import { createServerClient } from '@supabase/ssr'
+import axios from 'axios';
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+
+
+
+
+async function sendSMS(phone: string, message: string) {
+  try {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_FASTAPI_URL}/sms`, {
+      phone,
+      message
+    });
+    return response.data;
+  } catch (error) {
+    console.error('SMS error:', error);
+    throw error;
+  }
+}
 
 export async function POST(request: Request) {
   const cookieStore =  await cookies()

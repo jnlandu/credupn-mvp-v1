@@ -85,12 +85,13 @@ export async function POST(req: Request) {
       .insert({
         user_id: user?.id,
         publication_id: publication.id,
-        amount: 50, // Default amount
+        amount: 1000,
         status: 'PENDING',
         details: 'Paiement du frais de publication',
         payment_method: 'Mobile',
         created_at  : new Date().toISOString(),
         customer_email: user?.email,
+        // customer_name: user?.name,
         reference_code: Math.floor(Math.random() * 100).toString()
       })
       .select()
