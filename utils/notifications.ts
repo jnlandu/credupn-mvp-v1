@@ -10,6 +10,10 @@ export async function sendNotification(data: any) {
         },
         body: JSON.stringify(data)
       });
+
+      console.log('Notification request Data :', data);
+
+      console.log('Notification send response:', response);
   
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
