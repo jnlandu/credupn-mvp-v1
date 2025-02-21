@@ -1,6 +1,6 @@
 // app/admin/layout.tsx
 "use client"
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 
@@ -32,17 +32,68 @@ import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 
 
+
+
+interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
 export default function AdminLayout({
   children
 }: {
   children: React.ReactNode
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const router = useRouter()
-  const { toast } = useToast()
   const [isSigningOut, setIsSigningOut] = useState(false)
 
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const checkAdminAuth = async () => {
+      const supabase = createClient();
+      
+      try {
+        // Get authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          router.push('/auth/login');
+          return;
+        }
+        // Get user details including role
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('id, email, name, role')
+          .eq('id', user.id)
+          .single();
+  
+        if (error) throw error;
+  
+        // Check if user is admin
+        if (userData.role !== 'admin') {
+          router.push('/unauthorized');
+          return;
+        }
+  
+        setAdminUser(userData);
+        
+      } catch (error) {
+        console.error('Admin auth error:', error);
+        router.push('/auth/signin');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    checkAdminAuth();
+  }, []);
 
   const handleSignOut = async () => {
     setIsSigningOut(true)
@@ -75,7 +126,7 @@ export default function AdminLayout({
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-black text-white p-6 space-y-6 transition-all duration-300 flex flex-col relative`}>
         <div className="mb-8 flex items-center justify-between">
             <h2 className={`text-xl font-bold ${!isSidebarOpen && 'hidden'}`}>
-              <Link href="/admin">Tableau de bord</Link>
+              <Link href="/admin">Espace Administrateur</Link>
             </h2>
             <Button
               variant="ghost"
@@ -168,7 +219,7 @@ export default function AdminLayout({
         <div className="border-b pb-4 mb-8">
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Bienvenue, {adminUser?.name}</h1>
               <p className="text-sm text-muted-foreground">
                 Gerer les publications, les utilisateurs et les paiements
               </p>
@@ -187,9 +238,11 @@ export default function AdminLayout({
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">Admin</p>
+                      <p className="text-sm font-medium leading-none">
+                      {adminUser?.name}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        admin@example.com
+                      {adminUser?.email}
                       </p>
                     </div>
                   </DropdownMenuLabel>
@@ -200,12 +253,18 @@ export default function AdminLayout({
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Paramètres</span>
+                    <Link  
+                      href="/admin/settings/" 
+                      className="ml-2"
+                      >
+                      Paramètres
+                    </Link>
+                    {/* <span>Paramètres</span> */}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="text-red-600 cursor-pointer"
-                    onClick={handleSignOut}
+                    onClick={()=> handleSignOut()}
                     disabled={isSigningOut}
                   >
                     {isSigningOut ? (
