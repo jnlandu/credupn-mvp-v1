@@ -46,29 +46,6 @@ export default function NotFound() {
         </div>
 
         {/* Optional: Suggested Links */}
-        <div className="mt-12 space-y-2 text-sm">
-          <p className="text-muted-foreground">Pages suggérées:</p>
-          <div className="flex flex-col gap-2">
-            <Link 
-              href="/publications" 
-              className="text-primary hover:underline"
-            >
-              Publications
-            </Link>
-            <Link 
-              href="/about" 
-              className="text-primary hover:underline"
-            >
-              À propos
-            </Link>
-            <Link 
-              href="/contact" 
-              className="text-primary hover:underline"
-            >
-              Contact
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   )
