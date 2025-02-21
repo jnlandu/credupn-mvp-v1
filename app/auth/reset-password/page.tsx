@@ -1,7 +1,7 @@
 // app/auth/reset-password/page.tsx
 "use client"
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -49,7 +49,7 @@ const sendSecurityAlert = async (userEmail: string, location: string) => {
     }
   };
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent () {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
@@ -60,13 +60,19 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     // Check for error parameters in URL
-    const errorCode = searchParams.get('error_code')
-    const errorDescription = searchParams.get('error_description')
-    
-    if (errorCode === 'otp_expired') {
-      setError('Le lien de réinitialisation a expiré. Veuillez demander un nouveau lien.')
-    } else if (errorDescription) {
-      setError(errorDescription.replace(/\+/g, ' '))
+    try{
+      const errorCode = searchParams.get('error_code')
+      const errorDescription = searchParams.get('error_description')
+      
+      if (errorCode === 'otp_expired') {
+        setError('Le lien de réinitialisation a expiré. Veuillez demander un nouveau lien.')
+      } else if (errorDescription) {
+        setError(errorDescription.replace(/\+/g, ' '))
+      }
+    } catch (error) {
+      router.push('/error')
+      setError('Une erreur est survenue')
+
     }
   }, [searchParams])
 
@@ -121,7 +127,7 @@ export default function ResetPasswordPage() {
 };
 
   return (
-    <div className="min-h-screen flex flex-col mt-12">
+     <div className="min-h-screen flex flex-col mt-12">
       <div className="flex items-center justify-center">
         <div className="w-full max-w-md">
           <Card>
@@ -229,5 +235,20 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
