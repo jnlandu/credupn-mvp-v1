@@ -59,7 +59,7 @@ export default function Home() {
             doi,
             keywords
           `)
-          // .eq('status', 'PUBLISHED')
+          .eq('status', 'PUBLISHED')
           .order('created_at', { ascending: false })
           .limit(3)
 

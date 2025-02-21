@@ -87,6 +87,7 @@ export default function PublicationsPage() {
           image_url,
           pdf_url
         `)
+        .eq('status', 'PUBLISHED') // Add filter for published status
         .order('created_at', { ascending: false })
 
       if (error) {

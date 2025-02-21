@@ -72,7 +72,6 @@ conf = ConnectionConfig(
     USE_CREDENTIALS = True,
     VALIDATE_CERTS = False  # Disable SSL certificate verification
 )
-
 # Root endpoint
 @app.get("/")
 async def root():
@@ -198,6 +197,7 @@ async def simple_send(email: EmailSchema) -> JSONResponse:
     return JSONResponse(status_code=200,content={"message": "email has been sent"})
 
 
+<<<<<<< HEAD
 TWILIO_ACCOUNT_SID="ACfe6114dcb3985e19c93a0ecf343d5071"
 TWILIO_AUTH_TOKEN="bb3d4405725ca18df4b61bc4a78e36a0"
 TWILIO_PHONE_NUMBER="+17273493186"
@@ -206,6 +206,14 @@ TWILIO_PHONE_NUMBER="+17273493186"
 account_sid = TWILIO_ACCOUNT_SID  # os.getenv('TWILIO_ACCOUNT_SID')
 auth_token =  TWILIO_AUTH_TOKEN #os.getenv('TWILIO_AUTH_TOKEN')
 twilio_phone =TWILIO_PHONE_NUMBER #=  # os.getenv('TWILIO_PHONE_NUMBER')
+=======
+
+
+# Initialize Twilio client
+account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+auth_token =  os.environ.get('TWILIO_AUTH_TOKEN')
+twilio_phone = os.environ.get('TWILIO_PHONE_NUMBER')
+>>>>>>> main
 client = Client(account_sid, auth_token)
 
 @app.post("/sms")
