@@ -51,6 +51,8 @@ import {
    Reviewer,
 
   } from '@/data/publications'
+import { fetchReviewers } from '@/utils/reviewers'
+import { on } from 'events'
 
 
 
@@ -60,29 +62,25 @@ import {
     email: string;
     institution: string;
   }
-
+  
   interface ReviewerTable {
     id: string;
     user_id: string;
     specialization: string[];
     expertise: string;
     availability: boolean;
-    users: {
-      id: string;
-      name: string;
-      email: string;
-      institution: string;
-    }
+    users: ReviewerUserData ;
+  }
+  interface ReviewerResponse {
+    id: string;
+    user_id: string;
+    specialization: string[];
+    expertise: string;
+    availability: boolean;
+    user: ReviewerUserData; // Change from users to user (singular)
   }
 
-interface ReviewerResponse {
-  id: string;
-  user_id: string;
-  specialization: string[];
-  expertise: string;
-  availability: boolean;
-  users: ReviewerUserData;
-}
+
 
 export default function SubmissionsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -93,12 +91,14 @@ export default function SubmissionsAdmin() {
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showReviewerModal, setShowReviewerModal] = useState(false)
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedReviewers, setSelectedReviewers] = useState<string[]>([])
   const [reviewerSearchTerm, setReviewerSearchTerm] = useState('')
   const [reviewers, setReviewers] = useState<ReviewerTable[]>([])
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(false)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [pdfError, setPdfError] = useState(false)
+  const [isSendingToReviewers, setIsSendingToReviewers] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const categories = Array.from(new Set(submissions.map(sub => sub.category)))
@@ -133,78 +133,32 @@ const filteredSubmissions = submissions.filter(sub =>
   const currentSubmissions = filteredSubmissions.slice(startIndex, endIndex)
 
 
-// Fetch reviewers
-const fetchReviewers = async () => {
-  const supabase = createClient()
-  setIsLoadingReviewers(true)
-  
+// In your component:
+const loadReviewers = async () => {
+  setIsLoadingReviewers(true);
   try {
-    const { data, error } = await supabase
-      .from('reviewers')
-      .select(`
-        id,
-        user_id,
-        specialization,
-        expertise,
-        availability,
-        users!users_id(
-          id,
-          name,
-          email,
-          institution
-        )
-      `)
-      .eq('status', true)
-      .eq('availability', true)
-
-    if (error) throw error
-
-    if (!data || data.length === 0) {
-      toast({
-        title: "Information",
-        description: "Aucun évaluateur disponible"
-      })
-      return
-    }
-
-    // Map and type the data properly
-    const mappedReviewers: ReviewerTable[] = (data as unknown as ReviewerResponse[]).map(reviewer => ({
-      id: reviewer.id || '',
-      user_id: reviewer.user_id,
-      specialization: reviewer.specialization || [],
-      expertise: reviewer.expertise || '',
-      availability: reviewer.availability,
-      users: {
-        id: reviewer.users?.id,
-        name: reviewer.users?.name,
-        email: reviewer.users?.email,
-        institution: reviewer.users?.institution
-      }
-    }));
-
-    setReviewers(mappedReviewers)
-
-  } catch (error) {
-    console.error('Error fetching reviewers:', error)
+    const data = await fetchReviewers();
+    setReviewers(data);
+  } catch (error: any) {
     toast({
       variant: "destructive",
       title: "Erreur",
-      description: "Impossible de charger la liste des évaluateurs"
-    })
+      description: error.message || "Impossible de charger la liste des évaluateurs"
+    });
   } finally {
-    setIsLoadingReviewers(false)
+    setIsLoadingReviewers(false);
   }
-}
-  
-// Add useEffect to fetch reviewers
+};
+
 useEffect(() => {
-    fetchReviewers()
-}, [])
+  loadReviewers();
+}, []);
 
 
 
 // Fetch submissions
 const fetchSubmissions = async () => {
+    
     const supabase = createClient()
     try {
       console.log('Fetching submissions...')
@@ -276,36 +230,129 @@ const refreshSubmissions = async () => {
 }
    
   // Add send to reviewer function
-const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => {
-  const supabase = createClient()
-  try {
-    // Update publication status
-    const { error: statusError } = await supabase
-      .from('publications')
-      .update({ 
-        status: 'UNDER_REVIEW',
-        reviewers: reviewerIds 
-      })
-      .eq('id', publicationId)
+  const sendToReviewers = async (publicationId: string, reviewerIds: string[]) => {
+    setIsSendingToReviewers(true);
+    const supabase = createClient()
+    try {
 
-    if (statusError) throw statusError
+      const { data: publication, error: getPubError } = await supabase
+        .from('publications')
+        .select('*')
+        .eq('id', publicationId)
+        .single();
 
-    // Notify reviewers (implement notification system)
+      if (getPubError) {
+        console.error('Error getting publication:', getPubError);
+        throw getPubError;
+      }
+      
+     // Update publication status
+     const { error: updateError } = await supabase
+        .from('publications')
+        .update({
+          status: 'UNDER_REVIEW',
+          reviewer_ids: reviewerIds,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', publicationId);
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw updateError;
+      }
+  
+      // Create notification records
+    const notifications = reviewerIds.map(reviewerId => ({
+      user_id: reviewerId,
+      type: 'REVIEW_REQUEST',
+      title: 'Nouvelle publication à évaluer',
+      message: `Une nouvelle publication "${publication.title}" vous a été assignée pour évaluation.`,
+      publication_id: publicationId,
+      created_at: new Date().toISOString(),
+      read: false,
+      reference_code: `NOTIF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    }));
+  
+     // Insert notifications with unique reference codes
+     const { error: notifyError } = await supabase
+     .from('notifications')
+     .insert(notifications);
+
+      if (notifyError) {
+        console.error('Notification error:', notifyError);
+        throw notifyError;
+      }
+    // Send notifications
+    try {
+      const response = await fetch('/api/reviewer/notify', { // Changed from /api/reviewer/notify
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'REVIEW_REQUEST',
+          publicationId,
+          reviewerIds,
+          title: publication.title
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send notifications');
+      }
+
+      const result = await response.json();
+      console.log('Notification result:', result);
+
+    } catch (apiError: any) {
+      console.error('API error:', {
+        message: apiError.message,
+        status: apiError.status,
+        details: apiError.details
+      });
+      throw apiError;
+    }
+
     toast({
       title: "Succès",
       description: "Publication envoyée aux évaluateurs"
-    })
+    });
     
-    setShowReviewerModal(false)
-    refreshSubmissions()
-  } catch (error) {
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: "Impossible d'envoyer aux évaluateurs"
-    })
+    setShowReviewerModal(false);
+    setIsSendingToReviewers(false);
+    await fetchSubmissions();
+
+  
+    } catch (error: any) {
+      console.error('Error sending to reviewers:', error)
+      console.error('Error sending to reviewers:', {
+        name: error.name,
+        message: error.message,
+        code: error?.code,
+        details: error?.details,
+        stack: error.stack
+      });
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'envoyer aux évaluateurs"
+      })
+      setIsSendingToReviewers(false);
+    }
   }
-}
+
+
+/** On Send to Reviewers Functions  */
+const onSendToReviewers = async () => {
+    await sendToReviewers(selectedSubmission!.id, selectedReviewers);
+    // Reset states after successful send
+    setSelectedReviewers([]);
+    setShowReviewerModal(false);
+    // await refreshSubmissions();
+  }
+
+/**    Save Eduit function  */
 const saveEdit = async (id: string, field: string, value: any) => {
   const supabase = createClient()
   
@@ -561,63 +608,30 @@ const saveEdit = async (id: string, field: string, value: any) => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button
+                      <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            // First fix the type - it should not be an array
-                            const mappedSubmission: PendingPublication = {
-                              id: submission.id,
-                              title: submission.title,
-                              author: Array.isArray(submission.author)
-                                ? submission.author.map(element => ({
-                                    name: element?.name,
-                                    email: element?.email,
-                                    institution: element?.institution
-                                  }))
-                                : {
-                                    name: submission.author.name,
-                                    email: submission.author.email,
-                                    institution: submission.author.institution
-                                  },
-                              status: submission.status,
-                              abstract: submission.abstract,
-                              type: submission.type,
-                              date: submission.date,
-                              category: submission.category,
-                              pdf_url: submission.pdf_url,
-                              keywords: submission.keywords || []
-                            };
-
-                            setSelectedSubmission(mappedSubmission);
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent event bubbling
+                            setShowPreviewModal(true);
+                            setShowReviewerModal(false); // Close reviewer modal if open
+                            setSelectedSubmission(submission);
                           }}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {submission.status.toLowerCase() === 'pending' && (
-                          <>
-                            {/* <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-green-600"
-                            >
-                             <Check className="h-4 w-4" />
-                            </Button> */}
-                            {/* <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600"  
-                            >
-                              <X className="h-4 w-4" />
-                            </Button> */}
-                          </>
-                        )}
                         {/*  Send to Reviewers */}
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setShowReviewerModal(true)}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent event bubbling
+                            setShowReviewerModal(true);
+                            // setShowPreviewModal(false); // Close preview modal if open
+                            setSelectedSubmission(submission);
+                          }}
                         >
+                          <span className="hidden sm:inline">{selectedSubmission?.id}</span>
                           <Send className="h-4 w-4" />
                         </Button>
                       </div>
@@ -677,7 +691,13 @@ const saveEdit = async (id: string, field: string, value: any) => {
         </div>
       </div>
 {/*  Publication preview and details */}
-<Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
+<Dialog 
+  open={showPreviewModal} 
+  onOpenChange={(open) => {
+    setShowPreviewModal(open);
+    if (!open) setSelectedSubmission(null);
+  }}
+>
   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
     <DialogHeader className="sticky top-0  z-10 pb-4 border-b">
       <DialogTitle>Détails de la soumission</DialogTitle>
@@ -693,22 +713,22 @@ const saveEdit = async (id: string, field: string, value: any) => {
             <p>
               <span className="font-medium text-gray-500">Auteur.e(s):</span>{" "}
               {Array.isArray(selectedSubmission.author) 
-                ? selectedSubmission.author.map(author => author.name).join(', ')
-                : selectedSubmission.author.name
+                ? selectedSubmission.author.map(author => author?.name).join(', ')
+                : selectedSubmission.author?.name
               }
             </p>
             <p>
               <span className="font-medium text-gray-500">Email:</span>{" "}
               {Array.isArray(selectedSubmission.author) 
-                ? selectedSubmission.author.map(author => author.email).join(', ')
-                : selectedSubmission.author.email
+                ? selectedSubmission.author.map(author => author?.email).join(', ')
+                : selectedSubmission.author?.email
               }
             </p>
             <p>
               <span className="font-medium text-gray-500">Institution:</span>{" "}
               {Array.isArray(selectedSubmission.author) 
-                ? selectedSubmission.author.map(author => author.institution).join(', ')
-                : selectedSubmission.author.institution
+                ? selectedSubmission.author.map(author => author?.institution).join(', ')
+                : selectedSubmission.author?.institution
               }
             </p>
           </div>
@@ -738,12 +758,6 @@ const saveEdit = async (id: string, field: string, value: any) => {
               <p className="mt-1 text-justify text-sm">{selectedSubmission.abstract}</p>
             </div>
           )}
-          {/* <div>
-            <p className="font-medium mb-2">Résumé:</p>
-            <p className="text-gray-700 whitespace-pre-wrap">
-              {selectedSubmission.abstract || 'Aucun résumé disponible'}
-            </p>
-          </div> */}
         </div>
 
         {/* PDF Preview */}
@@ -794,10 +808,7 @@ const saveEdit = async (id: string, field: string, value: any) => {
           </Button>
           {selectedSubmission.status === 'PENDING' && (
             <>
-              {/* <Button variant="destructive" onClick={() => setSelectedSubmission(null)}>
-                <X className="h-4 w-4 mr-2" />
-                Annuler
-              </Button> */}
+    
               <Button onClick={() => setShowReviewerModal(true)}>
                 <Send className="h-4 w-4 mr-2" />
                 Envoyer aux évaluateurs
@@ -846,6 +857,7 @@ const saveEdit = async (id: string, field: string, value: any) => {
                   }}
                   className="h-4 w-4 rounded border-gray-300"
                 />
+                <span className="flex-1 text-red-400">{selectedReviewers || 'Avec nom'}</span>
                 <label htmlFor={reviewer.id} className="flex-1 cursor-pointer">
                   <p className="font-medium">{reviewer.users?.name || 'Sans nom'}</p>
                   <p className="text-sm text-gray-500">
@@ -861,21 +873,18 @@ const saveEdit = async (id: string, field: string, value: any) => {
         )}
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowReviewerModal(false)}
+        <Button
+            disabled={selectedReviewers.length === 0 || isSendingToReviewers}
+            onClick={onSendToReviewers}
           >
-            Annuler
-          </Button>
-          <Button
-            disabled={selectedReviewers.length === 0}
-            onClick={() => {
-              if (selectedSubmission) {
-                sendToReviewers(selectedSubmission.id, selectedReviewers)
-              }
-            }}
-          >
-            Envoyer ({selectedReviewers.length})
+            {isSendingToReviewers ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Envoi...
+              </>
+            ) : (
+              `Envoyer (${selectedReviewers.length})`
+            )}
           </Button>
         </div>
       </div>
