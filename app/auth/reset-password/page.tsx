@@ -25,12 +25,11 @@ const resetPasswordSchema = z.object({
 
 type ResetPasswordData = z.infer<typeof resetPasswordSchema>
 
-function ResetPasswordContent () {
+function ResetPasswordPageContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
+const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
