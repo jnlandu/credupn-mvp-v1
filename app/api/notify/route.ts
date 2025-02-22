@@ -8,14 +8,53 @@ import { NextResponse } from 'next/server'
 
 
 async function sendSMS(phone: string, message: string) {
+  console.log('Sending SMS to:', phone);
+  console.log('SMS message:', message);
+
   try {
     const response = await axios.post(`${process.env.NEXT_PUBLIC_FASTAPI_URL}/sms`, {
       phone,
       message
     });
+
+    console.log('SMS response:', response.data);
     return response.data;
-  } catch (error) {
-    console.error('SMS error:', error);
+    
+  } catch (error: any) {
+    console.error('SMS error:', {
+      status: error.response?.status,
+      message: error.message,
+      data: error.response?.data
+    });
+
+    if (error.response?.status === 500) {
+      // For API routes, return error response
+      return new Response(
+        JSON.stringify({
+          error: 'Internal Server Error',
+          message: 'Une erreur est survenue lors de l\'envoi du SMS'
+        }), 
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+
+    // Handle other status codes
+    if (error.response?.status === 400) {
+      return new Response(
+        JSON.stringify({
+          error: 'Bad Request',
+          message: 'Numéro de téléphone invalide'
+        }), 
+        { status: 400 }
+      );
+    }
+
+    // Default error response
     throw error;
   }
 }

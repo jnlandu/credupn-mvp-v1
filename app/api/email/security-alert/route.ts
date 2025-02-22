@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     // Get user details
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('name',)
+      .select('name')
       .eq('email', email)
       .single()
 
@@ -89,65 +89,65 @@ export async function POST(request: Request) {
             </div>
           </div>
           <div style="
-            background-color: #f8fafc;
-            padding: 20px;
-            text-align: center;
-            border-top: 1px solid #e2e8f0;
-            ">
-            <div style="margin-bottom: 20px;">
-                <img 
-                src="https://cridupn.com/logo.png" 
-                alt="CRIDUPN Logo" 
-                style="width: 120px; height: auto;"
-                />
-            </div>
+  background-color: #f8fafc;
+  padding: 20px;
+  text-align: center;
+  border-top: 1px solid #e2e8f0;
+">
+  <div style="margin-bottom: 20px;">
+    <img 
+      src="https://cridupn.com/logo.png" 
+      alt="CRIDUPN Logo" 
+      style="width: 120px; height: auto;"
+    />
+  </div>
 
-            <div style="margin-bottom: 20px; color: #64748b; font-size: 14px;">
-                <p style="margin: 0 0 10px 0;">
-                Centre de Recherche Interdisciplinaire<br/>
-                Université Pédagogique Nationale<br/>
-                Route de Matadi, Binza/UPN<br/>
-                Kinshasa, RDC
-                </p>
-                
-                <p style="margin: 0;">
-                Tel: +243 XX XXX XXXX<br/>
-                Email: contact@cridupn.com
-                </p>
-            </div>
+  <div style="margin-bottom: 20px; color: #64748b; font-size: 14px;">
+    <p style="margin: 0 0 10px 0;">
+      Centre de Recherche Interdisciplinaire<br/>
+      Université Pédagogique Nationale<br/>
+      Route de Matadi, Binza/UPN<br/>
+      Kinshasa, RDC
+    </p>
+    
+    <p style="margin: 0;">
+      Tel: +243 XX XXX XXXX<br/>
+      Email: contact@cridupn.com
+    </p>
+  </div>
 
-            <div style="margin-bottom: 20px;">
-                <a href="https://facebook.com/cridupn" style="
-                text-decoration: none;
-                margin: 0 10px;
-                color: #1a365d;
-                ">Facebook</a>
-                <a href="https://twitter.com/cridupn" style="
-                text-decoration: none;
-                margin: 0 10px;
-                color: #1a365d;
-                ">Twitter</a>
-                <a href="https://linkedin.com/company/cridupn" style="
-                text-decoration: none;
-                margin: 0 10px;
-                color: #1a365d;
-                ">LinkedIn</a>
-            </div>
+  <div style="margin-bottom: 20px;">
+    <a href="https://facebook.com/cridupn" style="
+      text-decoration: none;
+      margin: 0 10px;
+      color: #1a365d;
+    ">Facebook</a>
+    <a href="https://twitter.com/cridupn" style="
+      text-decoration: none;
+      margin: 0 10px;
+      color: #1a365d;
+    ">Twitter</a>
+    <a href="https://linkedin.com/company/cridupn" style="
+      text-decoration: none;
+      margin: 0 10px;
+      color: #1a365d;
+    ">LinkedIn</a>
+  </div>
 
-            <div style="
-                font-size: 12px;
-                color: #94a3b8;
-                max-width: 400px;
-                margin: 0 auto;
-            ">
-                <p style="margin: 0 0 10px 0;">
-                Ce message a été envoyé à ${email}. Il contient des informations confidentielles et peut être soumis à des restrictions légales.
-                </p>
-                <p style="margin: 0;">
-                © ${new Date().getFullYear()} CRIDUPN. Tous droits réservés.
-                </p>
-            </div>
-            </div>
+  <div style="
+    font-size: 12px;
+    color: #94a3b8;
+    max-width: 400px;
+    margin: 0 auto;
+  ">
+    <p style="margin: 0 0 10px 0;">
+      Ce message a été envoyé à ${email}. Il contient des informations confidentielles et peut être soumis à des restrictions légales.
+    </p>
+    <p style="margin: 0;">
+      © ${new Date().getFullYear()} CRIDUPN. Tous droits réservés.
+    </p>
+  </div>
+</div>
         `
         break;
     }

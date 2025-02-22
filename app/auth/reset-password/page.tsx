@@ -25,54 +25,25 @@ const resetPasswordSchema = z.object({
 
 type ResetPasswordData = z.infer<typeof resetPasswordSchema>
 
-
-
-const sendSecurityAlert = async (userEmail: string, location: string) => {
-    try {
-      const response = await fetch('/api/email/security-alert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: userEmail,
-        //   subject: 'Alerte de sécurité - Modification du mot de passe',
-          type: 'PASSWORD_CHANGED',
-          location: location,
-          timestamp: new Date().toISOString()
-        })
-      });
-  
-    //   if (!response.ok) throw new Error('Failed to send security alert');
-    } catch (error) {
-      console.error('Error sending security alert:', error);
-    }
-  };
-
 function ResetPasswordContent () {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
 
   useEffect(() => {
     // Check for error parameters in URL
-    try{
-      const errorCode = searchParams.get('error_code')
-      const errorDescription = searchParams.get('error_description')
-      
-      if (errorCode === 'otp_expired') {
-        setError('Le lien de réinitialisation a expiré. Veuillez demander un nouveau lien.')
-      } else if (errorDescription) {
-        setError(errorDescription.replace(/\+/g, ' '))
-      }
-    } catch (error) {
-      router.push('/error')
-      setError('Une erreur est survenue')
-
+    const errorCode = searchParams.get('error_code')
+    const errorDescription = searchParams.get('error_description')
+    
+    if (errorCode === 'otp_expired') {
+      setError('Le lien de réinitialisation a expiré. Veuillez demander un nouveau lien.')
+    } else if (errorDescription) {
+      setError(errorDescription.replace(/\+/g, ' '))
     }
   }, [searchParams])
 
@@ -85,49 +56,36 @@ function ResetPasswordContent () {
   })
 
   const onSubmit = async (data: ResetPasswordData) => {
-  setIsLoading(true);
-  const supabase = createClient();
+    setIsLoading(true)
+    const supabase = createClient()
 
-  try {
-    // Get user's location
-    const locationResponse = await fetch('https://ipapi.co/json/');
-    const locationData = await locationResponse.json();
-    const location = `${locationData.city}, ${locationData.country_name}`;
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: data.password
+      })
 
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.email) throw new Error('User email not found');
+      if (error) throw error
 
-    // Update password
-    const { error } = await supabase.auth.updateUser({
-      password: data.password
-    });
+      toast({
+        title: "Mot de passe mis à jour",
+        description: "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe"
+      })
 
-    if (error) throw error;
+      router.push('/auth/login')
 
-    // Send security alert email
-    await sendSecurityAlert(user.email, location);
-
-    toast({
-      title: "Mot de passe mis à jour",
-      description: "Un email de confirmation vous a été envoyé"
-    });
-
-    router.push('/auth/login');
-
-  } catch (error: any) {
-    toast({
-      variant: "destructive", 
-      title: "Erreur",
-      description: error.message || "Impossible de réinitialiser le mot de passe"
-    });
-  } finally {
-    setIsLoading(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error.message || "Impossible de réinitialiser le mot de passe"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
-};
 
   return (
-     <div className="min-h-screen flex flex-col mt-12">
+    <div className="min-h-screen flex flex-col mt-8">
       <div className="flex items-center justify-center">
         <div className="w-full max-w-md">
           <Card>
@@ -241,14 +199,14 @@ function ResetPasswordContent () {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4">Chargement...</p>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4">Chargement...</p>
+          </div>
         </div>
-      </div>
-    }>
-      <ResetPasswordContent />
+      }>
+       <ResetPasswordPageContent />
     </Suspense>
   )
 }

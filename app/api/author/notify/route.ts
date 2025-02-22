@@ -48,7 +48,8 @@ const generateUniqueNotificationRef = async (supabase: any): Promise<string> => 
 
 async function sendSMS(phone: string, message: string) {
   console.log('Sending SMS to:', phone);
-  console.log('SMS message:', message)
+
+  console.log('SMS message:', message);
   try {
     const response = await axios.post(`${process.env.NEXT_PUBLIC_FASTAPI_URL}/sms`, {
       phone,
@@ -57,8 +58,42 @@ async function sendSMS(phone: string, message: string) {
 
     console.log('SMS response:', response.data);
     return response.data;
-  } catch (error) {
-    console.error('SMS error:', error);
+    
+  } catch (error: any) {
+    console.error('SMS error:', {
+      status: error.response?.status,
+      message: error.message,
+      data: error.response?.data
+    });
+
+    if (error.response?.status === 500) {
+      // For API routes, return error response
+      return new Response(
+        JSON.stringify({
+          error: 'Internal Server Error',
+          message: 'Une erreur est survenue lors de l\'envoi du SMS'
+        }), 
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+
+    // Handle other status codes
+    if (error.response?.status === 400) {
+      return new Response(
+        JSON.stringify({
+          error: 'Bad Request',
+          message: 'Numéro de téléphone invalide'
+        }), 
+        { status: 400 }
+      );
+    }
+
+    // Default error response
     throw error;
   }
 }
@@ -148,14 +183,22 @@ const { error: notifyError } = await supabase
       ? `CRIDUPN -- Bonjour  Mr/Mme ${authorName}, le paiement pour votre publication "${publication.title}" a été confirmé. Référence: ${reference_code}`
       : `CRIDUPN -- Bonjour Mr/Mme ${authorName}, le paiement pour votre publication "${publication.title}" a échoué. Référence: ${reference_code}`;
 
-    await sendSMS(authorPhone, message);
+      const smsResponse  = await sendSMS(authorPhone, message);
 
-    return NextResponse.json({ success: true });
+      if (smsResponse instanceof Response) {
+        // Error occurred, return the response
+        return smsResponse;
+      }
+  
+      return NextResponse.json({ success: true });
 
-  } catch (error) {
-    console.error('Notification error:', error);
+  }catch (error) {
+    console.error('API error:', error);
     return NextResponse.json(
-      { error: 'Failed to send notification' },
+      { 
+        error: 'Failed to send SMS',
+        message: 'Une erreur est survenue, veuillez réessayer plus tard'
+      },
       { status: 500 }
     );
   }
