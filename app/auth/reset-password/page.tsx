@@ -54,34 +54,84 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     }
   })
 
+  // Update sendSecurityAlert function
+const sendSecurityAlert = async (userEmail: string, location: string) => {
+    try {
+      const response = await fetch('/api/email/security-alert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          type: 'PASSWORD_CHANGED',
+          location: location,
+          timestamp: new Date().toISOString()
+        })
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send security alert');
+      }
+  
+      return data;
+  
+    } catch (error: any) {
+      console.error('Security alert error:', {
+        message: error.message,
+        status: error.status,
+        details: error.details
+      });
+  
+      // Re-throw error to be handled by caller
+      throw error;
+    }
+  };
+
   const onSubmit = async (data: ResetPasswordData) => {
     setIsLoading(true)
     const supabase = createClient()
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: data.password
-      })
+    // Get user's location
+    const locationResponse = await fetch('https://ipapi.co/json/');
+    const locationData = await locationResponse.json();
+    const location = `${locationData.city}, ${locationData.country_name}`;
 
-      if (error) throw error
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) throw new Error('User email not found');
 
-      toast({
-        title: "Mot de passe mis à jour",
-        description: "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe"
-      })
+    // Update password
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: data.password
+    });
 
-      router.push('/auth/login')
+    if (updateError) throw updateError;
 
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error.message || "Impossible de réinitialiser le mot de passe"
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    // Send security alert
+    await sendSecurityAlert(user.email, location);
+
+    toast({
+      title: "Succès",
+      description: "Votre mot de passe a été mis à jour"
+    });
+
+    router.push('/auth/login');
+
+  } catch (error: any) {
+    console.error('Password reset error:', error);
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: error.message || "Impossible de réinitialiser le mot de passe"
+    });
+  } finally {
+    setIsLoading(false);
   }
+};
 
   return (
     <div className="min-h-screen flex flex-col mt-8">
