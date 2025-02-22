@@ -6,7 +6,11 @@ import { NextResponse } from 'next/server'
 import { date } from 'zod'
 
 
-
+type Author = {
+  name: string;
+  email?: string;
+  institution?: string;
+};
 
 
 const getBaseUrl = async  () => {
@@ -43,7 +47,13 @@ export async function POST(req: Request) {
     const title = formData.get('title') as string
     const abstract = formData.get('abstract') as string
     const keywords = formData.get('keywords') as string
-    const author = formData.get('author') as string
+    const authorInput = formData.get('authors') as string;
+
+    const authorArray = authorInput.includes(',') 
+  ? authorInput.split(',').map(author => author.trim())
+  : [authorInput.trim()];
+
+  const formattedAuthors = `{${authorArray.map(author => `"${author}"`).join(',')}}`;
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -70,7 +80,7 @@ export async function POST(req: Request) {
         user_id: user?.id,
         pdf_url: publicUrl,
         abstract,
-        author,
+        author: formattedAuthors,
         keywords: keywords.split(',').map(k => k.trim()),
         status: 'PENDING',
         date    : new Date().toISOString()
