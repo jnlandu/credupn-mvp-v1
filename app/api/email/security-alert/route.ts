@@ -155,17 +155,17 @@ export async function POST(request: Request) {
     // Send email
     await sendEmail(email, subject, html)
 
-    // Log security event
-    const { error: logError } = await supabase
-      .from('security_logs')
-      .insert({
-        user_email: email,
-        event_type: type,
-        location,
-        created_at: timestamp
-      })
+    // // Log security event
+    // const { error: logError } = await supabase
+    //   .from('security_logs')
+    //   .insert({
+    //     user_email: email,
+    //     event_type: type,
+    //     location,
+    //     created_at: timestamp
+    //   })
 
-    if (logError) throw logError
+    // if (logError) throw logError
 
     return NextResponse.json({ success: true })
 
