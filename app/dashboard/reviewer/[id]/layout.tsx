@@ -1,7 +1,7 @@
 // app/dashboard/reviewer/[id]/layout.tsx
 "use client"
 
-import { use, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { 
   ClipboardList,
@@ -13,9 +13,28 @@ import {
   ChevronRight,
   Layout,
   History,
-  TrendingUp
+  TrendingUp,
+  User,
+  Loader2,
+  LogOut
 } from "lucide-react"
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
+import { ReviewerNotificationsMenu } from '@/components/users/ReviewerNotificationsMenu'
+import { createClient } from '@/lib/supabase/client'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Toaster } from '@/components/ui/toaster'
+import { SignOutButton } from "@/components/SignOutButton"
 
+
+// Add interfaces
+interface User {
+  id: string
+  name: string
+  email: string
+}
 
 interface LayoutProps {
   children: React.ReactNode
@@ -25,35 +44,134 @@ interface LayoutProps {
 export default function ReviewerLayout({ children, params }: LayoutProps) {
   const { id } = use(params) // Unwrap params using React.use()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
 
+  const router = useRouter()
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const checkReviewerAuth = async () => {
+      const supabase = createClient()
+
+      try {
+          const { data: { user } } = await supabase.auth.getUser();
+
+          if (!user) {
+            router.push('/auth/login');
+            return;
+          }
+          // Get user details including role
+          const { data: userData, error } = await supabase
+          .from('users')
+          .select('id, email, name, role')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        // Check if user is admin
+        if (userData.role !== 'reviewer') {
+          router.push('/unauthorized');
+          return;
+        }
+
+        setUser(userData);
+
+        } catch (error) {
+          console.error('Admin auth error:', error);
+          router.push('/auth/signin');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      checkReviewerAuth();
+    }, []);
+
+  const handleSignOut = async () => {
+      setIsSigningOut(true)
+      try {
+        const supabase = createClient()
+        const { error } = await supabase.auth.signOut()
+        
+        if (error) throw error
+        router.push('/auth/login')
+        toast({
+          title: "Déconnexion réussie",
+          description: "À bientôt!"
+        })
+        
+      } catch (error) {
+        console.error('Error signing out:', error)
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de se déconnecter"
+        })
+      } finally {
+        setIsSigningOut(false)
+      }
+    }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
   return (
     <div className="flex min-h-screen">
+       {/* Mobile menu overlay */}
+       {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
       {/* Sidebar */}
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-black text-white p-6 space-y-6 transition-all duration-300 relative`}>
+      <aside 
+      className={`
+        fixed lg:static inset-y-0 left-0 z-50
+        ${isSidebarOpen ? 'w-64' : 'w-20'} 
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        bg-black text-white p-6 space-y-6 
+        transition-all duration-300
+      `}
+      >
         <div className="mb-8 flex items-center justify-between">
-          <h2 className={`text-xl font-bold ${!isSidebarOpen && 'hidden'}`}>
-            <Link href="#">Espace du reviewer</Link>
-          </h2>
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 rounded-lg hover:bg-gray-800"
-          >
-            {isSidebarOpen ? (
-              <ChevronLeft className="h-5 w-5" />
-            ) : (
-              <ChevronRight className="h-5 w-5" />
-            )}
-          </button>
-        </div>
+        <h2 className={`text-xl font-bold ${!isSidebarOpen && 'hidden'}`}>
+          <Link href="#">Espace Evaluateur</Link>
+        </h2>
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 rounded-lg hover:bg-gray-800 hidden lg:block"
+        >
+          {isSidebarOpen ? (
+            <ChevronLeft className="h-5 w-5" />
+          ) : (
+            <ChevronRight className="h-5 w-5" />
+          )}
+        </button>
+        <button
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="p-2 rounded-lg hover:bg-gray-800 lg:hidden"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+      </div>
 
         {/* Navigation Links */}
-        <nav className="space-y-2">
+        <nav className="space-y-1">
           <Link
             href={`/dashboard/reviewer/${id}`}
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <Layout className="h-5 w-5" />
-            {isSidebarOpen && <span>Tableau de bord</span>}
+            {isSidebarOpen && <span>Espace Evaluateur</span>}
           </Link>
 
           <Link
@@ -71,28 +189,12 @@ export default function ReviewerLayout({ children, params }: LayoutProps) {
             <CheckCircle2 className="h-5 w-5" />
             {isSidebarOpen && <span>Évaluations complétées</span>}
           </Link>
-
-          <Link
-            href={`/dashboard/reviewer/${id}/history`} 
-            className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
-          >
-            <History className="h-5 w-5" />
-            {isSidebarOpen && <span>Historique</span>}
-          </Link>
-
-          {/* <Link
-            href="/reviewer/statistics"
-            className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
-          >
-            <TrendingUp className="h-5 w-5" />
-            {isSidebarOpen && <span>Statistiques</span>}
-          </Link> */}
         </nav>
 
         {/* Settings at bottom */}
         <div className="absolute bottom-6 w-full left-0 px-6">
           <Link
-            href={`/dashboard/reviewer/${id}/setting`} 
+            href={`/dashboard/reviewer/${id}/settings`} 
             className="flex items-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800 p-2 rounded-lg transition-colors"
           >
             <Settings className="h-5 w-5" />
@@ -102,11 +204,96 @@ export default function ReviewerLayout({ children, params }: LayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1">
-        <div className="p-8">
+      <main className="flex-1 p-8">
+      <div className="max-w-7xl mx-auto">
+         <div className="border-b pb-4 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+           <div className="flex items-center justify-between lg:block">
+            <div className="space-y-1">
+                <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
+                  Bienvenue, {user?.name}
+                </h1>
+                <p className="text-sm text-muted-foreground hidden lg:block">
+                  Gérer les évaluations, les évaluations complétées et l'historique
+                </p>
+              </div>
+              {/* Mobile menu trigger */}
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              >
+                <svg 
+                  className="h-6 w-6" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 6h16M4 12h16M4 18h16" 
+                  />
+                </svg>
+              </button>
+              </div>
+              <div className="flex items-center space-x-4">
+                <ReviewerNotificationsMenu />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="/avatars/admin.png" alt="Admin" />
+                      <AvatarFallback>{user?.name ? getInitials(user.name) : getInitials('Mayala Lemba')}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                      {user?.name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                      {user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/reviewer/${id}/profile`}>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+
+                    <Link href={`/dashboard/reviewer/${id}/settings`}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Paramètres
+                    </Link>
+                    {/* <span>Paramètres</span> */}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="text-red-600 cursor-pointer"
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                  >
+                    <SignOutButton 
+                      onSignOut={handleSignOut} 
+                      isSigningOut={isSigningOut} 
+                    />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
           {children}
         </div>
       </main>
+      <Toaster />
     </div>
   )
 }

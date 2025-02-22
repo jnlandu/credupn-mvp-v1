@@ -48,8 +48,8 @@ const generateUniqueNotificationRef = async (supabase: any): Promise<string> => 
 
 async function sendSMS(phone: string, message: string) {
   console.log('Sending SMS to:', phone);
-  console.log('SMS message:', message);
 
+  console.log('SMS message:', message);
   try {
     const response = await axios.post(`${process.env.NEXT_PUBLIC_FASTAPI_URL}/sms`, {
       phone,

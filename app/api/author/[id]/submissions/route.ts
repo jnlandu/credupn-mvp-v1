@@ -20,6 +20,27 @@ const getBaseUrl = async  () => {
   return `${protocol}://${host}`
 }
 
+const generateUniqueReference = async (supabase: any): Promise<string> => {
+  const prefix = 'PAY';
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  const reference = `${prefix}${timestamp}${random}`;
+
+  // Check if reference exists
+  const { data } = await supabase
+    .from('payments')
+    .select('reference_code')
+    .eq('reference_code', reference)
+    .single();
+
+  if (data) {
+    // If exists, try again recursively
+    return generateUniqueReference(supabase);
+  }
+
+  return reference;
+};
+
 export async function POST(req: Request) {
     const cookieStore = await  cookies()
     const supabase = createServerClient(
@@ -72,7 +93,8 @@ export async function POST(req: Request) {
       .from('publications')
       .getPublicUrl(fileName)
 
-    // Create publication
+    // Create publication  and generate reference code 
+    const pub_reference_code = await generateUniqueReference(supabase);  
     const { data: publication, error: pubError } = await supabase
       .from('publications')
       .insert({
@@ -83,13 +105,15 @@ export async function POST(req: Request) {
         author: formattedAuthors,
         keywords: keywords.split(',').map(k => k.trim()),
         status: 'PENDING',
-        date    : new Date().toISOString()
+        date    : new Date().toISOString(),
+        reference_code: pub_reference_code
       })
       .select()
       .single()
     if (pubError) throw pubError
 
-    // Create payment record
+    // Create payment record and generate reference code
+    const reference_code = await generateUniqueReference(supabase);  
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
@@ -101,8 +125,8 @@ export async function POST(req: Request) {
         payment_method: 'Mobile',
         created_at  : new Date().toISOString(),
         customer_email: user?.email,
-        // customer_name: user?.name,
-        reference_code: Math.floor(Math.random() * 100).toString()
+        customer_name: user?.user_metadata.full_name,
+        reference_code: reference_code
       })
       .select()
       .single()
@@ -216,11 +240,9 @@ export async function POST(req: Request) {
                   </div>
               </body>
               </html>
-
         `
       })
     })
-
     if (!emailResponse.ok) {
       console.error('Email send failed:', await emailResponse.text())
     }

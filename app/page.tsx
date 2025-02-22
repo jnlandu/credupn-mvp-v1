@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BookOpen, Users, FileText, GraduationCap,ScrollText, Loader2 } from 'lucide-react'
 import {members} from '@/lib/members'
 import { partnerships, publicationProcess, recentNews, servicesFeatures, upcomingEvents, userComments } from '@/data/publications'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +34,7 @@ interface AnimatedCounterProps {
 export default function Home() {
   const [recentPublications, setRecentPublications] = useState<Publication[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [scrollY, setScrollY] = useState(0);
   const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null)
   const router = useRouter()
   const { toast } = useToast()
@@ -80,6 +81,15 @@ export default function Home() {
     fetchRecentPublications()
   }, [])
 
+  // Handle scroll effects
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
 
 function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCounterProps) {
     const [count, setCount] = useState(0)
@@ -112,6 +122,52 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCount
       })
       router.push('/auth/signup')
     }
+
+  // Intersection Observer for fade-in effects
+  const useInView = (ref: any) => {
+    const [isInView, setIsInView] = useState(false);
+
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          setIsInView(entry.isIntersecting);
+        },
+        { threshold: 0.1 }
+      );
+
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+
+      return () => {
+        if (ref.current) {
+          observer.unobserve(ref.current);
+        }
+      };
+    }, [ref]);
+
+    return isInView;
+  };
+
+  // Animated Card Component
+  const AnimatedCard = ({ children, delay = 0 }: any) => {
+    const cardRef = useRef(null);
+    const isInView = useInView(cardRef);
+    
+    return (
+      <div
+        ref={cardRef}
+        className={`transition-all duration-1000 ${
+          isInView 
+            ? 'opacity-100 translate-y-0' 
+            : 'opacity-0 translate-y-10'
+        }`}
+        style={{ transitionDelay: `${delay}ms` }}
+      >
+        {children}
+      </div>
+    );
+  };
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -176,13 +232,14 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCount
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {servicesFeatures.map((feature, index) => (
+              
               <Card 
                 key={index} 
                 className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 <CardHeader>
                   <div className="rounded-full bg-primary/10 p-3 w-16 h-16 flex items-center justify-center mb-4">
-                    <feature.icon className="h-8 w-8 text-primary" />
+                    <feature.icon className="h-8 w-8 text-primary text-center" />
                   </div>
                   <CardTitle>{feature.title}</CardTitle>
                 </CardHeader>
@@ -190,41 +247,36 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }: AnimatedCount
                   <CardDescription>{feature.description}</CardDescription>
                 </CardContent>
               </Card>
+    
             ))}
           </div>
         </div>
       </section>
       {/* Stats Section with Animated Counters */}
-      <section className="py-24 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
-            <h3 className="text-4xl font-bold text-primary mb-2">
-              <AnimatedCounter target={50} suffix="+" />
-            </h3>
-            <p className="text-gray-600">Chercheurs</p>
-          </div>
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
-            <h3 className="text-4xl font-bold text-primary mb-2">
-              <AnimatedCounter target={200} suffix="+" />
-            </h3>
-            <p className="text-gray-600">Publications</p>
-          </div>
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
-            <h3 className="text-4xl font-bold text-primary mb-2">
-              <AnimatedCounter target={15} suffix="+" />
-            </h3>
-            <p className="text-gray-600">Partenariats</p>
-          </div>
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
-            <h3 className="text-4xl font-bold text-primary mb-2">
-              <AnimatedCounter target={30} suffix="+" />
-            </h3>
-            <p className="text-gray-600">Projets Actifs</p>
+      <section className="py-24 px-4 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {[
+              { count: 50, label: "Chercheurs", suffix: "+" },
+              { count: 200, label: "Publications", suffix: "+" },
+              { count: 15, label: "Partenariats", suffix: "+" },
+              { count: 30, label: "Projets Actifs", suffix: "+" }
+            ].map((stat, index) => (
+              <AnimatedCard key={index} delay={index * 150}>
+                <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center transform transition-all duration-300 hover:scale-105">
+                  <h3 className="text-4xl font-bold text-primary mb-2">
+                    <AnimatedCounter 
+                      target={stat.count} 
+                      suffix={stat.suffix} 
+                    />
+                  </h3>
+                  <p className="text-gray-600">{stat.label}</p>
+                </div>
+              </AnimatedCard>
+            ))}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
     {/* Latest Publications Preview */}
     <section className="py-4 px-4 bg-gray-50">

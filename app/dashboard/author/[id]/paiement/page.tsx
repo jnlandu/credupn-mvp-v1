@@ -59,6 +59,7 @@ const statusTranslations: Record<string, string> = {
   'REJECTED': 'Rejeté'
 };
 
+
 export default function PaymentPage({ params }: PageProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -514,8 +515,8 @@ const updatePaymentStatus = async (reference: string, phoneNumber: string, isSuc
                 <div className="rounded-lg bg-gray-50 p-6">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Statut</h3>
                   <Badge className={getStatusBadge(paymentDetails.status)}>
-                    {/* {statusTranslations[paymentDetails.status] || paymentDetails.status} */}
-                      {paymentDetails.status}
+                    {statusTranslations[paymentDetails.status] || paymentDetails.status}
+                      {/* {paymentDetails.status} */}
                   </Badge>
                 </div>
               </div>
