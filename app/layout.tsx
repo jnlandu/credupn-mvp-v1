@@ -6,6 +6,7 @@ import Header from '@/components/header';
 import FooterClient from '@/components/FooterClient'
 import { Toaster } from "@/components/ui/toaster"
 import ScrollToTop from '@/components/backTop';
+import { ChatBot } from '@/components/ChatBot';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
             {children}
             
           </main>
+          <ChatBot /> {/* Add here, before Footer */}
           <Toaster />
           <FooterClient />
           

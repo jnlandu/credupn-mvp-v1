@@ -26,7 +26,7 @@ import { usePathname, useRouter } from 'next/navigation'
 
   return (
       <button
-        className={`fixed bottom-8 right-8 p-3 rounded-full bg-primary text-black 
+        className={`fixed bottom-3 right-12 mx-8 p-3 rounded-full bg-primary text-black 
         shadow-lg transition-all duration-300 
         hover:bg-primary/90 hover:scale-110 hover:shadow-xl
         active:scale-95
