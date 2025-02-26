@@ -9,7 +9,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Bell, Loader2 } from 'lucide-react'
+import { 
+  ArrowUp,
+  ArrowDown,
+  Check,
+  Clock,
+  AlertTriangle
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from '@/utils/supabase/client'
 
@@ -41,22 +54,10 @@ export function NotificationsMenu() {
     
         // Fetch notifications with publication and payment details
         const { data, error } = await supabase
-          .from('notifications')
-          .select(`
-            *,
-            publications!notifications_publication_id_fkey (
-              title,
-              author:users!publications_user_id_fkey (
-                name
-              )
-            ),
-            payments!notifications_payment_id_fkey (
-              reference_number
-            )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(20)
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20)
     
         if (error) throw error
     
