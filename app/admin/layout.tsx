@@ -47,6 +47,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
@@ -121,7 +122,7 @@ export default function AdminLayout({
     }
   }
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen ">
       {/* Your sidebar code */}
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-black text-white p-6 space-y-6 transition-all duration-300 flex flex-col relative`}>
         <div className="mb-8 flex items-center justify-between">
@@ -231,7 +232,12 @@ export default function AdminLayout({
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="/avatars/admin.png" alt="Admin" />
-                      <AvatarFallback>AD</AvatarFallback>
+                      <AvatarFallback>
+                {adminUser?.name?.split(' ')
+                  .map(word => word[0])
+                  .join('')
+                  .toUpperCase()}
+              </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
