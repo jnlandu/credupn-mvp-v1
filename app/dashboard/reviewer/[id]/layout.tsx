@@ -164,7 +164,7 @@ export default function ReviewerLayout({ children, params }: LayoutProps) {
         className={`
           fixed lg:static inset-y-0 left-0 z-50
           ${isSidebarOpen ? 'w-64' : 'w-20'} 
-          ${isMobileMenuOpen ? 'top-16 translate-x-0' : 'top-16  -translate-x-full lg:translate-x-0'}
+          ${isMobileMenuOpen ? 'top-16 translate-x-0' : 'top-16  -translate-x-full lg:translate-x-0 z-auto'}
           bg-black text-white p-6 space-y-6 
           transition-all duration-300 ease-in-out
           overflow-y-auto

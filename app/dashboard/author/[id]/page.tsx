@@ -136,91 +136,78 @@ export default function AuthorDashboard({ params }: PageProps) {
   
   return (
     <div className="min-h-screen ">
-      <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold">Tableau de bord</h1>
-        <div className="flex justify-between items-center mb-8">
-        <p className="text-gray-500">Gérez vos soumissions et suivez leurs statuts</p>
-            {/* <Button asChild>
-              <Link href={`../author/${id}/soumettre`} className="flex items-center">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Nouvelle soumission
-              </Link>
-            </Button> */}
-        </div>
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Publications totales</p>
-                  <p className="text-2xl font-bold">
-                    {isLoading ? '-' : stats.totalPublications}
-                  </p>
-                </div>
-                <BookOpen className="h-8 w-8 text-primary" />
+    <div className="container mx-auto py-4 md:py-8 px-2 md:px-4">
+      {/*  Stats overview  */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-4">
+        <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardContent className="pt-4 md:pt-6 px-3 md:px-6 py-3 md:py-6">
+            <div className="flex flex-col items-center space-y-1 md:space-y-2">
+              <div className="text-2xl md:text-4xl font-bold">
+                {stats.totalPublications}
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">En attente</p>
-                  <p className="text-2xl font-bold">{stats.pendingSubmissions}</p>
-                </div>
-                <Clock className="h-8 w-8 text-yellow-500" />
-              </div>
-            </CardContent>
-          </Card>
+              <p className="text-xs md:text-sm text-gray-500">Publications totales</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Acceptées</p>
-                  <p className="text-2xl font-bold">{stats.acceptedPublications}</p>
-                </div>
-                <CheckCircle2 className="h-8 w-8 text-green-500" />
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100/50">
+          <CardContent className="pt-4 md:pt-6 px-3 md:px-6 py-3 md:py-6">
+            <div className="flex flex-col items-center space-y-1 md:space-y-2">
+              <div className="text-2xl md:text-4xl font-bold text-yellow-700">
+                {stats.pendingSubmissions}
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-xs md:text-sm text-gray-500">En attente</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Rejetées</p>
-                  <p className="text-2xl font-bold">{stats.rejectedPublications}</p>
+        <Card className="bg-gradient-to-br from-green-50 to-green-100/50 sm:col-span-2 md:col-span-1">
+          <CardContent className="pt-4 md:pt-6 px-3 md:px-6 py-3 md:py-6">
+            <div className="flex flex-col items-center space-y-1 md:space-y-2">
+              <div className="text-2xl md:text-4xl font-bold text-green-700">
+                {stats.acceptedPublications}
+              </div>
+              <p className="text-xs md:text-sm text-gray-500">Acceptées</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-red-50 to-red-100/50 sm:col-span-2 md:col-span-1">
+          <CardContent className="pt-4 md:pt-6 px-3 md:px-6 py-3 md:py-6">
+            <div className="flex flex-col items-center space-y-1 md:space-y-2">
+              <div className="text-2xl md:text-4xl font-bold text-red-700">
+                {stats.rejectedPublications}
                 </div>
-                <XCircle className="h-8 w-8 text-red-500" />
+              <p className="text-xs md:text-sm text-gray-500">Rejetées</p>
               </div>
             </CardContent>
           </Card>
-        </div>
+      </div>
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          {/* <TabsList> */}
-            {/* <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger> */}
-            {/* <TabsTrigger value="submissions">Mes soumissions</TabsTrigger> */}
-            {/* <TabsTrigger value="publications">Publications</TabsTrigger> */}
-          {/* </TabsList> */}
+          <TabsList>
+            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+            <TabsTrigger value="submissions">Mes soumissions</TabsTrigger>
+            <TabsTrigger value="publications">Publications</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
           <Card>
-              <CardHeader>
-                <CardTitle>Soumissions récentes</CardTitle>
+              <CardHeader className="px-4 md:px-6 py-3 md:py-6">
+              <CardTitle className="flex items-center gap-2 text-base md:text-lg">Soumissions récentes</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 md:px-6 py-0 md:py-0">
                 {isLoading ? (
                   <div className="py-8 flex justify-center">
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  <div className="divide-y">
+                  <div className="space-y-4 md:space-y-6">
                     {publications.slice(0, 5).map((pub) => (
-                      <div key={pub.id} className="py-4 flex items-center justify-between">
+                      <div 
+                         key={pub.id} 
+                         className="py-4 flex items-center justify-between"
+                        >
                         <div className="flex-1 space-y-1">
                           <div className="flex items-center justify-between">
                             <h3 className="font-medium">{pub.title}</h3>
