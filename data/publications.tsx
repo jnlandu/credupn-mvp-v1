@@ -269,7 +269,7 @@ export const publicationProcess = [
     step: 4,
     icon: BookOpen,
     title: "Publication",
-    description: "Publication finale après validation"
+    description: "Publication finale après validation  et Nofications de l'auteur"
   }
 ]
 
