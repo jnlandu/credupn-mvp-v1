@@ -1,9 +1,9 @@
-import { Facebook, Twitter, Linkedin, Mail } from 'lucide-react'
+import { Facebook, Twitter, Linkedin, Mail, Heart } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white py-12">
+    <footer className="sm:text-center bg-gray-900 text-white py-12">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About Section */}
@@ -75,9 +75,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+       {/* Copyright */}
+       <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
           <p>© {new Date().getFullYear()} CRIDUPN. Tous droits réservés.</p>
+          <p className="mt-2 flex items-center justify-center">
+            Made with <Heart className="h-4 w-4 mx-1 text-red-500 inline fill-red-500" /> by 
+            <Link href={"https://"} className="text-gray-400 hover:text-white mx-1">
+              Telema
+            </Link>
+          </p>
         </div>
       </div>
     </footer>
