@@ -253,7 +253,7 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
           <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 leading-tight">
             Un Pôle d'Excellence pour la Recherche et l'Innovation
           </h3>
-          <Separator className="bg-primary/30 h-1 w-24 mt-6" />
+          <Separator className="bg-gray-600 h-1 w-24 mt-6" />
         </div>
         <p className="text-gray-700 text-lg leading-relaxed">
           Le <span className="font-semibold">CRIDUPN</span> se positionne comme une institution académique de référence en République Démocratique du Congo, mobilisant l'expertise pluridisciplinaire de ses chercheurs pour relever les défis contemporains.
@@ -299,7 +299,7 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
       <h3 className="text-3xl font-bold text-gray-900 [text-wrap:balance]">
         Axes de Recherche Principaux
       </h3>
-      <Separator className="bg-primary/30 h-1 w-32 mx-auto my-4" />
+      <Separator className="bg-gray-600 h-1 w-32 mx-auto my-4" />
       <p className="text-lg text-gray-700 max-w-3xl mx-auto">
         Notre centre développe des projets de recherche dans plusieurs domaines stratégiques, avec une approche interdisciplinaire et collaborative
       </p>
@@ -332,7 +332,7 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
     <div className="text-center mb-16">
       <h2 className="text-sm uppercase tracking-wider text-primary font-semibold">Notre Impact</h2>
       <h3 className="text-3xl font-bold text-white mt-2">CRIDUPN en Chiffres</h3>
-      <Separator className="bg-primary/30 h-1 w-32 mx-auto my-6" />
+      <Separator className="bg-gray-600 h-1 w-32 mx-auto my-6" />
     </div>
     
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
@@ -366,7 +366,7 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
       <div className="mb-6 md:mb-0">
         <h2 className="text-sm uppercase tracking-wider text-primary font-semibold">Recherche & Publications</h2>
         <h3 className="text-3xl font-bold text-gray-900 mt-2">Publications Récentes</h3>
-        <Separator className="bg-primary/30 h-1 w-32 my-4" />
+        <Separator className="bg-gray-600 h-1 w-32 my-4" />
       </div>
       <Button asChild variant="outline" className="flex items-center gap-2">
         <Link href="/publications">
@@ -631,7 +631,7 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
        <div className="mb-6 md:mb-0">
         <h2 className="text-center text-sm uppercase tracking-wider text-black font-semibold">Notre équipe</h2>
         <h3 className="text-center text-3xl font-bold text-gray-900 mt-2">Chercheurs et Membres</h3>
-        <Separator className="bg-black h-1 w-32 my-4" />
+        <Separator className="bg-gray-600 h-1 w-32 my-4" />
       </div>
       {/* <Button asChild variant="outline" className="flex items-center gap-2">
         <Link href="/members/">

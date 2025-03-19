@@ -15,7 +15,7 @@ export default function AboutPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen ">
       {/* Hero Section - Refined */}
       <section className="relative h-[60vh] flex items-center">
         <Image
@@ -47,7 +47,7 @@ export default function AboutPage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="text-sm uppercase tracking-wider text-primary font-semibold mb-2">Notre Histoire</div>
+            <div className="text-sm uppercase tracking-wider text-gray-900 font-semibold mb-2">Notre Histoire</div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
               Excellence et Innovation depuis 1990
             </h2>
@@ -69,26 +69,26 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-7xl mx-auto mb-16">
             <div className="text-center mb-12">
-              <div className="text-sm uppercase tracking-wider text-primary font-semibold mb-2">Ce qui nous définit</div>
+              <div className="text-sm uppercase tracking-wider text-gray-900 font-semibold mb-2">Ce qui nous définit</div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">Notre Mission & Vision</h2>
-              <Separator className="bg-primary/30 h-1 w-32 mx-auto" />
+              <Separator className="bg-gray-700 h-1 w-32 mx-auto" />
             </div>
             <div className="grid md:grid-cols-2 gap-12">
               <Card className="border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-2 overflow-hidden">
                 <div className="h-2 bg-primary/80 w-full rounded-t-sm mb-2"></div>
                 <CardContent className="p-8">
-                  <div className='flex  flex-row gap-4'>
-                  <div className="rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-6 mt-2">
-                    <Star className="h-7 w-7 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4 text-g">Notre Mission</h3>
-                  </div>
-                  {/* <h3 className="text-2xl font-bold mb-4 text-g">Notre Mission</h3> */}
-                  <p className="text-gray-200 leading-relaxed">
-                    Le CREDUPN est dédié à l'avancement de la recherche interdisciplinaire en RDC. 
-                    Nous travaillons pour résoudre les défis contemporains à travers 
-                    la recherche scientifique rigoureuse, l'innovation méthodologique et la formation des chercheurs.
-                  </p>
+                    <div className='flex  flex-row gap-4'>
+                    <div className="rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-6 mt-2">
+                      <Star className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4 text-g">Notre Mission</h3>
+                    </div>
+                    {/* <h3 className="text-2xl font-bold mb-4 text-g"> Notre Mission </h3> */}
+                    <p className="text-gray-200 leading-relaxed">
+                      Le CREDUPN est dédié à l'avancement de la recherche interdisciplinaire en RDC. 
+                      Nous travaillons pour résoudre les défis contemporains à travers 
+                      la recherche scientifique rigoureuse, l'innovation méthodologique et la formation des chercheurs.
+                    </p>
                 </CardContent>
               </Card>
               <Card className="border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-2 overflow-hidden">
@@ -100,7 +100,7 @@ export default function AboutPage() {
                   </div>
                   <h3 className="text-2xl font-bold mb-4 text0">Notre Vision</h3>
                 </div>
-                  {/* <h3 className="text-2xl font-bold mb-4 text0">Notre Vision</h3> */}
+                  {/* <h3 className="text-2xl font-bold mb-4 text0"> Notre Vision </h3> */}
                   <p className="text-gray-200 leading-relaxed">
                     Devenir un centre d'excellence de renommée internationale pour la recherche 
                     interdisciplinaire en Afrique, contribuant significativement au développement 
@@ -137,15 +137,14 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Values - Modernized */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <div className="text-sm uppercase tracking-wider text-primary font-semibold">Principes Fondamentaux</div>
+              <div className="text-sm uppercase tracking-wider text-gray-900  font-semibold">Principes Fondamentaux</div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">Nos Valeurs</h2>
-              <Separator className="bg-primary/30 h-1 w-32 mx-auto" />
+              <Separator className="bg-gray-700 h-1 w-32 mx-auto" />
               <p className="text-gray-600 max-w-2xl mx-auto mt-6">
                 Ces valeurs guident notre approche de la recherche et façonnent notre culture institutionnelle
               </p>
@@ -188,9 +187,9 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <div className="text-sm uppercase tracking-wider text-primary font-semibold">Nous Contacter</div>
+              <div className="text-sm uppercase tracking-wider text-gray-900 font-semibold">Nous Contacter</div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">Notre Localisation</h2>
-              <Separator className="bg-primary/30 h-1 w-32 mx-auto" />
+              <Separator className="bg-gray-600 h-1 w-32 mx-auto" />
             </div>
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="space-y-8">
