@@ -155,7 +155,7 @@ export default function Home() {
     return isInView
   }
 
-  // Animated Section Component
+// Animated Section Component
 // Update the AnimatedSection component to only animate in, never out
 const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
   children: React.ReactNode;
@@ -197,54 +197,54 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
       {/* Hero Section - More Professional & Clean */}
       <section className="relative h-[90vh] overflow-hidden">
       <Image
-    src="/images/hero.jpeg"
-    alt="CRIDUPN Centre de Recherche Interdisciplinaire"
-    fill
-    className="object-cover"
-    priority
-  />
-  <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black/90" />
-  <div className="relative z-10 flex items-center justify-center h-full px-4 max-w-7xl mx-auto">
-    <div className="space-y-8 max-w-4xl">
-      <div className="flex flex-col space-y-2">
-        <Badge className="w-fit text-sm px-4 py-1 mb-4 bg-primary/20 text-primary border-primary/30 backdrop-blur-sm">
-          Centre d'Excellence en Recherche
-        </Badge>
-        <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight [text-wrap:balance] animate-fade-up">
-          Centre de Recherche Interdisciplinaire
-        </h1>
-        <h2 className="text-2xl md:text-4xl font-semibold text-white/90 animate-fade-up [animation-delay:200ms]">
-          Université Pédagogique Nationale
-        </h2>
-      </div>
-      <p className="text-lg md:text-xl text-white/80 max-w-2xl leading-relaxed animate-fade-up [animation-delay:400ms]">
-        Promouvoir l'excellence académique et la recherche scientifique pour le développement durable de l'Afrique et de la République Démocratique du Congo
-      </p>
-      <div className="flex flex-wrap gap-4 animate-fade-up [animation-delay:600ms]">
-        <Button 
-          asChild 
-          size="lg" 
-          className="text-base px-6 py-6 bg-primary hover:bg-primary/90 transition-colors"
-        >
-          <Link href="/publications" className="flex items-center gap-2">
-            Explorer nos Publications <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-        <Button 
-          asChild 
-          size="lg" 
-          variant="outline" 
-          className="text-base px-6 py-6 bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors border-white/30"
-        >
-          <Link href="/about">Notre Centre</Link>
-        </Button>
+        src="/images/hero.jpeg"
+        alt="CRIDUPN Centre de Recherche Interdisciplinaire"
+        fill
+        className="object-cover"
+        priority
+      />
+    <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black/90" />
+    <div className="relative z-10 flex items-center justify-center h-full px-4 max-w-7xl mx-auto">
+      <div className="space-y-8 max-w-4xl">
+        <div className="flex flex-col space-y-2">
+          <Badge className="w-fit text-sm px-4 py-1 mb-4 bg-primary/20 text-primary border-primary/30 backdrop-blur-sm">
+            Centre d'Excellence en Recherche
+          </Badge>
+          <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight [text-wrap:balance] animate-fade-up">
+            Centre de Recherche Interdisciplinaire
+          </h1>
+          <h2 className="text-2xl md:text-4xl font-semibold text-white/90 animate-fade-up [animation-delay:200ms]">
+            Université Pédagogique Nationale
+          </h2>
+        </div>
+        <p className="text-lg md:text-xl text-white/80 max-w-2xl leading-relaxed animate-fade-up [animation-delay:400ms]">
+          Promouvoir l'excellence académique et la recherche scientifique pour le développement durable de l'Afrique et de la République Démocratique du Congo
+        </p>
+        <div className="flex flex-wrap gap-4 animate-fade-up [animation-delay:600ms]">
+          <Button 
+            asChild 
+            size="lg" 
+            className="text-base px-6 py-6 bg-primary hover:bg-primary/90 transition-colors"
+          >
+            <Link href="/publications" className="flex items-center gap-2">
+              Explorer nos Publications <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button 
+            asChild 
+            size="lg" 
+            variant="outline" 
+            className="text-base px-6 py-6 bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors border-white/30"
+          >
+            <Link href="/about">Notre Centre</Link>
+          </Button>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-      {/* Introduction Section - New */}
-      <section className="py-20 bg-white">
+  {/* Introduction Section - New */}
+  <section className="py-20 bg-white">
   <div className="max-w-7xl mx-auto px-4 md:px-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
       <div className="space-y-8">
@@ -291,11 +291,11 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
   </div>
 </section>
 
-      {/* Research Domains Section - Redesigned */}
-      <section className="py-20 px-4 bg-gray-50">
+  {/* Research Domains Section - Redesigned */}
+  <section className="py-20 px-4 bg-gray-50">
   <div className="max-w-7xl mx-auto">
     <div className="text-center mb-16 space-y-4">
-      <h2 className="text-sm uppercase tracking-wider text-primary font-semibold">Domaines d'Excellence</h2>
+      <h2 className="text-sm uppercase tracking-wider font-semibold text-black ">Domaines d'Excellence</h2>
       <h3 className="text-3xl font-bold text-gray-900 [text-wrap:balance]">
         Axes de Recherche Principaux
       </h3>
@@ -359,8 +359,8 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
   </div>
 </section>
 
-      {/* Latest Publications Section - Redesigned */}
-      <section className="py-20 px-4 bg-white">
+  {/* Latest Publications Section - Redesigned */}
+  <section className="py-20 px-4 bg-white">
   <div className="max-w-7xl mx-auto">
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16">
       <div className="mb-6 md:mb-0">
@@ -450,7 +450,7 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
         <div className="max-w-7xl mx-auto">
           {/* <AnimatedSection> */}
             <div className="text-center mb-16">
-              <h2 className="text-sm uppercase tracking-wider text-primary font-semibold">Soumission</h2>
+              <h2 className="text-sm uppercase tracking-wider font-semibold  text-gray-900">Soumission</h2>
               <h3 className="text-3xl font-bold text-gray-900 mt-2">Appel à publications</h3>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto mt-4">
                 La revue CRIDUPN accepte les soumissions de recherches originales dans tous les domaines académiques.
@@ -789,7 +789,7 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
         <div className="max-w-7xl mx-auto">
           {/* <AnimatedSection> */}
             <div className="text-center mb-16">
-              <h2 className="text-sm uppercase tracking-wider text-primary font-semibold">Collaborations</h2>
+              <h2 className="text-sm uppercase tracking-wider  text-gray-900 font-semibold">Collaborations</h2>
               <h3 className="text-3xl font-bold text-gray-900 mt-2">Partenariats et Indexation</h3>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto mt-4">
                 Notre centre collabore avec des institutions prestigieuses et notre revue est indexée 
