@@ -19,7 +19,8 @@ export default function AboutPage() {
       {/* Hero Section - Refined */}
       <section className="relative h-[60vh] flex items-center">
         <Image
-          src="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2086&q=80"
+          // src="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2086&q=80"
+          src="/images/divers/batupn.jpg"
           alt="CRIDUPN Centre de Recherche"
           fill
           className="object-cover"
@@ -76,11 +77,14 @@ export default function AboutPage() {
               <Card className="border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-2 overflow-hidden">
                 <div className="h-2 bg-primary/80 w-full rounded-t-sm mb-2"></div>
                 <CardContent className="p-8">
-                  <div className="rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-6">
+                  <div className='flex  flex-row gap-4'>
+                  <div className="rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-6 mt-2">
                     <Star className="h-7 w-7 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 text-gray-900">Notre Mission</h3>
-                  <p className="text-gray-700 leading-relaxed">
+                  <h3 className="text-2xl font-bold mb-4 text-g">Notre Mission</h3>
+                  </div>
+                  {/* <h3 className="text-2xl font-bold mb-4 text-g">Notre Mission</h3> */}
+                  <p className="text-gray-200 leading-relaxed">
                     Le CREDUPN est dédié à l'avancement de la recherche interdisciplinaire en RDC. 
                     Nous travaillons pour résoudre les défis contemporains à travers 
                     la recherche scientifique rigoureuse, l'innovation méthodologique et la formation des chercheurs.
@@ -90,11 +94,14 @@ export default function AboutPage() {
               <Card className="border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-2 overflow-hidden">
                 <div className="h-2 bg-primary/80 w-full rounded-t-sm mb-2"></div>
                 <CardContent className="p-8">
+                <div className='flex  flex-row gap-4'>
                   <div className="rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-6">
                     <Lightbulb className="h-7 w-7 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 text-gray-900">Notre Vision</h3>
-                  <p className="text-gray-700 leading-relaxed">
+                  <h3 className="text-2xl font-bold mb-4 text0">Notre Vision</h3>
+                </div>
+                  {/* <h3 className="text-2xl font-bold mb-4 text0">Notre Vision</h3> */}
+                  <p className="text-gray-200 leading-relaxed">
                     Devenir un centre d'excellence de renommée internationale pour la recherche 
                     interdisciplinaire en Afrique, contribuant significativement au développement 
                     scientifique, technologique, économique et social du continent africain.
