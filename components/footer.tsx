@@ -46,7 +46,7 @@ export default function Footer() {
             <h3 className="text-xl font-bold mb-4">Contact</h3>
             <ul className="space-y-2 text-gray-400">
               <li>UPN, Kinshasa, RDC</li>
-              <li>contact@credupn.cd</li>
+              <li>inforevue@cridupn-rdc.cd</li>
               <li>+243 000 000 000</li>
             </ul>
           </div>
