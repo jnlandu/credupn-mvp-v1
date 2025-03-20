@@ -625,14 +625,14 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
   </section>
 
       {/* Our Members Section - Professional Redesign */}
-  <section className="py-20 px-4 bg-white">
-  <div className="max-w-7xl mx-auto">
+  {/* <section className="py-20 px-4 bg-white"> */}
+  {/* <div className="max-w-7xl mx-auto"> */}
      {/* <div className="flex flex-col md:flex-row justify-center items-start md:items-center mb-16"> */}
-       <div className="mb-6 md:mb-0">
+       {/* <div className="mb-6 md:mb-0">
         <h2 className="text-center text-sm uppercase tracking-wider text-black font-semibold">Notre équipe</h2>
         <h3 className="text-center text-3xl font-bold text-gray-900 mt-2">Chercheurs et Membres</h3>
         <Separator className="bg-gray-600 h-1 w-32 my-4" />
-      </div>
+      </div> */}
       {/* <Button asChild variant="outline" className="flex items-center gap-2">
         <Link href="/members/">
           Voir tous les membres <ArrowRight className="h-4 w-4" />
@@ -640,12 +640,12 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
       </Button> */}
     {/* </div> */}
     
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {members.slice(0, 3).map((member, index) => (
-        <div key={index} >
-          <Card className="overflow-hidden border border-gray-200 shadow-md hover:shadow-xl transition-all duration-300 group h-full">
+    {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-8"> */}
+      {/* </div>{members.slice(0, 3).map((member, index) => ( */}
+        {/* // <div key={index} >
+        //   <Card className="overflow-hidden border border-gray-200 shadow-md hover:shadow-xl transition-all duration-300 group h-full"> */}
             {/* Image Header with Overlay */}
-            <div className="relative h-72">
+            {/* <div className="relative h-72">
               <Image
                 src={member.image}
                 alt={member.name}
@@ -653,10 +653,10 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
                 className="object-cover"
                 style={{ objectPosition: 'center 15%' }} 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-70 group-hover:opacity-90 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-70 group-hover:opacity-90 transition-opacity" /> */}
               
               {/* Academic Info Overlay */}
-              <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+              {/* <div className="absolute top-4 right-4 flex flex-col items-end gap-2"> */}
                 {/* <Badge className="bg-whit text-primary border-0 py-1 px-3 shadow-sm">
                   <GraduationCap className="h-3.5 w-3.5 mr-1" />
                   {member.publications} publications
@@ -665,13 +665,13 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
                 {/* <Badge className="bg-primary/20 text-white border-0 shadow-sm">
                   {member.specialization}
                 </Badge> */}
-              </div>
-            </div>
+              {/* </div>
+            </div> */}
             
             {/* Profile Card Content */}
-            <CardContent className="relative pt-8 pb-4">
+            {/* <CardContent className="relative pt-8 pb-4"> */}
               {/* Avatar */}
-              <div className="absolute -top-12 left-6 rounded-full border-4 border-white shadow-md overflow-hidden h-24 w-24">
+              {/* <div className="absolute -top-12 left-6 rounded-full border-4 border-white shadow-md overflow-hidden h-24 w-24">
                 <Image
                   src={member.image}
                   alt={member.name}
@@ -679,17 +679,17 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
                   className="object-cover"
                   style={{ objectPosition: 'center 15%' }}
                 />
-              </div>
+              </div> */}
               
               {/* Member Info */}
-              <div className="ml-28">
+              {/* <div className="ml-28">
                 <h3 className="text-xl font-bold mb-1 text-gray-400">{member.name}</h3>
                 <p className="text-primary font-medium mb-2">{member.title}</p>
               </div>
               
-              <Separator className="my-4" />
+              <Separator className="my-4" /> */}
               {/* Details */}
-              <div className="space-y-3 mt-4">
+              {/* <div className="space-y-3 mt-4">
                 <div className="flex items-center gap-3">
                   <div className="bg-gray-100 p-2 rounded-full">
                     <Building2 className="h-4 w-4 text-gray-700" />
@@ -730,10 +730,10 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
           </Card>
         </div>
       ))}
-    </div>
+    </div> */}
     
     {/* CTA for All Members */}
-    <div className="mt-14 text-center">
+    {/* <div className="mt-14 text-center">
       <Button asChild size="lg" variant="outline" className="gap-2">
         <Link href="/members/" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
@@ -741,8 +741,8 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
         </Link>
       </Button>
     </div>
-  </div>
-</section>
+  </div> */}
+{/* </section> */}
 
       {/* Testimonials Section - Redesigned */}
       <section className="py-20 px-4 bg-primary/5">
