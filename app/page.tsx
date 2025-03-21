@@ -503,7 +503,7 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
         </div>
       </section>
 
-    
+      {/* Publication Process - Redesigned */}
   {/* Publication Process - Enhanced with Visual Elements */}
 <section className="py-20 px-4 bg-primary/5">
   <div className="max-w-7xl mx-auto">
@@ -625,8 +625,8 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
   </section>
 
       {/* Our Members Section - Professional Redesign */}
-  {/* <section className="py-20 px-4 bg-white"> */}
-  {/* <div className="max-w-7xl mx-auto"> */}
+  {/* <section className="py-20 px-4 bg-white">
+  <div className="max-w-7xl mx-auto"> */}
      {/* <div className="flex flex-col md:flex-row justify-center items-start md:items-center mb-16"> */}
        {/* <div className="mb-6 md:mb-0">
         <h2 className="text-center text-sm uppercase tracking-wider text-black font-semibold">Notre équipe</h2>
@@ -641,9 +641,9 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
     {/* </div> */}
     
     {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-8"> */}
-      {/* </div>{members.slice(0, 3).map((member, index) => ( */}
-        {/* // <div key={index} >
-        //   <Card className="overflow-hidden border border-gray-200 shadow-md hover:shadow-xl transition-all duration-300 group h-full"> */}
+      {/* {members.slice(0, 3).map((member, index) => ( */}
+        {/* <div key={index} > */}
+          {/* <Card className="overflow-hidden border border-gray-200 shadow-md hover:shadow-xl transition-all duration-300 group h-full"> */}
             {/* Image Header with Overlay */}
             {/* <div className="relative h-72">
               <Image
@@ -741,8 +741,8 @@ const AnimatedSection = ({ children, delay = 0, direction = 'up' }: {
         </Link>
       </Button>
     </div>
-  </div> */}
-{/* </section> */}
+  </div>
+</section> */}
 
       {/* Testimonials Section - Redesigned */}
       <section className="py-20 px-4 bg-primary/5">
